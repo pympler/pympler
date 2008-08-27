@@ -1,0 +1,35 @@
+README for pympler
+==================
+
+
+Installation
+------------
+1. Build the package::
+
+    python setup.py build
+
+2.a) For a system-wide installation run::
+
+    sudo python setup.py install
+
+2.b) For a user-specific installation run::
+
+    python setup.py --user install
+
+Note that the user-specific installation requires Python 2.6 or higher.
+
+
+Usage
+-----
+FIXME:
+The usage of pympler is described in the documentation. It is available either
+in this distribution at *doc/index.html* or you can read it online at
+*http://packages.python.org/muppy/*.
+
+
+Contributing
+------------
+You can post wishes, bug reports or patches at our issue tracker under
+*http://code.google.com/p/pympler/issues/* or write an email to
+*pympler-dev@googlegroups.com*.
+

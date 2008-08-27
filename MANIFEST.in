@@ -1,0 +1,7 @@
+include LICENSE
+include NOTICE
+include README
+
+FIXME: recursive-include doc *
+FIXME: prune doc/source
+FIXME: prune doc/build
