@@ -1,0 +1,46 @@
+Check-in new revision
+=====================
+
+* update CHANGELOG if necessary
+
+* run test suite
+
+* run doctests
+
+
+Release a new version
+=====================
+
+Tests
+-----
+
+* run the test suite
+
+  $ python tests/test_all.py
+
+* run doctests on the documentation
+
+  $ cd doc
+  $ make doctest
+
+Checks
+------
+  
+* check the meta data specified in muppy/metadata.py
+
+* check CHANGES file for missing entries
+
+* check NOTICE file for missing contributors
+
+* check the to-be-released module-distribution
+
+  $ python setup.py sdist
+
+Release
+-------
+  
+* release a new version to the python cheeseshop via
+
+  $ python setup.py sdist --formats=gztar,zip upload
+
+* update the documentation at http://packages.python.org/muppy/

@@ -1,0 +1,16 @@
+Release 0.1b1
+==============
+
+* Updated asizeof module to latest version: 4.4 (Aug 01, 2008).
+
+* Moved gc.collect() into muppy.get_objects(). This greatly reduces the use of
+  of gc.collect() in and outside of muppy.
+
+
+
+Release 0.1a2
+=============
+
+* first public release
+
+
