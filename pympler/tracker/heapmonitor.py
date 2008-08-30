@@ -45,7 +45,7 @@ from inspect     import stack, getmembers
 import cPickle
 import gc
 
-import pympler.asizeof as asizeof
+import pympler.sizer.asizeof as asizeof
 #from SCons.Debug import memory
 
 # Dictionaries of TrackedObject objects associated with the actual objects that
