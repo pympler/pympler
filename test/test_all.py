@@ -7,8 +7,7 @@ from glob import glob
 from unittest import defaultTestLoader
 
 testfile_pattern = 'test_*.py'
-# location of this very module
-_modulepath = os.path.abspath(os.path.dirname(inspect.getfile(lambda foo:foo)))
+module_list = ''
 
 def get_tests(dir='.'):
     '''Get a list of module names of all tests included in dir.'''
@@ -31,6 +30,18 @@ def get_tests(dir='.'):
         res.append(moduleName)
     return res
 
+
+def get_tests_from_file(fname):
+    tests = []
+    f = open(fname)
+    try:
+        for test in f.readlines():
+            tests.append(test.strip())            
+    finally:
+        f.close()
+    return tests
+
+
 def suite():
     '''Create a suite with all tests included in the directory of this script.
 
@@ -38,16 +49,21 @@ def suite():
 
     '''
     res = unittest.TestSuite()
-    test_modules = get_tests()
+    test_modules = get_tests_from_file(module_list)
     for test_module in test_modules:
-        package, sep, module = test_module.rpartition('.')
-        if package == '':
-            testModule = __import__(test_module)
-        else:
-            testModule = __import__(test_module, fromlist=module)
-        res.addTest(defaultTestLoader.loadTestsFromModule(testModule))
+        components = test_module.split('.')
+        module = components[-1]
+        try:
+            if len(components) == 1:
+                testModule = __import__(test_module)
+            else:
+                testModule = __import__(test_module, globals(), locals(), [module])
+            res.addTest(defaultTestLoader.loadTestsFromModule(testModule))
+        except (SyntaxError, NameError, ImportError), exc:
+            print "WARNING: Ignoring '%s' due to an error while importing:" % test_module
+            print exc
     return res
     
 if __name__ == '__main__':
-    sys.path.append(_modulepath + os.sep + "..")
+    module_list = sys.argv[1]
     unittest.TextTestRunner(verbosity=2).run(suite())

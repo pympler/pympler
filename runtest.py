@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from tempfile import mkstemp
 from optparse import OptionParser
 
 
@@ -12,7 +13,8 @@ def get_tests(dir = 'test'):
     tests = []
 
     if os.path.isfile(dir):
-        if dir.startswith('test_') and dir.endswith('.py'):
+        fn = os.path.basename(dir)
+        if fn.startswith('test_') and fn.endswith('.py'):
             tests.append(dir)
 
     elif os.path.isdir(dir):
@@ -30,25 +32,42 @@ def remove_duplicates(list):
 
 
 def main():
-    usage = "usage: %prog [options]"
+    '''
+    Find and run all specified tests.
+    '''
+    usage = "usage: %prog [options] tests"
     parser = OptionParser(usage)
     parser.add_option("-P", "--python", type="string", 
                       dest="python", default="python")
 
     (options, args) = parser.parse_args()
 
+    project_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+    test_path = os.path.join(project_path, 'test')
+
     tests = []
-    if not args: 
-        tests = get_tests()
-    else:
-        for dir in args:
-            tests.extend(get_tests(dir))
+    if not args:
+        args = [test_path]
+    for dir in args:
+        tests.extend(get_tests(dir))
     tests = remove_duplicates(tests)
     tests.sort()
-
-    os.environ['PYTHONPATH'] = os.getcwd()
+    (fd, test_list) = mkstemp(suffix='.txt')
+    f = os.fdopen(fd, 'w')
     for t in tests:
-        subprocess.call([options.python, t])
+        t = t.replace(project_path, '')
+        t = os.path.splitext(t)[0].replace(os.sep, '.')
+        if t[0] == '.': 
+            t = t[1:]
+        if not t == 'test.test_all':
+            f.write(t+'\n')
+    f.close()
+
+    os.environ['PYTHONPATH'] = project_path
+    subprocess.call([options.python, 
+                     os.path.join(test_path, 'test_all.py'),
+                     test_list])
+    os.remove(test_list)
 
 if __name__ == '__main__':
     main()
