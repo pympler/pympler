@@ -1,0 +1,71 @@
+Pympler is a development tool to measure, monitor and analyze the
+memory behavior of Python objects in a running Python application.
+
+By pympling a Python application, detailed insight in the size and
+the lifetime of Python objects can be obtained.  Undesirable or
+unexpected runtime behavior like memory bloat and other "pymples"
+can easily be identified.
+
+Pympler integrates 3 previously separate modules into a single,
+comprehensive profiling tool.  The <asizeof> module provides basic
+size information for one or several Python objects, module <muppy>
+is used for on-line monitoring of a Python application and module
+<heampmonitor> provides off-line analysis of the lifetime of
+selected Python objects.
+
+Pympler is written entirely in Python, can be used with Python
+version 2.2.3 or later up to the most recent Python 2.6 and 3.0
+releases without other dependencies.
+
+
+Target Audience
+---------------
+
+Every Python developer interested in analyzing the memory consumption
+of his or her Python program should find a suitable, readily usable
+facility in Pympler.
+
+
+Usage Examples
+--------------
+
+Aaron is curious how much memory certain Python objects consume.  He
+uses one of the <asizeof> function to get the size of these objects and
+all associated referents.
+
+Peter is trying to compare different implementations of a new parser
+module.  For each implementation, he uses the <asizeof> module to print
+simple statistics like size and number of objects summarized by type.
+
+Graham has been notified that his Python script leaks memory. Looking at
+the garbage collector debug output does not reveal where the leaks come
+from.  Thus he decides to use the <muppy> module to see which actions
+result in an increased memory usage.  Graham discovers that whenever
+his script iterates over the input set, a new dict object is created.
+With the help of the <muppy> module he can identify where these new
+dicts are referenced and eliminates the leak. 
+
+Helen maintains a complex application that is taking up a large amount of
+memory.  She would like to reduce the memory footprint of her program by
+optimizing or restructuring her code.  She has a number of optimization
+candidates and she would like to know if optimizing one of them would
+likely reduce the total memory footprint.  Helen uses the <heapmonitor>
+to track and profile her candidate classes.  The results tell her which
+class instances take up the largest shares of memory and are therefore
+best suited for optimization attempts.  After trying to optimize her code
+she runs the program again and compares the profiling results to
+quantify the improvements.
+
+
+History
+-------
+
+Pympler was founded in August 2008 by Jean Brouwers, Ludwig Hähne, and Robert
+Schuppenies with the goal of providing a complete and stand-alone
+memory profiling solution for Python.
+
+<some more details about each module>
+-------------------------------------
+
+<simple usage examples for each module>
+---------------------------------------

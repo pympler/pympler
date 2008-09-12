@@ -21,10 +21,9 @@ Note that the user-specific installation requires Python 2.6 or higher.
 
 Usage
 -----
-FIXME:
 The usage of pympler is described in the documentation. It is available either
 in this distribution at *doc/index.html* or you can read it online at
-*http://packages.python.org/muppy/*.
+*http://packages.python.org/pympler/*.
 
 
 Contributing
