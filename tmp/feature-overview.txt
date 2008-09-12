@@ -1,0 +1,105 @@
+merger potential / similarities
+===============================
+
+* summarization of information - maybe to specific to individual use case
+* representation of (class and type) objects
+* ignore/include certain builtin objects
+* consider referents up to a certain level (resolution_level)
+* not thread-safe
+
+heapmonitor / muppy
+-------------------
+* snapshot concept
+* ref-browsing
+
+possible modules
+----------------
+* sizer (asizeof)
+* ref-browsing (heapmonitor&muppy)
+* ..
+
+
+asizeof
+=======
+
+general
+-------
+* detailed size of single object, flat, referents
+* size of set of objects
+* length of an object
+* get object referents
+* exclude refs, types from result
+
+* works with almost any type of object
+* several builtin objects are ignored per default
+* ignore most of the magic attributes
+
+
+statistics
+----------
+* print statistics
+
+heapmonitor
+===========
+
+general
+-------
+* track objects of certain classes
+** track object creation
+* weakrefs -> works with only a limited set of objects
+* consider referents up to a certain level
+
+
+statistics
+----------
+* print stats  (size, timestamp/lifetime, referents)
+* print summary per class
+* sort by classname, name, birth, death, size, tsize, repr
+* as- vs descending
+* dump to file, stdout, html
+
+tracker
+-------
+* (periodic) tracking (snapshots)
+* snapshot annotation
+
+reference browsing
+------------------
+* graphviz graph
+* visualize ref_cycles 
+
+
+muppy
+=====
+
+general
+-------
+* get all objects
+* get total size of set of objects
+* get diff between two set of object (new vs. removed objects)
+* filter object set by type, minimum, or maximum size
+* get all referents up to a certain level
+* get the diff of memory usage before and after a function call
+* works with almost any type of object
+
+statistics
+----------
+* print summary of object set (type.__repr__, total size, total number)
+** can be sorted, as- vs descending, limited to a certain number of rows
+* different representation for different types of objects (more or less
+verbose information)
+* get diff between two summaries (much faster than entire object sets)
+
+tracker
+-------
+* track changes in memory usage
+** diffs between snapshots, ignores stored information
+* a) based on summarized information: returns summaries
+* b) based on individual objects: returns object sets
+
+reference browsing
+------------------
+* identify referents of objects with arbitrary depth
+* tree-like illustration
+* console-based, file-based, interactive
+
