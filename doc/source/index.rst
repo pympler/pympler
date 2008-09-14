@@ -16,6 +16,7 @@ Quick Links
 
 Table of Content
 ================
+- :ref:`heapmonitor` - a description of the heap monitor module
 - :ref:`related_work` - Other projects which deal which memory profiling in
   Python are mentioned in the this section.
 - :ref:`glossary` - A few basic terms used throughout the documentation.
