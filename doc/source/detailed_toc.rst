@@ -5,6 +5,7 @@ Below you can find a complete overview of all pages of this documentation.
 
 .. toctree::
 
+   intro
    related
    glossary
    changes
