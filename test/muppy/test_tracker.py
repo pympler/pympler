@@ -2,8 +2,8 @@ import gc
 import sys
 import unittest
 
-from pympler.tracker.muppy import summary
-from pympler.tracker.muppy import tracker
+from pympler.muppy import summary
+from pympler.muppy import tracker
 
 # used to create an indicattor object to track changes between snapshots
 import bz2
@@ -12,6 +12,15 @@ class TrackerTest(unittest.TestCase):
 
     def setUp(self):
         gc.collect()
+        # simplify object type representation used for summaries
+        # for these tests it is not necessary to work with the extended repr
+        def simple_repr(o, verbosity=1):
+            return str(type(o))
+        self.old_repr = summary._repr
+        summary._repr = simple_repr
+
+    def tearDown(self):
+        summary._repr = self.old_repr
 
     def _get_indicator(self):
         """Create an indicattor object to track changes between snashots."""

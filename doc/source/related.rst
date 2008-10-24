@@ -9,8 +9,6 @@ applications. This page lists other known tools. If you know yet another one or
 find the description is not correct you can create a new issue at
 http://code.google.com/p/pympler/issues.
 
-.. _asizeof:
-
 asizeof
 -------
 

@@ -7,11 +7,11 @@ unexpected runtime behavior like memory bloat and other "pymples"
 can easily be identified.
 
 Pympler integrates 3 previously separate modules into a single,
-comprehensive profiling tool.  The <asizeof> module provides basic
-size information for one or several Python objects, module <muppy>
-is used for on-line monitoring of a Python application and module
-<heampmonitor> provides off-line analysis of the lifetime of
-selected Python objects.
+comprehensive profiling tool.  The :ref:`asizeof <asizeof>` module
+provides basic size information for one or several Python objects,
+module :ref:`muppy <muppy>` is used for on-line monitoring of a Python
+application and module :ref:`heapmonitor <heapmonitor>` provides
+off-line analysis of the lifetime of selected Python objects.
 
 Pympler is written entirely in Python, can be used with Python
 version 2.2.3 or later up to the most recent Python 2.6 and 3.0
@@ -30,31 +30,33 @@ Usage Examples
 --------------
 
 Aaron is curious how much memory certain Python objects consume.  He
-uses one of the <asizeof> function to get the size of these objects and
-all associated referents.
+uses one of the :ref:`asizeof <asizeof>` functions to get the size of
+these objects and all associated referents.
 
 Peter is trying to compare different implementations of a new parser
-module.  For each implementation, he uses the <asizeof> module to print
-simple statistics like size and number of objects summarized by type.
+module.  For each implementation, he uses the :ref:`asizeof <asizeof>`
+module to print simple statistics like size and number of objects
+summarized by type.
 
 Graham has been notified that his Python script leaks memory. Looking at
 the garbage collector debug output does not reveal where the leaks come
-from.  Thus he decides to use the <muppy> module to see which actions
+from.  Thus he decides to use the :ref:`muppy <muppy>` module to see which actions
 result in an increased memory usage.  Graham discovers that whenever
 his script iterates over the input set, a new dict object is created.
-With the help of the <muppy> module he can identify where these new
+With the help of the `muppy` module he can identify where these new
 dicts are referenced and eliminates the leak. 
 
-Helen maintains a complex application that is taking up a large amount of
-memory.  She would like to reduce the memory footprint of her program by
-optimizing or restructuring her code.  She has a number of optimization
-candidates and she would like to know if optimizing one of them would
-likely reduce the total memory footprint.  Helen uses the <heapmonitor>
-to track and profile her candidate classes.  The results tell her which
-class instances take up the largest shares of memory and are therefore
-best suited for optimization attempts.  After trying to optimize her code
-she runs the program again and compares the profiling results to
-quantify the improvements.
+Helen maintains a complex application that is taking up a large amount
+of memory.  She would like to reduce the memory footprint of her
+program by optimizing or restructuring her code.  She has a number of
+optimization candidates and she would like to know if optimizing one
+of them would likely reduce the total memory footprint.  Helen uses
+the :ref:`heapmonitor <heapmonitor>` to track and profile her
+candidate classes.  The results tell her which class instances take up
+the largest shares of memory and are therefore best suited for
+optimization attempts.  After trying to optimize her code she runs the
+program again and compares the profiling results to quantify the
+improvements.
 
 
 History

@@ -27,7 +27,7 @@ import unittest
 import gc
 import StringIO
 
-from pympler.tracker.heapmonitor import *
+from pympler.heapmonitor import *
 
 class Foo:
     def __init__(self):
@@ -116,6 +116,21 @@ class TrackObjectTestCase(unittest.TestCase):
         assert tracked_objects[idfoo].ref() is not None
         assert tracked_objects[idbar].ref() is None
 
+    def test_mixed_tracking(self):
+        """Test mixed instance and class tracking.
+        """
+        f = StringIO.StringIO()
+        foo = Foo()
+        track_object(foo)
+        create_snapshot()
+        print_stats(file=f)
+        track_class(Foo)
+        objs = []
+        for x in xrange(10):
+            objs.append(Foo())
+        create_snapshot()
+        print_stats(file=f)
+
     def test_recurse(self):
         """Test recursive sizing and saving of referents.
         """
@@ -170,6 +185,24 @@ class SnapshotTestCase(unittest.TestCase):
             ts = [t for (t,sz) in to.footprint[1:]]
             assert ts == refts
 
+    def test_snapshot_members(self):
+        """Test existence and value of snapshot members.
+        """
+        foo = Foo()
+        track_object(foo)
+        create_snapshot()
+
+        fp = footprint[0]
+        assert fp.system_total > 0
+        assert fp.overhead > 0
+        assert fp.tracked_total > 0
+        assert fp.asizeof_total > 0
+
+        assert fp.system_total > fp.overhead
+        assert fp.system_total > fp.tracked_total
+        assert fp.system_total > fp.asizeof_total
+        assert fp.asizeof_total >= fp.tracked_total
+
     def test_desc(self):
         """Test footprint description.
         """
@@ -187,18 +220,18 @@ class SnapshotTestCase(unittest.TestCase):
     def test_background_monitoring(self):
         """Test background monitoring.
         """
-        import pympler.tracker.heapmonitor
+        import pympler.heapmonitor
 
         start_periodic_snapshots(0.1)
-        assert pympler.tracker.heapmonitor._periodic_thread.interval == 0.1
-        assert pympler.tracker.heapmonitor._periodic_thread.getName() is 'BackgroundMonitor'
+        assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.1
+        assert pympler.heapmonitor.heapmonitor._periodic_thread.getName() is 'BackgroundMonitor'
         for x in xrange(10): # try to interfere
             create_snapshot()
         time.sleep(0.5)
         start_periodic_snapshots(0.2)
-        assert pympler.tracker.heapmonitor._periodic_thread.interval == 0.2
+        assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.2
         stop_periodic_snapshots()
-        assert pympler.tracker.heapmonitor._periodic_thread is None
+        assert pympler.heapmonitor.heapmonitor._periodic_thread is None
         assert len(footprint) > 10
 
 
@@ -350,7 +383,8 @@ class LogTestCase(unittest.TestCase):
         stats.print_stats(filter='Bar',limit=0.5)
         assert len(stats.sorted) == tolen
         stats.print_summary()
-        assert f3.getvalue()[:12] == '__main__.Bar'
+        clsname = f3.getvalue().split(' ')[0]
+        assert clsname[-4:] == '.Bar', clsname
         assert len(f3.getvalue()) < len(f1.getvalue())
 
         f1.close()
@@ -365,6 +399,7 @@ class GarbageTestCase(unittest.TestCase):
         gc.set_debug(gc.DEBUG_SAVEALL)
 
     def tearDown(self):
+        gc.set_debug(0)
         gc.enable()
 
     def test_findgarbage(self):

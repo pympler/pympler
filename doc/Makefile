@@ -4,7 +4,10 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+# use non-standard sphinx-build, because versions before 0.4.2 has a bug
+# when using automethod
+#SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = ./sphinx-build
 PAPER         =
 
 # Internal variables.

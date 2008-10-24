@@ -6,7 +6,7 @@ import summary
 try:
     from sys import getsizeof as _getsizeof
 except ImportError:
-    from pympler.sizer.asizeof import flatsize
+    from pympler.asizeof import flatsize
     _getsizeof = flatsize
 
 __TPFLAGS_HAVE_GC = 1<<14

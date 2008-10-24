@@ -1,5 +1,13 @@
-Release XXX
+Release 0.1
 ===========
-* first public release
+
+This initial release is the first step to unify three separate Python memory
+profiling tools. We aim to create a place-to-go for Python developers who want
+to monitor and analyze the memory usage of their applications. It is just the
+first step towards a further integration. There is still lots of work that
+needs to be done and we stress that the API is subject to change. Any feedback
+you want to give us, wishes, bug reports, or feature requests please send them
+to **pympler-dev@googlegroups.com**.
 
 
+* First Public Release.

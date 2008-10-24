@@ -7,14 +7,56 @@ Heapmonitor Documentation
 Introduction
 ------------
 
-The Heapmonitor is a facility delivering insight into the memory distribution
-of a Python program. It provides facilities to track and size individual
-objects or all instances of certain classes.
+.. automodule:: pympler.heapmonitor.heapmonitor
 
 Usage
 -----
 
-TODO
+Let's start with a simple example. Suppose you have this module::
+
+    >>> class Employee:
+    ...    pass
+    ...    
+    >>> class Factory:
+    ...    pass
+    ...
+    >>> def create_factory():
+    ...    factory = Factory()
+    ...    factory.name = "Assembly Line Unlimited"
+    ...    factory.employees = []
+    ...    return factory
+    ...
+    >>> def populate_factory(factory):
+    ...    for x in xrange(1000):
+    ...        worker = Employee()
+    ...        worker.assigned = factory.name
+    ...        factory.employees.append(worker)
+    ...
+    >>> factory = create_factory()
+    >>> populate_factory(factory)
+
+The basic tools of the Heapmonitor are tracking objects or classes, taking
+snapshots, and printing or dumping statistics. The first step is to decide what
+to track. Then spots of interest for snapshot creation have to be identified.
+Finally, the gathered data can be printed or saved::
+    
+    >>> factory = create_factory()
+    >>> from pympler import heapmonitor
+    >>> heapmonitor.track_object(factory)
+    >>> heapmonitor.track_class(Employee)
+    >>> heapmonitor.create_snapshot()
+    >>> populate_factory(factory)
+    >>> heapmonitor.create_snapshot()
+    >>> heapmonitor.print_stats(detailed=0)
+    ---- SUMMARY ------------------------------------------------------------------
+                                             active      1.22 MB      average   pct
+      Factory                                     1    344     B    344     B    0%
+      __main__.Employee                           0      0     B      0     B    0%
+                                             active      1.42 MB      average   pct
+      Factory                                     1      4.75 KB      4.75 KB    0%
+      __main__.Employee                        1000    195.38 KB    200     B   13%
+    -------------------------------------------------------------------------------
+
 
 Basic Functionality
 -------------------
@@ -28,9 +70,11 @@ size of the object is sampled when taking a snapshot.
 
 To track the size of an individual object::
     
-    from pympler.tracker import heapmonitor
+    from pympler import heapmonitor
     obj = MyObject()
     heapmonitor.track_object(obj)
+
+.. autofunction:: track_object
 
 Class Tracking
 ~~~~~~~~~~~~~~
@@ -41,7 +85,9 @@ instances of a class can automatically be tracked with *track_class*::
     heapmonitor.track_class(MyClass)
 
 All instances of `MyClass` (or a class that inherits from `MyClass`) created
-hereafter are tracked. 
+hereafter are tracked.
+
+.. autofunction:: track_class
 
 Tracked Object Snapshot
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,6 +103,17 @@ tracked objects::
 
 With this information, the distribution of the allocated memory can be
 apportioned to tracked classes and instances.
+
+.. autofunction:: create_snapshot
+
+Print Statistics
+~~~~~~~~~~~~~~~~
+
+The gathered data can be investigated with `print_stats`. This prints all
+available data. To filter and limit the output the more powerful "Off-line
+analysis" API can be used instead.
+
+.. autofunction:: print_stats
 
 Advanced Functionality
 ----------------------
@@ -84,7 +141,8 @@ resolution level can also be set for all instances of a class::
 
     heapmonitor.track_class(MyObject, resolution_level=1)
 
-..
+.. warning::
+
     Please note the per-referent sizing is very memory and computationally
     intensive. The recorded meta-data must be stored for each referent of a tracked
     object which might easily quadruplicate the memory footprint of the build.
@@ -115,10 +173,15 @@ associated with any tracked object. ::
 
     heapmonitor.start_periodic_snapshots(interval=0.1)
 
-..
+.. warning::
+
     Take care if you use automatic snapshots with tracked objects. The sizing
     of individual objects might be inconsistent when memory is allocated or freed
     while the snapshot is being taken.
+
+.. autofunction:: start_periodic_snapshots
+
+.. autofunction:: stop_periodic_snapshots
 
 Off-line Analysis
 ~~~~~~~~~~~~~~~~~
@@ -129,7 +192,7 @@ off-line analysis::
 
     heapmonitor.dump_stats('heap-profile.dat')
 
-The !MemStats class of the Heapmonitor provides means to evaluate the collected
+The `MemStats` class of the Heapmonitor provides means to evaluate the collected
 data. The API is inspired by the `Stats class
 <http://docs.python.org/lib/profile-stats.html>`_ of the Python profiler. It is
 possible to sort the data based on user preferences, filter by class and limit
@@ -138,11 +201,14 @@ the output noise to a manageable magnitude.
 The following example reads the dumped data and prints the ten largest Node
 objects to the standard output::
 
-    from pympler.tracker.heapmonitor import MemStats
+    from pympler.heapmonitor import MemStats
 
     stats = MemStats()
     stats.load('heap.dat')
     stats.sort_stats('size').print_stats(limit=10, filter='Node')
+
+.. autoclass:: MemStats
+   :members: load_stats, sort_stats, print_stats, dump_stats, reverse_order
 
 HTML Statistics
 ~~~~~~~~~~~~~~~
@@ -155,10 +221,13 @@ by specifying a file with the extension *.html* file as the profiling output::
 
 However, you can also reprocess a previously generated dump::
 
-    from pympler.tracker.heapmonitor import HtmlStats
+    from pympler.heapmonitor import HtmlStats
 
     stats = HtmlStats('heap-profile.dat')
     stats.create_html('heap-profile.html')
+
+.. autoclass:: HtmlStats
+   :members: create_html
 
 Tracking Garbage
 ----------------
@@ -167,24 +236,48 @@ Garbage occurs if objects refer too each other in a circular fashion. Such
 reference cycles cannot be freed automatically and must be collected by the
 garbage collector. While it is sometimes hard to avoid creating reference
 cycles, preventing such cycles saves garbage collection time and limits the
-lifetime of objects.
+lifetime of objects. Moreover, some objects cannot be collected by the garbage
+collector.
 
-The Heapmonitor provides special flags to analyze reference cycles. When ... is
-invoked, the garbage collector is turned off and the garbage objects are
-printed::
+The Heapmonitor provides functions to analyze reference cycles of collectable
+objects. When the garbage collector is turned off, the garbage can be kept for
+debugging purposes::
 
-    TODO
+    from pympler import heapmonitor
+
+    heapmonitor.start_debug_garbage()
+
+    l = []
+    l.append(l) # produce cycle
+
+    heapmonitor.print_garbage_stats()
+    heapmonitor.end_debug_garbage()
+
 
 Reference cycles can be visualized with `graphviz <http://www.graphviz.org>`_.
-A graphviz input file is generated when ... ::
+A graphviz input file is generated when `visualize_ref_cycles` is invoked::
 
-    TODO
+    from pympler import heapmonitor
 
-The graph file can be turned into a PDF with the following commands (Linux)::
+    heapmonitor.start_debug_garbage()
+
+    l = []
+    l.append(l) # produce cycle
+
+    heapmonitor.visualize_ref_cycles('leakgraph.txt')
+    heapmonitor.end_debug_garbage()
+
+
+On Linux, the graph file can be turned into a PDF with the following commands::
 
     dot -o leakgraph.dot leakgraph.txt
     dot leakgraph.dot -Tps -o leakgraph.eps
     epstopdf leakgraph.eps
+
+.. autofunction:: start_debug_garbage
+.. autofunction:: end_debug_garbage
+.. autofunction:: print_garbage_stats
+.. autofunction:: visualize_ref_cycles
 
 Limitations and Corner Cases
 ----------------------------

@@ -1,6 +1,6 @@
 import unittest
 
-from pympler.tracker.muppy import mprofile
+from pympler.muppy import mprofile
 
 class MProfileTest(unittest.TestCase):
 

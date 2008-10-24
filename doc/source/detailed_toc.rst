@@ -6,7 +6,9 @@ Below you can find a complete overview of all pages of this documentation.
 .. toctree::
 
    intro
+   asizeof
    heapmonitor
+   muppy/muppy
    related
    glossary
    changes
