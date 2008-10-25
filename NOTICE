@@ -1,9 +1,14 @@
 =========================================================================
 ==  NOTICE file corresponding to section 4(d) of the Apache License,   ==
 ==                  Version 2.0, in this case for the                  ==
-==             Memory Usage Profiler for Python distribution.          ==
+==                        Pympler distribution.                        ==
 =========================================================================
 
 Copyright 2008 Jean Brouwser
 Copyright 2008 Ludwig Haehne
 Copyright 2008 Robert Schuppenies
+
+
+The asizeof module is based on code Copyright (c) 2002-2008 -- ProphICy
+Semiconductor, Inc. (BSD). The copyright notice is attached to the end of the
+asizeof module.
