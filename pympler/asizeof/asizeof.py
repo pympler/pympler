@@ -42,7 +42,7 @@
    use methods  asizeof and  asizesof to size additional objects.
    Call methods  exclude_refs and/or  exclude_types to exclude
    references to resp. instances or types of certain objects.
-   Use one of the  print_... methods to report the statistics.
+   Use one of the  print\_... methods to report the statistics.
 
 
    The size of an object is defined as the sum of the flat size
@@ -130,7 +130,7 @@
 
    The functions and classes in this module are not thread-safe.
 
-   **) See Python source file .../Include/longinterp.h for the
+   \**) See Python source file .../Include/longinterp.h for the
        C typedef of digit used in multi-precision int (or long)
        objects.  The size of digit in bytes can be obtained in
        Python from the int (or long) __itemsize__ attribute.
@@ -537,7 +537,7 @@ def _dict_refs(obj, named):
         for k, v in _items(obj):
             s = str(k)
             yield _NamedRef('[K] ' + s, k)
-            yield _NamedRef('[V] ' + s, v)
+            yield _NamedRef('[V] ' + s + ': ' + _repr(v), v)
     else:
         for k, v in _items(obj):
             yield k
@@ -1938,7 +1938,7 @@ def asizeof(*objs, **opts):
        fractional part of the  stats value (x 100) is the cutoff
        percentage for simple profiles.
 
-       **) See this module documentation for the definition of
+       \**) See this module documentation for the definition of
            flat size.
     '''
     t, p = _objs_opts(objs, **opts)
