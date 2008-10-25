@@ -58,7 +58,6 @@ optimization attempts.  After trying to optimize her code she runs the
 program again and compares the profiling results to quantify the
 improvements.
 
-
 History
 -------
 
@@ -66,8 +65,3 @@ Pympler was founded in August 2008 by Jean Brouwers, Ludwig Hähne, and Robert
 Schuppenies with the goal of providing a complete and stand-alone
 memory profiling solution for Python.
 
-<some more details about each module>
--------------------------------------
-
-<simple usage examples for each module>
----------------------------------------
