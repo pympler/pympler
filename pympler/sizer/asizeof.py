@@ -42,7 +42,7 @@
    use methods  asizeof and  asizesof to size additional objects.
    Call methods  exclude_refs and/or  exclude_types to exclude
    references to resp. instances or types of certain objects.
-   Use one of the  print_... methods to report the statistics.
+   Use one of the  print\_... methods to report the statistics.
 
 
    The size of an object is defined as the sum of the flat size
@@ -130,12 +130,12 @@
 
    The functions and classes in this module are not thread-safe.
 
-   **) See Python source file .../Include/longinterp.h for the
-       C typedef of digit used in multi-precision int (or long)
-       objects.  The size of digit in bytes can be obtained in
-       Python from the int (or long) __itemsize__ attribute.
-       Function  leng (rather _len_int) below deterimines the
-       number of digits from the int (or long) value.
+   \**) See Python source file .../Include/longinterp.h for the
+        C typedef of digit used in multi-precision int (or long)
+        objects.  The size of digit in bytes can be obtained in
+        Python from the int (or long) __itemsize__ attribute.
+        Function  leng (rather _len_int) below deterimines the
+        number of digits from the int (or long) value.
 '''  #PYCHOK expected
 
 from __future__ import generators  # for yield in Python 2.2
@@ -144,12 +144,12 @@ from inspect    import currentframe, isbuiltin, isclass, iscode, \
                        isframe, isfunction, ismethod, ismodule, stack
 from math       import log
 from os         import linesep
-from struct     import calcsize  # class Struct only in Python 2.5 and 3.0
+from struct     import calcsize  # type/class Struct only in Python 2.5+
 import sys
 import types    as     Types
 import weakref  as     Weakref
 
-__version__ = '5.9 (Oct 20, 2008)'
+__version__ = '5.9 (Oct 25, 2008)'
 __all__     = ['adict', 'asized', 'asizeof', 'asizesof',
                'Asized', 'Asizer',  # classes
                'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
@@ -195,7 +195,7 @@ if _sizeof_Cdigit < 2:
 
 try:  # sizeof(unicode_char)
     u = unicode('\0')
-except NameError:  # missing
+except NameError:  # no unicode() in Python 3.0
     u = '\0'
 u = u.encode('unicode-internal')  # see .../Lib/test/test_sys.py
 _sizeof_Cunicode = len(u)
@@ -537,7 +537,7 @@ def _dict_refs(obj, named):
         for k, v in _items(obj):
             s = str(k)
             yield _NamedRef('[K] ' + s, k)
-            yield _NamedRef('[V] ' + s, v)
+            yield _NamedRef('[V] ' + s + ': ' + _repr(v), v)
     else:
         for k, v in _items(obj):
             yield k
@@ -1938,8 +1938,8 @@ def asizeof(*objs, **opts):
        fractional part of the  stats value (x 100) is the cutoff
        percentage for simple profiles.
 
-       **) See this module documentation for the definition of
-           flat size.
+       \**) See the documentation of this module for the definition
+            of flat size.
     '''
     t, p = _objs_opts(objs, **opts)
     if t:
@@ -2005,7 +2005,12 @@ def basicsize(obj, **opts):
     return v
 
 def flatsize(obj, align=0, **opts):
-    '''Return the flat size of an object (in bytes).
+    '''Return the flat size of an object (in bytes),
+       optionally aligned to a given power of 2.
+
+       See function  basicsize for a description of
+       the other options and see the documentation of
+       this module for the definition of flat size.
     '''
     v = _typedefof(obj, **opts)
     if v:
@@ -2020,7 +2025,8 @@ def flatsize(obj, align=0, **opts):
 
 def itemsize(obj, **opts):
     '''Return the item size of an object (in bytes).
-       See function  basicsize for other details.
+       See function  basicsize for a description of
+       the options.
     '''
     v = _typedefof(obj, **opts)
     if v:
@@ -2029,7 +2035,8 @@ def itemsize(obj, **opts):
 
 def leng(obj, **opts):
     '''Return the length of an object (in items).
-       See function  basicsize for other details.
+       See function  basicsize for a description of
+       the options.
     '''
     v = _typedefof(obj, **opts)
     if v:
@@ -2040,7 +2047,8 @@ def leng(obj, **opts):
 
 def refs(obj, **opts):
     '''Return (a generator for) specific referents of an
-       object.  See function  basicsize for other details.
+       object.  See function  basicsize for a description
+       of the options.
     '''
     v = _typedefof(obj, **opts)
     if v:
