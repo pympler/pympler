@@ -67,7 +67,7 @@ improvements.
 History
 -------
 
-Pympler was founded in August 2008 by Jean Brouwers, Ludwig Hähne, and Robert
-Schuppenies with the goal of providing a complete and stand-alone
-memory profiling solution for Python.
+Pympler was founded in August 2008 by Jean Brouwers, Ludwig Haehne,
+and Robert Schuppenies with the goal of providing a complete and
+stand-alone memory profiling solution for Python.
 

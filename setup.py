@@ -59,9 +59,9 @@ def run_setup():
           url=metadata.url,
           version=metadata.version,
 
-          packages=['pympler', 'pympler.sizer', 'pympler.tracker',
-                    'pympler.tracker.muppy',\
-                    'test', 'test.tracker', 'test.tracker.muppy'],
+          packages=['pympler',
+                    'pympler.asizeof', 'pympler.heapmonitor', 'pympler.muppy',
+                    'test', 'test.heapmonitor', 'test.muppy'],
           
           license=metadata.license,
           platforms = ['any'],
