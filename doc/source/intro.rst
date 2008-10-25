@@ -13,9 +13,14 @@ module :ref:`muppy <muppy>` is used for on-line monitoring of a Python
 application and module :ref:`heapmonitor <heapmonitor>` provides
 off-line analysis of the lifetime of selected Python objects.
 
-Pympler is written entirely in Python, can be used with Python
-version 2.2.3 or later up to the most recent Python 2.6 and 3.0
-releases without other dependencies.
+Pympler is written entirely in Python, with no dependencies to
+external libraries or projects. Both the :ref:`heapmonitor
+<heapmonitor>` and the :ref:`muppy <muppy>` module will work with
+Python 2.4, 2.5, and 2.6. The :ref:`asizeof <asizeof>` module has
+been tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
+3.0rc1 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel) and
+Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit Python
+and on RHEL 3u7 and Solaris 10 both 64-bit Python.
 
 
 Target Audience
@@ -57,6 +62,7 @@ the largest shares of memory and are therefore best suited for
 optimization attempts.  After trying to optimize her code she runs the
 program again and compares the profiling results to quantify the
 improvements.
+
 
 History
 -------
