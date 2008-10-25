@@ -16,14 +16,14 @@ Quick Links
 
 Table of Content
 ================
-- :ref:`asizeof` - a description of the asizeof module
-- :ref:`heapmonitor` - a description of the heap monitor module
-- :ref:`muppy` - a description of the muppy module
-- :ref:`related_work` - Other projects which deal which memory profiling in
+* :ref:`asizeof` - A description of the asizeof module.
+* :ref:`heapmonitor` - A description of the heap monitor module.
+* :ref:`muppy` - A description of the muppy module.
+* :ref:`related_work` - Other projects which deal which memory profiling in
   Python are mentioned in the this section.
-- :ref:`glossary` - A few basic terms used throughout the documentation.
-- :ref:`changes` - Changes in muppy.
-- :ref:`copyright` - Last but not least ..
+* :ref:`glossary` - A few basic terms used throughout the documentation.
+* :ref:`changes` - Changes in Pympler.
+* :ref:`copyright` - Last but not least ..
   
 Also available are
 
