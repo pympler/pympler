@@ -25,7 +25,10 @@ __revision__ = "__FILE__ __REVISION__ __DATE__ __DEVELOPER__"
 
 import unittest
 import gc
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from pympler.heapmonitor import *
 
@@ -119,14 +122,14 @@ class TrackObjectTestCase(unittest.TestCase):
     def test_mixed_tracking(self):
         """Test mixed instance and class tracking.
         """
-        f = StringIO.StringIO()
+        f = StringIO()
         foo = Foo()
         track_object(foo)
         create_snapshot()
         print_stats(file=f)
         track_class(Foo)
         objs = []
-        for x in xrange(10):
+        for x in range(10):
             objs.append(Foo())
         create_snapshot()
         print_stats(file=f)
@@ -225,7 +228,7 @@ class SnapshotTestCase(unittest.TestCase):
         start_periodic_snapshots(0.1)
         assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.1
         assert pympler.heapmonitor.heapmonitor._periodic_thread.getName() is 'BackgroundMonitor'
-        for x in xrange(10): # try to interfere
+        for x in range(10): # try to interfere
             create_snapshot()
         time.sleep(0.5)
         start_periodic_snapshots(0.2)
@@ -343,12 +346,12 @@ class LogTestCase(unittest.TestCase):
 
         create_snapshot('Footest')
 
-        f1 = StringIO.StringIO()
-        f2 = StringIO.StringIO()
+        f1 = StringIO()
+        f2 = StringIO()
 
         print_stats(file=f1)
 
-        tmp = StringIO.StringIO()
+        tmp = StringIO()
         dump_stats(tmp, close=0)
 
         clear()
@@ -377,7 +380,7 @@ class LogTestCase(unittest.TestCase):
         self.assertRaises(NotImplementedError, stats.diff_stats, stats)
 
         # Test partial printing
-        stats.stream = f3 = StringIO.StringIO()
+        stats.stream = f3 = StringIO()
         stats.sort_stats()
         tolen = len(stats.sorted)
         stats.print_stats(filter='Bar',limit=0.5)

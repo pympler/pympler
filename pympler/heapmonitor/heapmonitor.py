@@ -28,10 +28,17 @@ import sys
 import time
 
 from weakref     import ref as weakref_ref
-from new         import instancemethod
+try:
+    from new         import instancemethod
+except ImportError: # Python 3.0
+    def instancemethod(func, a, cls):
+        return func
 from inspect     import stack, getmembers
 
-import cPickle
+try:
+    import cPickle as pickle
+except ImportError: # Python 3.0
+    import pickle
 import gc
 
 import pympler.asizeof as asizeof
@@ -89,7 +96,7 @@ def _is_tracked(klass):
     """
     Determine if the class is tracked.
     """
-    return _observers.has_key(klass)
+    return klass in _observers
 
 def _track_modify(klass, name, detail, keep, trace):
     """
@@ -379,7 +386,7 @@ def track_object(instance, name=None, resolution_level=0, keep=0, trace=0):
     # tracked classes. In the latter case, the most specialized class wins.
     # To detect id recycling, the weak reference is checked. If it is 'None' a
     # tracked object is dead and another one takes the same 'id'. 
-    if tracked_objects.has_key(id(instance)) and \
+    if id(instance) in tracked_objects and \
         tracked_objects[id(instance)].ref() is not None:
         return
 
@@ -387,7 +394,7 @@ def track_object(instance, name=None, resolution_level=0, keep=0, trace=0):
 
     if name is None:
         name = instance.__class__.__name__
-    if not tracked_index.has_key(name):
+    if not name in tracked_index:
         tracked_index[name] = []
     tracked_index[name].append(to)
     tracked_objects[id(instance)] = to
@@ -430,7 +437,8 @@ def detach_all_classes():
     """
     Detach from all tracked classes.
     """
-    for klass in _observers.keys():
+    classes = list(_observers.keys())
+    for klass in classes:
         detach_class(klass) 
 
 
@@ -566,9 +574,10 @@ def create_snapshot(description=''):
         # The objects need to be sized in a deterministic order. Sort the
         # objects by its creation date which should at least work for non-parallel
         # execution. The "proper" fix would be to handle shared data separately.
-        sorttime = lambda i, j: (i.birth < j.birth) and -1 or (i.birth > j.birth) and 1 or 0
-        tos = tracked_objects.values()
-        tos.sort(sorttime)
+        tos = list(tracked_objects.values())
+        #sorttime = lambda i, j: (i.birth < j.birth) and -1 or (i.birth > j.birth) and 1 or 0
+        #tos.sort(sorttime)
+        tos.sort(key=lambda x: x.birth)
         for to in tos:
             to.track_size(ts, sizer)
 
@@ -623,8 +632,8 @@ class MemStats:
         """
         if isinstance(file, type('')):
             file = open(file, 'r')
-        self.tracked_index = cPickle.load(file)
-        self.footprint = cPickle.load(file)
+        self.tracked_index = pickle.load(file)
+        self.footprint = pickle.load(file)
         self.sorted = []
 
     def dump_stats(self, file, close=1):
@@ -636,8 +645,8 @@ class MemStats:
         """
         if isinstance(file, type('')):
             file = open(file, 'w')
-        cPickle.dump(tracked_index, file, protocol=cPickle.HIGHEST_PROTOCOL)
-        cPickle.dump(footprint, file, protocol=cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(tracked_index, file, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(footprint, file, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
             file.close()
 
@@ -655,7 +664,7 @@ class MemStats:
             for fp in self.footprint:
                 if fp.tracked_total > maxsize:
                     tmax = fp.timestamp
-            for key in self.tracked_index.iterkeys():
+            for key in self.tracked_index.keys():
                 for to in self.tracked_index[key]:
                     to.classname = key
                     to.size = to.get_max_size()
@@ -696,7 +705,7 @@ class MemStats:
                     'name', 'repr', 'size')
 
         if not set(criteria).issuperset(set(args)):
-            raise ValueError, "Invalid sort criteria"
+            raise ValueError("Invalid sort criteria")
 
         if not args:
             args = criteria
@@ -790,7 +799,7 @@ class MemStats:
         Print per-class summary for each snapshot.
         """
         # Emit class summaries for each snapshot
-        classlist = self.tracked_index.keys()
+        classlist = list(self.tracked_index.keys())
         classlist.sort()
 
         file = self.stream
@@ -1242,47 +1251,36 @@ def _visualize_gc_graphviz(garbage, metagarbage, edges, file):
     file.write('}\n')
     file.close()
 
-if hasattr(gc, 'get_referents'):
-    def eliminate_leafs(graph, get_referents=gc.get_referents):
-        """
-        Eliminate leaf objects (not directly part of cycles).
-        """
-        result = []
-        idset = set([id(x) for x in graph])
-        for n in graph:
-            refset = set([id(x) for x in get_referents(n)])
-            if refset.intersection(idset):
-                result.append(n)
-        return result
+def eliminate_leafs(graph, get_referents=gc.get_referents):
+    """
+    Eliminate leaf objects (not directly part of cycles).
+    """
+    result = []
+    idset = set([id(x) for x in graph])
+    for n in graph:
+        refset = set([id(x) for x in get_referents(n)])
+        if refset.intersection(idset):
+            result.append(n)
+    return result
 
-    def get_edges(graph, get_referents=gc.get_referents):
-        """
-        Compute the edges for the reference graph.
-        The function returns a set of tuples (id(a), id(b), ref) if a
-        references b with the referent 'ref'.
-        """
-        idset = set([id(x) for x in graph])
-        edges = set([])
-        for n in graph:
-            refset = set([id(x) for x in get_referents(n)])
-            for ref in refset.intersection(idset):
-                label = ''
-                for (k, v) in getmembers(n):
-                    if id(v) == ref:
-                        label = k
-                        break
-                edges.add((id(n), ref, label))
-        return edges
-
-else:
-    # TODO Implement the functions using get_referrers instead of get_referents
-    # for Python 2.2 compliance.
-    def eliminate_leafs(graph, get_referents=None, get_referrers=gc.get_referrers):
-        return graph
-
-    def get_edges(graph, get_referents=None, get_referrers=gc.get_referrers):
-        return set([])
-
+def get_edges(graph, get_referents=gc.get_referents):
+    """
+    Compute the edges for the reference graph.
+    The function returns a set of tuples (id(a), id(b), ref) if a
+    references b with the referent 'ref'.
+    """
+    idset = set([id(x) for x in graph])
+    edges = set([])
+    for n in graph:
+        refset = set([id(x) for x in get_referents(n)])
+        for ref in refset.intersection(idset):
+            label = ''
+            for (k, v) in getmembers(n):
+                if id(v) == ref:
+                    label = k
+                    break
+            edges.add((id(n), ref, label))
+    return edges
 
 def find_garbage(sizer=None, graphfile=None, prune=1):
     """
@@ -1313,7 +1311,7 @@ def find_garbage(sizer=None, graphfile=None, prune=1):
     edges = get_edges(cycles)
 
     garbage = []
-    for obj, sz in map(None, cycles, sizer.asizesof(*cycles)):
+    for obj, sz in map( lambda x, y: (x, y), cycles, sizer.asizesof(*cycles)):
         g = Garbage()
         g.size = sz
         g.id = id(obj)

@@ -59,9 +59,9 @@ def suite():
             else:
                 testModule = __import__(test_module, globals(), locals(), [module])
             res.addTest(defaultTestLoader.loadTestsFromModule(testModule))
-        except (SyntaxError, NameError, ImportError), exc:
-            print "WARNING: Ignoring '%s' due to an error while importing:" % test_module
-            print exc
+        except (SyntaxError, NameError, ImportError):
+            print ("WARNING: Ignoring '%s' due to an error while importing:" % test_module)
+            #print (exc)
     return res
     
 if __name__ == '__main__':
