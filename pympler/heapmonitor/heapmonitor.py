@@ -29,8 +29,8 @@ from weakref     import ref as weakref_ref
 try:
     from new         import instancemethod
 except ImportError: # Python 3.0
-    def instancemethod(func, *args):
-        return func
+    def instancemethod(*args):
+        return args[0]
 from inspect     import stack, getmembers
 
 try:
@@ -134,16 +134,16 @@ def _restore_constructor(klass):
     del _observers[klass]
 
 
-def _tracker(_observer_, self, *args, **kwds):
+def _tracker(_observer_, _self_, *args, **kwds):
     """
     Injected constructor for tracked classes.
     Call the actual constructor of the object and track the object.
     Attach to the object before calling the constructor to track the object with
     the parameters of the most specialized class.
     """
-    track_object(self, name=_observer_.name, resolution_level=_observer_.detail,
+    track_object(_self_, name=_observer_.name, resolution_level=_observer_.detail,
         keep=_observer_.keep, trace=_observer_.trace)
-    _observer_.init(self, *args, **kwds)
+    _observer_.init(_self_, *args, **kwds)
 
 def _trunc(s, max, left=0):
     """
@@ -237,7 +237,7 @@ class TrackedObject(object):
         for key, value in list(state.items()):
             setattr(self, key, value)        
 
-    def _print_refs(self, file, refs, total, prefix='    ', level=1, 
+    def _print_refs(self, fobj, refs, total, prefix='    ', level=1, 
         minsize=0, minpct=0.1):
         """
         Print individual referents recursively.
@@ -247,9 +247,9 @@ class TrackedObject(object):
         lrefs.reverse()
         for r in lrefs:
             if r.size > minsize and (r.size*100.0/total) > minpct:
-                file.write('%-50s %-14s %3d%% [%d]\n' % (_trunc(prefix+str(r.name),50),
+                fobj.write('%-50s %-14s %3d%% [%d]\n' % (_trunc(prefix+str(r.name),50),
                     _pp(r.size),int(r.size*100.0/total), level))
-                self._print_refs(file, r.refs, total, prefix=prefix+'  ', level=level+1)
+                self._print_refs(fobj, r.refs, total, prefix=prefix+'  ', level=level+1)
 
     def _save_trace(self):
         """
@@ -265,36 +265,36 @@ class TrackedObject(object):
         finally:
             del st
 
-    def print_text(self, file, full=0):
+    def print_text(self, fobj, full=0):
         """
         Print the gathered information in human-readable format to the specified
-        file.
+        fobj.
         """
         if full:
             if self.death:
-                file.write('%-32s ( free )   %-35s\n' % (
+                fobj.write('%-32s ( free )   %-35s\n' % (
                     _trunc(self.name, 32, left=1), _trunc(self.repr, 35)))
             else:
-                file.write('%-32s 0x%08x %-35s\n' % (
+                fobj.write('%-32s 0x%08x %-35s\n' % (
                     _trunc(self.name, 32, left=1), self.id, _trunc(self.repr, 35)))
             try:
                 for line in self.trace:
-                    file.write(line)
+                    fobj.write(line)
             except AttributeError:
                 pass
             for (ts, size) in self.footprint:
-                file.write('  %-30s %s\n' % (_get_timestamp(ts), _pp(size.size)))
-                self._print_refs(file, size.refs, size.size)                    
+                fobj.write('  %-30s %s\n' % (_get_timestamp(ts), _pp(size.size)))
+                self._print_refs(fobj, size.refs, size.size)                    
             if self.death is not None:
-                file.write('  %-30s finalize\n' % _get_timestamp(ts))
+                fobj.write('  %-30s finalize\n' % _get_timestamp(ts))
         else:
             # TODO Print size for largest snapshot (get_size_at_time)
             # Unused ATM: Maybe drop this type of reporting
             size = self.get_max_size()
             if self.repr:
-                file.write('%-64s %-14s\n' % (_trunc(self.repr, 64), _pp(size)))
+                fobj.write('%-64s %-14s\n' % (_trunc(self.repr, 64), _pp(size)))
             else:
-                file.write('%-64s %-14s\n' % (_trunc(self.name, 64), _pp(size)))       
+                fobj.write('%-64s %-14s\n' % (_trunc(self.name, 64), _pp(size)))       
         
 
     def track_size(self, ts, sizer):
@@ -471,7 +471,12 @@ else:
     class PeriodicThread(threading.Thread):
         """
         Thread object to take snapshots periodically.
-        """    
+        """
+        def __init__(self, *args, **kw):
+            self.interval = kw['interval']
+            del kw['interval']
+            threading.Thread.__init__(self, *args, **kw)
+
         def run(self):
             """
             Loop until a stop signal is set.
@@ -491,9 +496,8 @@ else:
         global _periodic_thread
 
         if not _periodic_thread:
-            _periodic_thread = PeriodicThread(name='BackgroundMonitor')
+            _periodic_thread = PeriodicThread(name='BackgroundMonitor', interval=interval)
             _periodic_thread.setDaemon(True)
-            _periodic_thread.interval = interval
             _periodic_thread.start()
         elif _periodic_thread.isAlive():
             _periodic_thread.interval = interval
@@ -544,7 +548,10 @@ except ImportError:
 
 
 class Footprint:
-    pass
+    def __init__(self):
+        self.tracked_total = 0
+        self.asizeof_total = 0
+        self.overhead = 0
 
 def create_snapshot(description=''):
     """
@@ -622,31 +629,31 @@ class MemStats:
         if filename:
             self.load_stats(filename)
     
-    def load_stats(self, file):
+    def load_stats(self, fdump):
         """
         Load the data from a dump file.
-        The argument `file` can be either a filename or a an open file object
+        The argument `fdump` can be either a filename or a an open file object
         that requires read access.
         """
-        if isinstance(file, type('')):
-            file = open(file, 'rb')
-        self.tracked_index = pickle.load(file)
-        self.footprint = pickle.load(file)
+        if isinstance(fdump, type('')):
+            fdump = open(fdump, 'rb')
+        self.tracked_index = pickle.load(fdump)
+        self.footprint = pickle.load(fdump)
         self.sorted = []
 
-    def dump_stats(self, file, close=1):
+    def dump_stats(self, fdump, close=1):
         """
         Dump the logged data to a file.
         The argument `file` can be either a filename or a an open file object
         that requires write access. `close` controls if the file is closed
         before leaving this method (the default behaviour).
         """
-        if isinstance(file, type('')):
-            file = open(file, 'wb')
-        pickle.dump(tracked_index, file, protocol=pickle.HIGHEST_PROTOCOL)
-        pickle.dump(footprint, file, protocol=pickle.HIGHEST_PROTOCOL)
+        if isinstance(fdump, type('')):
+            fdump = open(fdump, 'wb')
+        pickle.dump(tracked_index, fdump, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(footprint, fdump, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
-            file.close()
+            fdump.close()
 
     def _init_sort(self):
         """
@@ -746,7 +753,7 @@ class MemStats:
         return self
 
     def diff_stats(self, stats):
-        raise NotImplementedError
+        return None # TODO
 
     def annotate_snapshot(self, snapshot):
         """
@@ -758,23 +765,23 @@ class MemStats:
         snapshot.classes = {}
 
         for classname in list(self.tracked_index.keys()):
-            sum = 0
+            total = 0
             active = 0
             for to in self.tracked_index[classname]:
-                sum += to.get_size_at_time(snapshot.timestamp)
+                total += to.get_size_at_time(snapshot.timestamp)
                 if to.birth < snapshot.timestamp and (to.death is None or 
                    to.death > snapshot.timestamp):
                     active += 1
             try:
-                pct = sum * 100.0 / snapshot.asizeof_total
+                pct = total * 100.0 / snapshot.asizeof_total
             except ZeroDivisionError:
                 pct = 0
             try:
-                avg = sum / active
+                avg = total / active
             except ZeroDivisionError:
                 avg = 0
 
-            snapshot.classes[classname] = {'sum': sum, 'avg': avg, 'pct': pct, \
+            snapshot.classes[classname] = {'sum': total, 'avg': avg, 'pct': pct, \
                 'active': active}
         
     def print_stats(self, filter=None, limit=1.0):
@@ -790,18 +797,18 @@ class MemStats:
         if not self.sorted:
             self.sort_stats()
 
-        sorted = self.sorted
+        _sorted = self.sorted
 
         if filter:
-            sorted = [to for to in sorted if filter in to.classname]
+            _sorted = [to for to in _sorted if filter in to.classname]
 
         if limit < 1.0:
-            sorted = sorted[:int(len(self.sorted)*limit)+1]
+            _sorted = _sorted[:int(len(self.sorted)*limit)+1]
         elif limit > 1:
-            sorted = sorted[:int(limit)]
+            _sorted = _sorted[:int(limit)]
 
         # Emit per-instance data
-        for to in sorted:
+        for to in _sorted:
             to.print_text(self.stream, full=1)
 
     def print_summary(self):
@@ -812,12 +819,12 @@ class MemStats:
         classlist = list(self.tracked_index.keys())
         classlist.sort()
 
-        file = self.stream
+        fobj = self.stream
 
-        file.write('---- SUMMARY '+'-'*66+'\n')
+        fobj.write('---- SUMMARY '+'-'*66+'\n')
         for fp in self.footprint:
             self.annotate_snapshot(fp)
-            file.write('%-35s %11s %12s %12s %5s\n' % \
+            fobj.write('%-35s %11s %12s %12s %5s\n' % \
                 (_trunc(fp.desc, 35), 'active', _pp(fp.asizeof_total), 
                  'average', 'pct'))
             for classname in classlist:
@@ -829,10 +836,10 @@ class MemStats:
                     # earlier snapshots.
                     pass 
                 else:
-                    sum, avg, pct, active = info['sum'], info['avg'], info['pct'], info['active']
-                    file.write('  %-33s %11d %12s %12s %4d%%\n' % \
-                        (_trunc(classname, 33), active, _pp(sum), _pp(avg), pct))
-        file.write('-'*79+'\n')
+                    total, avg, pct, active = info['sum'], info['avg'], info['pct'], info['active']
+                    fobj.write('  %-33s %11d %12s %12s %4d%%\n' % \
+                        (_trunc(classname, 33), active, _pp(total), _pp(avg), pct))
+        fobj.write('-'*79+'\n')
 
 class HtmlStats(MemStats):
     """
@@ -876,23 +883,23 @@ class HtmlStats(MemStats):
         <td id="num">%(size)s</td>
         <td id="num">%(pct)3.1f%%</td></tr>"""
 
-    def _print_refs(self, file, refs, total, level=1, minsize=0, minpct=0.1):
+    def _print_refs(self, fobj, refs, total, level=1, minsize=0, minpct=0.1):
         """
         Print individual referents recursively.
         """
-        lcmp = lambda i, j: (i.size > j.size) and -1 or (i.size < j.size) and 1 or 0
         lrefs = list(refs)
-        lrefs.sort(lcmp)
+        lrefs.sort(key=lambda x: x.size)
+        lrefs.reverse()
         if level == 1:
-            file.write('<table>\n')
+            fobj.write('<table>\n')
         for r in lrefs:
             if r.size > minsize and (r.size*100.0/total) > minpct:
                 data = {'level': level, 'name': _trunc(str(r.name),128),
                     'size': _pp(r.size), 'pct': r.size*100.0/total }
-                file.write(self.refrow % data)
-                self._print_refs(file, r.refs, total, level=level+1)
+                fobj.write(self.refrow % data)
+                self._print_refs(fobj, r.refs, total, level=level+1)
         if level == 1:
-            file.write("</table>\n")
+            fobj.write("</table>\n")
 
     class_summary = """<p>%(cnt)d instances of %(cls)s were registered. The
     average size is %(avg)s, the minimal size is %(min)s, the maximum size is
@@ -903,43 +910,43 @@ class HtmlStats(MemStats):
         Print detailed statistics and instances for the class `classname`. All
         data will be written to the file `fname`.
         """
-        file = open(fname, "w")
-        file.write(self.header % (classname, self.style))
+        fobj = open(fname, "w")
+        fobj.write(self.header % (classname, self.style))
 
-        file.write("<h1>%s</h1>\n" % (classname))
+        fobj.write("<h1>%s</h1>\n" % (classname))
 
         sizes = [to.get_max_size() for to in self.tracked_index[classname]]
-        sum = reduce( lambda s,x: s+x, sizes )
+        total = reduce( lambda s,x: s+x, sizes )
         data = {'cnt': len(self.tracked_index[classname]), 'cls': classname}
-        data['avg'] = _pp(sum / len(sizes))
+        data['avg'] = _pp(total / len(sizes))
         data['max'] = _pp(max(sizes))
         data['min'] = _pp(min(sizes))
-        file.write(self.class_summary % data)
+        fobj.write(self.class_summary % data)
 
-        file.write(self.charts[classname])
+        fobj.write(self.charts[classname])
 
-        file.write("<h2>Instances</h2>\n")
+        fobj.write("<h2>Instances</h2>\n")
         for to in self.tracked_index[classname]:
-            file.write('<table id="tl" width="100%" rules="rows">\n')
-            file.write('<tr><td id="hl" width="140px">Instance</td><td id="hl">%s at 0x%08x</td></tr>\n' % (to.name, to.id))
+            fobj.write('<table id="tl" width="100%" rules="rows">\n')
+            fobj.write('<tr><td id="hl" width="140px">Instance</td><td id="hl">%s at 0x%08x</td></tr>\n' % (to.name, to.id))
             if to.repr:
-                file.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % to.repr)
-            file.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (_get_timestamp(to.birth), _get_timestamp(to.death)))
+                fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % to.repr)
+            fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (_get_timestamp(to.birth), _get_timestamp(to.death)))
             if hasattr(to, 'trace'):
                 trace = "<pre>%s</pre>" % (''.join(to.trace))                
-                file.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
+                fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
             for (ts, size) in to.footprint:
-                file.write("<tr><td>%s</td>" % _get_timestamp(ts))
+                fobj.write("<tr><td>%s</td>" % _get_timestamp(ts))
                 if not size.refs:
-                    file.write("<td>%s</td></tr>\n" % _pp(size.size))
+                    fobj.write("<td>%s</td></tr>\n" % _pp(size.size))
                 else:
-                    file.write("<td>%s" % _pp(size.size))
-                    self._print_refs(file, size.refs, size.size)
-                    file.write("</td></tr>\n")
-            file.write("</table>\n")
+                    fobj.write("<td>%s" % _pp(size.size))
+                    self._print_refs(fobj, size.refs, size.size)
+                    fobj.write("</td></tr>\n")
+            fobj.write("</table>\n")
 
-        file.write(self.footer)    
-        file.close()
+        fobj.write(self.footer)    
+        fobj.close()
     
     snapshot_cls_header = """<tr>
         <th id="hl">Class</th>
@@ -961,28 +968,28 @@ class HtmlStats(MemStats):
         including code objects but excluding overhead have a total size of
         %(asizeof)s.</p>\n"""
 
-    def print_summary(self, filename, title=''):
+    def create_title_page(self, filename, title=''):
         """
         Output the title page.
         """
-        file = open(filename, "w")
-        file.write(self.header % (title, self.style))
+        fobj = open(filename, "w")
+        fobj.write(self.header % (title, self.style))
 
-        file.write("<h1>%s</h1>\n" % title)
-        file.write("<h2>Memory distribution over time</h2>\n")
-        file.write(self.charts['snapshots'])
+        fobj.write("<h1>%s</h1>\n" % title)
+        fobj.write("<h2>Memory distribution over time</h2>\n")
+        fobj.write(self.charts['snapshots'])
 
-        file.write("<h2>Snapshots statistics</h2>\n")
-        file.write('<table id="nb">\n')
+        fobj.write("<h2>Snapshots statistics</h2>\n")
+        fobj.write('<table id="nb">\n')
 
         classlist = list(self.tracked_index.keys())
         classlist.sort()
 
         for fp in self.footprint:
-            file.write('<tr><td>\n')
-            file.write('<table id="tl" rules="rows">\n')
+            fobj.write('<tr><td>\n')
+            fobj.write('<table id="tl" rules="rows">\n')
             self.annotate_snapshot(fp)
-            file.write("<h3>%s snapshot at %s</h3>\n" % (fp.desc or 'Untitled',\
+            fobj.write("<h3>%s snapshot at %s</h3>\n" % (fp.desc or 'Untitled',\
                 _get_timestamp(fp.timestamp)))
 
             data = {}
@@ -991,25 +998,25 @@ class HtmlStats(MemStats):
             data['asizeof']  = _pp(fp.asizeof_total)
             data['overhead'] = _pp(getattr(fp, 'overhead', 0))
 
-            file.write(self.snapshot_summary % data)
+            fobj.write(self.snapshot_summary % data)
 
             if fp.tracked_total:
-                file.write(self.snapshot_cls_header)
+                fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
                     data = fp.classes[classname].copy()
                     data['cls'] = "<a href='%s'>%s</a>" % (self.links[classname], classname)
                     data['sum'] = _pp(data['sum'])
                     data['avg'] = _pp(data['avg'])
-                    file.write(self.snapshot_cls % data)
-            file.write('</table>')
-            file.write('</td><td>\n')
+                    fobj.write(self.snapshot_cls % data)
+            fobj.write('</table>')
+            fobj.write('</td><td>\n')
             if fp.tracked_total:
-                file.write(self.charts[fp])
-            file.write('</td></tr>\n')
+                fobj.write(self.charts[fp])
+            fobj.write('</td></tr>\n')
 
-        file.write("</table>\n")
-        file.write(self.footer)    
-        file.close()
+        fobj.write("</table>\n")
+        fobj.write(self.footer)    
+        fobj.close()
 
     def create_lifetime_chart(self, classname, filename=''):
         """
@@ -1098,9 +1105,10 @@ class HtmlStats(MemStats):
         for a given `snapshot`. The chart is saved to `filename`.
         """
         try:
-            from pylab import figure, title, pie, axes, savefig, sum
+            from pylab import figure, title, pie, axes, savefig
+            from pylab import sum as pylab_sum
         except ImportError:
-            return self.nopylab_msg % (classname+" lifetime")
+            return self.nopylab_msg % ("pie_chart")
 
         # Don't bother illustrating a pie without pieces.
         if not snapshot.tracked_total:
@@ -1113,7 +1121,7 @@ class HtmlStats(MemStats):
             if v['pct'] > 3.0:
                 classlist.append(k)
                 sizelist.append(v['sum'])
-        sizelist.insert(0, snapshot.asizeof_total - sum(sizelist))
+        sizelist.insert(0, snapshot.asizeof_total - pylab_sum(sizelist))
         classlist.insert(0, 'Other')
         #sizelist = [x*0.01 for x in sizelist]
 
@@ -1160,26 +1168,26 @@ class HtmlStats(MemStats):
             self.links[cn]  = fn
             self.print_class_details(fn, cn)
 
-        self.print_summary(fname, title=title)
+        self.create_title_page(fname, title=title)
     
 
-def dump_stats(file, close=1):
+def dump_stats(fobj, close=1):
     """
-    Dump the logged data to `file`. Stop asynchronous snapshots to prevent the
+    Dump the logged data to `fobj`. Stop asynchronous snapshots to prevent the
     data of changing while being dumped. The side effect are lags, especially
     when a long period has been set. As dumping and loading are time-intensive
     operations when there is a large amount of data, allow creating HTML
     documents directly if a filename with a '.html' suffix is passed.
     """
     stop_periodic_snapshots()
-    if isinstance(file, type('')) and file[-5:] == '.html':
+    if isinstance(fobj, type('')) and fobj[-5:] == '.html':
         stats = HtmlStats(tracked_index=tracked_index, footprint=footprint)
-        stats.create_html(file)
+        stats.create_html(fobj)
     else:
         stats = MemStats(tracked_index=tracked_index, footprint=footprint)
-        stats.dump_stats(file, close)
+        stats.dump_stats(fobj, close)
 
-def print_stats(file=sys.stdout, detailed=1):
+def print_stats(fobj=sys.stdout, detailed=1):
     """
     Write tracked objects by class to stdout. The size for each tracked object
     is printed and a per-snapshot summary is printed. If `detailed` is set to
@@ -1190,16 +1198,16 @@ def print_stats(file=sys.stdout, detailed=1):
     lags, especially when a long period has been set. 
     """
     stop_periodic_snapshots()
-    stats = MemStats(stream=file, tracked_index=tracked_index, footprint=footprint)
+    stats = MemStats(stream=fobj, tracked_index=tracked_index, footprint=footprint)
     if detailed:
         stats.print_stats()
     stats.print_summary()
 
-def print_snapshots(file=sys.stdout):
+def print_snapshots(fobj=sys.stdout):
     """
     Print snapshot stats.
     """
-    file.write('%-32s %15s (%11s) %15s\n' % ('Snapshot Label', 'Virtual Total',
+    fobj.write('%-32s %15s (%11s) %15s\n' % ('Snapshot Label', 'Virtual Total',
         'Measurable', 'Tracked Total'))
     for fp in footprint:
         label = fp.desc
@@ -1208,7 +1216,7 @@ def print_snapshots(file=sys.stdout):
         sample = "%-32s %15s (%11s) %15s\n" % \
             (label, _pp(fp.system_total), _pp(fp.asizeof_total), 
             _pp(fp.tracked_total))
-        file.write(sample)
+        fobj.write(sample)
 
 
 #
@@ -1220,22 +1228,20 @@ def print_snapshots(file=sys.stdout):
 class Garbage:
     pass
 
-def _log_garbage(garbage, file=sys.stdout):
+def _log_garbage(garbage, fobj=sys.stdout):
     """
     Log garbage to console.
     """
     sz = 0
-    sortgarbage = lambda a, b: \
-        a.size > b.size and -1 or \
-        a.size < b.size and 1 or 0
-    garbage.sort(sortgarbage)
-    file.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
+    garbage.sort(key=lambda x: x.size)
+    garbage.reverse()
+    fobj.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
     for g in garbage:
         sz += g.size
-        file.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, _trunc(g.type, 12),
+        fobj.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, _trunc(g.type, 12),
             _trunc(g.str, 46)))
 
-def _visualize_gc_graphviz(garbage, metagarbage, edges, file):
+def _visualize_gc_graphviz(garbage, metagarbage, edges, fobj):
     """
     Emit a graph representing the connections between the objects collected by
     the garbage collector. The text representation can be transformed to a graph
@@ -1244,8 +1250,8 @@ def _visualize_gc_graphviz(garbage, metagarbage, edges, file):
     function.
     """
     header = '// Process this file with graphviz\n'
-    file.write(header)
-    file.write('digraph G {\n')
+    fobj.write(header)
+    fobj.write('digraph G {\n')
     for n, g in map(None, garbage, metagarbage):
         label = _trunc(g.str, 48).replace('"', "'")
         extra = ''
@@ -1253,13 +1259,13 @@ def _visualize_gc_graphviz(garbage, metagarbage, edges, file):
             extra = ', color=red'
         elif g.type == 'frame':
             extra = ', color=orange'
-        file.write('    "X%08x" [ label = "%s\\n%s" %s ];\n' % \
+        fobj.write('    "X%08x" [ label = "%s\\n%s" %s ];\n' % \
             (id(n), label, g.type, extra))
     for (i, j, l) in edges:
-        file.write('    X%08x -> X%08x [label="%s"];\n' % (i, j, l))
+        fobj.write('    X%08x -> X%08x [label="%s"];\n' % (i, j, l))
 
-    file.write('}\n')
-    file.close()
+    fobj.write('}\n')
+    fobj.close()
 
 def eliminate_leafs(graph, get_referents=gc.get_referents):
     """
@@ -1357,7 +1363,7 @@ def end_debug_garbage():
     gc.enable()
 
 
-def print_garbage_stats(file=sys.stdout):
+def print_garbage_stats(fobj=sys.stdout):
     """
     Print statistics related to garbage/leaks.
     This function collects the reported garbage. Therefore, subsequent
@@ -1369,8 +1375,8 @@ def print_garbage_stats(file=sys.stdout):
 
     cnt = len(garbage)
     if cnt:
-        _log_garbage(garbage, file)
-    file.write('Garbage: %8d collected objects (%6d in cycles): %12s\n' % (total, cnt, _pp(sz)))
+        _log_garbage(garbage, fobj)
+    fobj.write('Garbage: %8d collected objects (%6d in cycles): %12s\n' % (total, cnt, _pp(sz)))
 
 
 def visualize_ref_cycles(fname):
@@ -1380,9 +1386,9 @@ def visualize_ref_cycles(fname):
     This function collects the reported garbage. Therefore, subsequent
     invocations of `print_garbage_stats` will not report the same objects again.
     """
-    file = open(fname, 'w')
+    fobj = open(fname, 'w')
     sizer = asizeof.Asizer()
-    total, garbage = find_garbage(sizer, file)
-    file.close()
+    total, garbage = find_garbage(sizer, fobj)
+    fobj.close()
 
     

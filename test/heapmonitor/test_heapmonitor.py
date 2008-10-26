@@ -128,13 +128,13 @@ class TrackObjectTestCase(unittest.TestCase):
         foo = Foo()
         track_object(foo)
         create_snapshot()
-        print_stats(file=f)
+        print_stats(fobj=f)
         track_class(Foo)
         objs = []
         for x in range(10):
             objs.append(Foo())
         create_snapshot()
-        print_stats(file=f)
+        print_stats(fobj=f)
 
     def test_recurse(self):
         """Test recursive sizing and saving of referents.
@@ -351,7 +351,7 @@ class LogTestCase(unittest.TestCase):
         f1 = StringIO()
         f2 = StringIO()
 
-        print_stats(file=f1)
+        print_stats(fobj=f1)
 
         tmp = BytesIO()
         dump_stats(tmp, close=0)
@@ -379,7 +379,7 @@ class LogTestCase(unittest.TestCase):
         stats.sort_stats('classname', 'birth')
         assert stats.sorted[0].classname == 'Bar'
         self.assertRaises(ValueError, stats.sort_stats, 'name', 42, 'classn')
-        self.assertRaises(NotImplementedError, stats.diff_stats, stats)
+        assert stats.diff_stats(stats) == None # Not yet implemented
 
         # Test partial printing
         stats.stream = f3 = StringIO()
