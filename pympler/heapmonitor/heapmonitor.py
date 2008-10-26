@@ -22,8 +22,6 @@ an overview of memory distribution between the different tracked objects.
 #    limitations under the License.
 # 
 
-# TODO Provide set type for Python 2.2/2.3 compliance.
-
 import sys
 import time
 
@@ -31,7 +29,7 @@ from weakref     import ref as weakref_ref
 try:
     from new         import instancemethod
 except ImportError: # Python 3.0
-    def instancemethod(func, a, cls):
+    def instancemethod(func, *args):
         return func
 from inspect     import stack, getmembers
 
@@ -236,7 +234,7 @@ class TrackedObject(object):
         Restore the state from pickled data. Needed because a slotted class is
         used.
         """
-        for key, value in state.items():
+        for key, value in list(state.items()):
             setattr(self, key, value)        
 
     def _print_refs(self, file, refs, total, prefix='    ', level=1, 
@@ -244,9 +242,9 @@ class TrackedObject(object):
         """
         Print individual referents recursively.
         """
-        lcmp = lambda i, j: (i.size > j.size) and -1 or (i.size < j.size) and 1 or 0
         lrefs = list(refs)
-        lrefs.sort(lcmp)
+        lrefs.sort(key=lambda x: x.size)
+        lrefs.reverse()
         for r in lrefs:
             if r.size > minsize and (r.size*100.0/total) > minpct:
                 file.write('%-50s %-14s %3d%% [%d]\n' % (_trunc(prefix+str(r.name),50),
@@ -568,7 +566,7 @@ def create_snapshot(description=''):
             _snapshot_lock.acquire()
 
         sizer = asizeof.Asizer()
-        objs = [to.ref() for to in tracked_objects.values()]
+        objs = [to.ref() for to in list(tracked_objects.values())]
         sizer.exclude_refs(*objs)
 
         # The objects need to be sized in a deterministic order. Sort the
@@ -631,7 +629,7 @@ class MemStats:
         that requires read access.
         """
         if isinstance(file, type('')):
-            file = open(file, 'r')
+            file = open(file, 'rb')
         self.tracked_index = pickle.load(file)
         self.footprint = pickle.load(file)
         self.sorted = []
@@ -644,7 +642,7 @@ class MemStats:
         before leaving this method (the default behaviour).
         """
         if isinstance(file, type('')):
-            file = open(file, 'w')
+            file = open(file, 'wb')
         pickle.dump(tracked_index, file, protocol=pickle.HIGHEST_PROTOCOL)
         pickle.dump(footprint, file, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
@@ -664,7 +662,7 @@ class MemStats:
             for fp in self.footprint:
                 if fp.tracked_total > maxsize:
                     tmax = fp.timestamp
-            for key in self.tracked_index.keys():
+            for key in list(self.tracked_index.keys()):
                 for to in self.tracked_index[key]:
                     to.classname = key
                     to.size = to.get_max_size()
@@ -719,10 +717,22 @@ class MemStats:
                     return res
             return 0
 
+        def cmp2key(mycmp):
+            "Converts a cmp= function into a key= function"
+            class K:
+                def __init__(self, obj, *args):
+                    self.obj = obj
+                #def __cmp__(self, other):
+                #    return mycmp(self.obj, other.obj)
+                def __lt__(self, other):
+                    return mycmp(self.obj, other.obj) < 0                    
+            return K
+    
         if not self.sorted:
             self._init_sort()
 
-        self.sorted.sort(_sort)
+        #self.sorted.sort(_sort)
+        self.sorted.sort(key=cmp2key(_sort))
 
         return self
 
@@ -747,7 +757,7 @@ class MemStats:
 
         snapshot.classes = {}
 
-        for classname in self.tracked_index.iterkeys():
+        for classname in list(self.tracked_index.keys()):
             sum = 0
             active = 0
             for to in self.tracked_index[classname]:
@@ -965,7 +975,7 @@ class HtmlStats(MemStats):
         file.write("<h2>Snapshots statistics</h2>\n")
         file.write('<table id="nb">\n')
 
-        classlist = self.tracked_index.keys()
+        classlist = list(self.tracked_index.keys())
         classlist.sort()
 
         for fp in self.footprint:
@@ -1017,7 +1027,7 @@ class HtmlStats(MemStats):
             if to.death:
                 cnt.append([to.death, -1])
         cnt.sort()
-        for i in xrange(1, len(cnt)):
+        for i in range(1, len(cnt)):
             cnt[i][1] += cnt[i-1][1]
             #if cnt[i][0] == cnt[i-1][0]:
             #    del cnt[i-1]
@@ -1048,7 +1058,7 @@ class HtmlStats(MemStats):
         for fp in self.footprint:
             self.annotate_snapshot(fp)
 
-        classlist = self.tracked_index.keys()
+        classlist = list(self.tracked_index.keys())
         classlist.sort()
 
         x = [fp.timestamp for fp in self.footprint]
@@ -1059,7 +1069,7 @@ class HtmlStats(MemStats):
             pct = [fp.classes[cn]['pct'] for fp in self.footprint]
             if max(pct) > 3.0:
                 sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.footprint]
-                sz = map( lambda x, y: x+y, base, sz )
+                sz = list(map( lambda x, y: x+y, base, sz ))
                 xp, yp = mlab.poly_between(x, base, sz)
                 polys.append( ((xp, yp), {'label': cn}) )
                 poly_labels.append(cn)
@@ -1099,7 +1109,7 @@ class HtmlStats(MemStats):
         self.annotate_snapshot(snapshot)
         classlist = []
         sizelist = []
-        for k, v in snapshot.classes.items():
+        for k, v in list(snapshot.classes.items()):
             if v['pct'] > 3.0:
                 classlist.append(k)
                 sizelist.append(v['sum'])
@@ -1136,16 +1146,16 @@ class HtmlStats(MemStats):
         fn = path.join(self.filesdir, 'timespace.png')
         self.charts['snapshots'] = self.create_snapshot_chart(fn)
 
-        for fp, idx in map(None, self.footprint, range(len(self.footprint))):
+        for fp, idx in map(None, self.footprint, list(range(len(self.footprint)))):
             fn = path.join(self.filesdir, 'fp%d.png' % (idx))
             self.charts[fp] = self.create_pie_chart(fp, fn)
 
-        for cn in self.tracked_index.iterkeys():
+        for cn in list(self.tracked_index.keys()):
             fn = path.join(self.filesdir, cn.replace('.', '_')+'-lt.png')
             self.charts[cn] = self.create_lifetime_chart(cn, fn)
 
         # Create HTML pages first for each class and then the index page.
-        for cn in self.tracked_index.iterkeys():
+        for cn in list(self.tracked_index.keys()):
             fn = path.join(self.filesdir, cn.replace('.', '_')+'.html')
             self.links[cn]  = fn
             self.print_class_details(fn, cn)

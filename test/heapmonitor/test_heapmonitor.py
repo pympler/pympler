@@ -25,12 +25,14 @@ __revision__ = "__FILE__ __REVISION__ __DATE__ __DEVELOPER__"
 
 import unittest
 import gc
+import re
 try:
     from StringIO import StringIO
+    BytesIO = StringIO
 except ImportError:
-    from io import StringIO
+    from io import StringIO, BytesIO
 
-from pympler.heapmonitor import *
+from pympler.heapmonitor.heapmonitor import *
 
 class Foo:
     def __init__(self):
@@ -351,7 +353,7 @@ class LogTestCase(unittest.TestCase):
 
         print_stats(file=f1)
 
-        tmp = StringIO()
+        tmp = BytesIO()
         dump_stats(tmp, close=0)
 
         clear()
@@ -387,7 +389,7 @@ class LogTestCase(unittest.TestCase):
         assert len(stats.sorted) == tolen
         stats.print_summary()
         clsname = f3.getvalue().split(' ')[0]
-        assert clsname[-4:] == '.Bar', clsname
+        assert re.search('.Bar', clsname) != None, clsname
         assert len(f3.getvalue()) < len(f1.getvalue())
 
         f1.close()
@@ -485,9 +487,9 @@ class GarbageTestCase(unittest.TestCase):
         e = get_edges(gc.garbage[:])
 
         # TODO: insert labels when implemented
-        assert (idfoo, idfd, '') in e
+        assert (idfoo, idfd, '') in e or (idfoo, idfd, '__dict__') in e
         assert (idfd, idbar, '') in e
-        assert (idbar, idbd, '') in e
+        assert (idbar, idbd, '') in e or (idbar, idbd, '__dict__') in e
         assert (idbd, idfoo, '') in e        
 
 if __name__ == "__main__":
