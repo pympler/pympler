@@ -8,36 +8,36 @@ from tempfile import mkstemp
 from optparse import OptionParser
 
 
-def get_files(dir = 'test', pattern = '^test_[^\n]*.py$'):
+def get_files(location = 'test', pattern = '^test_[^\n]*.py$'):
     '''
-    Get all files in directory `dir` recursively that match the specified
+    Get all files in directory `location` recursively that match the specified
     `pattern`.
     '''
     tests = []
     pattern = re.compile(pattern)
 
-    if os.path.isfile(dir):
-        fn = os.path.basename(dir)
+    if os.path.isfile(location):
+        fn = os.path.basename(location)
         if pattern.match(fn):
-            tests.append(dir)
+            tests.append(location)
 
-    elif os.path.isdir(dir):
-        for root, dirs, files in os.walk(dir):
+    elif os.path.isdir(location):
+        for root, dirs, files in os.walk(location):
             for fn in files:
                 if pattern.match(fn):
                     tests.append(os.path.join(root,fn))
 
     return tests
 
-def run_pychecker(filter = []):
+def run_pychecker(locations = []):
     '''
     Run pychecker against all specified source files.
     '''
     sources = []
-    if filter == []:
-        filter = ['pympler']
-    for location in filter:
-        sources.extend(get_files(dir = location, pattern = '[^\n]*.py$'))
+    if locations == []:
+        locations = ['pympler']
+    for location in locations:
+        sources.extend(get_files(location = location, pattern = '[^\n]*.py$'))
     for src in sources:
         print ("\nCHECKING %s" % src)
         subprocess.call(['python', 'tools/pychok.py', '-no', '--quiet', src])
@@ -110,8 +110,8 @@ def main():
     tests = []
     if not args:
         args = [test_path]
-    for dir in args:
-        tests.extend(get_tests(dir))
+    for location in args:
+        tests.extend(get_files(location))
     tests = remove_duplicates(tests)
     tests.sort()
     (fd, test_list) = mkstemp(suffix='.txt')
