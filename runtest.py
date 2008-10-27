@@ -3,30 +3,44 @@
 import os
 import sys
 import subprocess
+import re
 from tempfile import mkstemp
 from optparse import OptionParser
 
 
-def get_tests(dir = 'test'):
+def get_files(dir = 'test', pattern = '^test_[^\n]*.py$'):
     '''
-    Get all tests in directory `dir`; that are files that match the pattern
-    "test_*.py". A sorted list with the filenames is returned.
+    Get all files in directory `dir` recursively that match the specified
+    `pattern`.
     '''
     tests = []
+    pattern = re.compile(pattern)
 
     if os.path.isfile(dir):
         fn = os.path.basename(dir)
-        if fn.startswith('test_') and fn.endswith('.py'):
+        if pattern.match(fn):
             tests.append(dir)
 
     elif os.path.isdir(dir):
         for root, dirs, files in os.walk(dir):
             for fn in files:
-                if fn.startswith('test_') and fn.endswith('.py'):
+                if pattern.match(fn):
                     tests.append(os.path.join(root,fn))
 
     return tests
 
+def run_pychecker(filter = []):
+    '''
+    Run pychecker against all specified source files.
+    '''
+    sources = []
+    if filter == []:
+        filter = ['pympler']
+    for location in filter:
+        sources.extend(get_files(dir = location, pattern = '[^\n]*.py$'))
+    for src in sources:
+        print ("\nCHECKING %s" % src)
+        subprocess.call(['python', 'tools/pychok.py', '-no', '--quiet', src])
 
 def remove_duplicates(list):
     d = {}.fromkeys(list)
@@ -63,6 +77,8 @@ def main():
                       dest="doctest", help="Run doctests.")
     parser.add_option("--all-tests", action='store_true', default=False,
                       dest="alltests", help="Run all available tests.")
+    parser.add_option("--pychecker", action="store_true", default=False,
+                      dest="pychecker", help="Static analysis with PyChecker")
 
     (options, args) = parser.parse_args()
     project_path = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -83,6 +99,11 @@ def main():
         print "============"
         test_docs(doc_path, actions=['doctest'])
         print 
+    if options.pychecker:
+        print "Run pychecker"
+        print "============="
+        run_pychecker(args)
+        return
     if options.no_unittests:
         return
         
