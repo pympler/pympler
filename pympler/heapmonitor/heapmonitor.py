@@ -35,8 +35,8 @@ from inspect     import stack, getmembers
 
 try:
     import cPickle as pickle
-except ImportError: # Python 3.0
-    import pickle
+except ImportError:
+    import pickle #PYCHOK Python 3.0 module
 import gc
 
 import pympler.asizeof as asizeof
@@ -338,12 +338,12 @@ class TrackedObject(object):
         """
         self._resolution_level = resolution_level
     
-    def finalize(self, ref):
+    def finalize(self, ref): #PYCHOK required to match callback
         """
-        Mark the reference as dead and remember the timestamp.
-        It would be great if we could measure the pre-destruction size. 
-        Unfortunately, the object is gone by the time the weakref callback is called.
-        However, weakref callbacks are useful to be informed when tracked objects died
+        Mark the reference as dead and remember the timestamp.  It would be
+        great if we could measure the pre-destruction size.  Unfortunately, the
+        object is gone by the time the weakref callback is called.  However,
+        weakref callbacks are useful to be informed when tracked objects died
         without the need of destructors.
 
         If the object is destroyed at the end of the program execution, it's not
@@ -523,28 +523,30 @@ else:
 # platform specific. First try to use the resource module. If that does not
 # exist, try a fallback for Windows. If 0 is returned (Linux), try to read the
 # stat file. If all fails, return 0.
+memory = lambda : 0
 try:
     import resource
-    def memory():
+    def _memory_generic():
         res = resource.getrusage(resource.RUSAGE_SELF)[4]
         if res == 0:
             stat = open('/proc/self/stat')
             if stat:
                 res = int( stat.read().split()[22] )
         return res
+    memory = _memory_generic
 
 except ImportError:
     try:
         from win32process import GetProcessMemoryInfo
         from win32api import GetCurrentProcess
     except ImportError:
-        def memory():
-            return 0
+        pass
     else:
-        def memory():
+        def _memory_windows():
             process_handle = GetCurrentProcess()
             memory_info = GetProcessMemoryInfo( process_handle )
             return memory_info['PeakWorkingSetSize']
+        memory = _memory_windows
 
 
 class Footprint:
@@ -618,13 +620,13 @@ class MemStats:
     Presents the gathered memory statisitics based on user preferences.
     """
 
-    def __init__(self, filename=None, stream=sys.stdout, tracked_index=None, footprint=None):
+    def __init__(self, filename=None, stream=sys.stdout, tracked=None, snapshots=None):
         """
         Initialize the data log structures.
         """
         self.stream = stream
-        self.tracked_index = tracked_index
-        self.footprint = footprint
+        self.tracked_index = tracked
+        self.footprint = snapshots
         self.sorted = []
         if filename:
             self.load_stats(filename)
@@ -1181,10 +1183,10 @@ def dump_stats(fobj, close=1):
     """
     stop_periodic_snapshots()
     if isinstance(fobj, type('')) and fobj[-5:] == '.html':
-        stats = HtmlStats(tracked_index=tracked_index, footprint=footprint)
+        stats = HtmlStats(tracked=tracked_index, snapshots=footprint)
         stats.create_html(fobj)
     else:
-        stats = MemStats(tracked_index=tracked_index, footprint=footprint)
+        stats = MemStats(tracked=tracked_index, snapshots=footprint)
         stats.dump_stats(fobj, close)
 
 def print_stats(fobj=sys.stdout, detailed=1):
@@ -1198,7 +1200,7 @@ def print_stats(fobj=sys.stdout, detailed=1):
     lags, especially when a long period has been set. 
     """
     stop_periodic_snapshots()
-    stats = MemStats(stream=fobj, tracked_index=tracked_index, footprint=footprint)
+    stats = MemStats(stream=fobj, tracked=tracked_index, snapshots=footprint)
     if detailed:
         stats.print_stats()
     stats.print_summary()
