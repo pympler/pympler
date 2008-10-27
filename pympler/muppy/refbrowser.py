@@ -14,7 +14,6 @@ import gc
 import inspect
 import sys
 
-import muppy
 import summary
 
 class _Node(object):
@@ -91,11 +90,11 @@ class RefBrowser(object):
 
         """
         self.ignore.append(inspect.currentframe())
-        res = _Node(root, self.str_func)
-        self.already_included.add(id(root))
+        res = _Node(root, self.str_func) #PYCHOK use root parameter
+        self.already_included.add(id(root)) #PYCHOK use root parameter
         if maxdepth == 0:
             return res
-        objects = gc.get_referrers(root)
+        objects = gc.get_referrers(root) #PYCHOK use root parameter
         self.ignore.append(objects)
         for o in objects:
             # XXX: find a better way to ignore dict of _Node objects
@@ -194,7 +193,7 @@ class ConsoleBrowser(RefBrowser):
 class FileBrowser(ConsoleBrowser):
     """RefBrowser implementation which prints the tree to a file."""
     
-    def print_tree(self, filename, tree=None):
+    def print_tree(self, filename):
         """ Print referrers tree to file (in text format).
         
         keyword arguments

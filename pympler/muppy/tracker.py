@@ -11,7 +11,6 @@ one time and compare with objects from an earlier time.
 """
 import gc
 import inspect
-import sys
 
 import muppy
 import summary
@@ -182,15 +181,14 @@ class ObjectTracker(object):
             return [o for o in objects if o not in ignore]
     
         tmp = gc.get_objects()
-        ignore.append(inspect.currentframe())
-        ignore.append(self)
-        if hasattr(self, 'o0'): ignore.append(self.o0)
-        if hasattr(self, 'o1'): ignore.append(self.o1)
-        ignore.append(ignore)
-        ignore.append(remove_ignore)
+        ignore.append(inspect.currentframe()) #PYCHOK change ignore
+        ignore.append(self) #PYCHOK change ignore
+        if hasattr(self, 'o0'): ignore.append(self.o0) #PYCHOK change ignore
+        if hasattr(self, 'o1'): ignore.append(self.o1) #PYCHOK change ignore
+        ignore.append(ignore) #PYCHOK change ignore
+        ignore.append(remove_ignore) #PYCHOK change ignore
         # this implies that referenced objects are also ignored
         tmp = remove_ignore(tmp, ignore)
-        import types
         res = []
         for o in tmp:
             # gc.get_objects returns only container objects, but we also want
@@ -217,12 +215,12 @@ class ObjectTracker(object):
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe())
+        ignore.append(inspect.currentframe()) #PYCHOK change ignore
         self.o1 = self._get_objects(ignore)
         diff = muppy.get_diff(self.o0, self.o1)
         self.o0 = self.o1
         # manual cleanup, see comment above
-        del ignore[:]
+        del ignore[:] #PYCHOK change ignore
         return diff
 
     def print_diff(self, ignore=[]):
@@ -232,7 +230,7 @@ class ObjectTracker(object):
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe())
+        ignore.append(inspect.currentframe()) #PYCHOK change ignore
         diff = self.get_diff(ignore)
         print "Added objects:"
         summary.print_(summary.summarize(diff['+']))

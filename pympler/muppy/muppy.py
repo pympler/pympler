@@ -92,7 +92,7 @@ def sort(objects):
     objects.sort(lambda x, y: _getsizeof(x) - _getsizeof(y))
     return objects
     
-def filter(objects, Type=None, min=-1, max=-1):
+def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter
     """Filter objects.
 
     The filter can be by type, minimum size, and/or maximum size.
@@ -107,11 +107,11 @@ def filter(objects, Type=None, min=-1, max=-1):
     if min > max:
         raise ValueError("minimum must be smaller than maximum")
     if Type is not None:
-        [res.append(o) for o in objects if isinstance(o, Type)]
+        res = [o for o in objects if isinstance(o, Type)]
     if min > -1:
-        [res.remove(o) for o in res if _getsizeof(o) < min]
+        res = [o for o in res if _getsizeof(o) < min]
     if max > -1:
-        [res.append(o) for o in res if _getsizeof(o) > max]
+        res = [o for o in res if _getsizeof(o) > max]
     return res
 
 def get_referents(object, level=1):

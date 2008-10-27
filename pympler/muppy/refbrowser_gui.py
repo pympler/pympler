@@ -77,6 +77,7 @@ class _ReferrerTreeItem(TreeWidget.TreeItem, Tkinter.Label):
         belongs to.
 
         """
+        TreeWidget.TreeItem.__init__(self, parentwindow)
         Tkinter.Label.__init__(self, parentwindow)
         self.node = node
         self.parentwindow = parentwindow
