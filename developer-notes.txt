@@ -22,6 +22,9 @@ Tests
   $ cd doc
   $ make doctest
 
+* check sources with pychecker
+  $ python runtest.py --pychecker
+
 Checks
 ------
   

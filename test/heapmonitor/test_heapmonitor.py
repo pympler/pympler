@@ -131,7 +131,7 @@ class TrackObjectTestCase(unittest.TestCase):
         print_stats(fobj=f)
         track_class(Foo)
         objs = []
-        for x in range(10):
+        for _ in range(10):
             objs.append(Foo())
         create_snapshot()
         print_stats(fobj=f)
@@ -140,7 +140,6 @@ class TrackObjectTestCase(unittest.TestCase):
         """Test recursive sizing and saving of referents.
         """
         foo = Foo()
-        bar = Bar()
 
         track_object(foo, resolution_level=1)
         create_snapshot()
@@ -229,9 +228,9 @@ class SnapshotTestCase(unittest.TestCase):
 
         start_periodic_snapshots(0.1)
         assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.1
-        assert pympler.heapmonitor.heapmonitor._periodic_thread.getName() is 'BackgroundMonitor'
+        assert pympler.heapmonitor.heapmonitor._periodic_thread.getName() == 'BackgroundMonitor'
         for x in range(10): # try to interfere
-            create_snapshot()
+            create_snapshot(str(x))
         time.sleep(0.5)
         start_periodic_snapshots(0.2)
         assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.2

@@ -1,10 +1,8 @@
-import inspect
 import os
 import sys
 import unittest
 
 from glob import glob
-from unittest import defaultTestLoader
 
 testfile_pattern = 'test_*.py'
 module_list = ''
@@ -58,9 +56,9 @@ def suite():
                 testModule = __import__(test_module)
             else:
                 testModule = __import__(test_module, globals(), locals(), [module])
-            res.addTest(defaultTestLoader.loadTestsFromModule(testModule))
+            res.addTest(unittest.defaultTestLoader.loadTestsFromModule(testModule))
         except (SyntaxError, NameError, ImportError):
-            print ("WARNING: Ignoring '%s' due to an error while importing:" % test_module)
+            print ("WARNING: Ignoring '%s' due to an error while importing!" % test_module)
             #print (exc)
     return res
     

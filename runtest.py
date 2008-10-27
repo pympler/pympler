@@ -39,8 +39,9 @@ def run_pychecker(locations = []):
     for location in locations:
         sources.extend(get_files(location = location, pattern = '[^\n]*.py$'))
     for src in sources:
-        print ("\nCHECKING %s" % src)
-        subprocess.call(['python', 'tools/pychok.py', '-no', '--quiet', src])
+        print ("CHECKING %s" % src)
+        subprocess.call(['python', 'tools/pychok.py', '-no', '--stdlib', 
+                         '--quiet', src])
 
 def remove_duplicates(list):
     d = {}.fromkeys(list)
