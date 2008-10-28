@@ -7,27 +7,56 @@ import re
 from tempfile import mkstemp
 from optparse import OptionParser
 
-
 def get_files(location = 'test', pattern = '^test_[^\n]*.py$'):
     '''
     Get all files in directory `location` recursively that match the specified
     `pattern`.
     '''
-    tests = []
+    res = []
     pattern = re.compile(pattern)
-
     if os.path.isfile(location):
         fn = os.path.basename(location)
         if pattern.match(fn):
-            tests.append(location)
-
+            res.append(location)
     elif os.path.isdir(location):
         for root, dirs, files in os.walk(location):
             for fn in files:
                 if pattern.match(fn):
-                    tests.append(os.path.join(root,fn))
+                    res.append(os.path.join(root,fn))
+    return res
 
-    return tests
+def remove_duplicates(list):
+    d = {}.fromkeys(list)
+    return d.keys()
+
+def run_unittests(project_path, python_path='python', locations=[]):
+    '''
+    Run unittests for all modules found in the specified locations.
+
+    If no location is given, all unittests will be executed.
+    '''
+    if locations == []:
+        locations = ['test']
+    tests = []
+    for location in locations:
+        tests.extend(get_files(location))
+    tests = remove_duplicates(tests)
+    tests.sort()
+    (fd, test_list) = mkstemp(suffix='.txt')
+    f = os.fdopen(fd, 'w')
+    for t in tests:
+        t = t.replace(project_path, '')
+        t = os.path.splitext(t)[0].replace(os.sep, '.')
+        if t[0] == '.': 
+            t = t[1:]
+        if not t == 'test.test_all':
+            f.write(t+'\n')
+    f.close()
+    os.environ['PYTHONPATH'] = project_path
+    subprocess.call([python_path, 
+                     os.path.join('test', 'test_all.py'),
+                     test_list])
+    os.remove(test_list)
 
 def run_pychecker(locations = []):
     '''
@@ -42,11 +71,6 @@ def run_pychecker(locations = []):
         print ("CHECKING %s" % src)
         subprocess.call(['python', 'tools/pychok.py', '-no', '--stdlib', 
                          '--quiet', src])
-
-def remove_duplicates(list):
-    d = {}.fromkeys(list)
-    return d.keys()
-
 
 def test_docs(path, actions=['html', 'doctest']):
     '''Test documentation with sphinx.
@@ -108,31 +132,9 @@ def main():
     if options.no_unittests:
         return
         
-    tests = []
-    if not args:
-        args = [test_path]
-    for location in args:
-        tests.extend(get_files(location))
-    tests = remove_duplicates(tests)
-    tests.sort()
-    (fd, test_list) = mkstemp(suffix='.txt')
-    f = os.fdopen(fd, 'w')
-    for t in tests:
-        t = t.replace(project_path, '')
-        t = os.path.splitext(t)[0].replace(os.sep, '.')
-        if t[0] == '.': 
-            t = t[1:]
-        if not t == 'test.test_all':
-            f.write(t+'\n')
-    f.close()
-
-    os.environ['PYTHONPATH'] = project_path
     print "Run unittests"
     print "============="
-    subprocess.call([options.python, 
-                     os.path.join(test_path, 'test_all.py'),
-                     test_list])
-    os.remove(test_list)
+    run_unittests(project_path, options.python, args)
 
 if __name__ == '__main__':
     main()
