@@ -41,6 +41,16 @@ import gc
 
 import pympler.asizeof as asizeof
 
+__all__ = ['TrackedObject', 'track_change', 'track_object', 'track_class',
+           'detach_class', 'detach_all', 'detach_all_classes', 'clear',
+           'start_periodic_snapshots', 'stop_periodic_snapshots',
+           'create_snapshot', 'MemStats', 'HtmlStats',
+           'dump_stats', 'print_stats', 'print_snapshots',
+           'start_debug_garbage', 'end_debug_garbage', 'print_garbage_stats',
+           'visualize_ref_cycles', 'find_garbage', 'get_edges',
+           'eliminate_leafs',
+           'tracked_index', 'tracked_objects', 'footprint']
+
 # Dictionaries of TrackedObject objects associated with the actual objects that
 # are tracked. 'tracked_index' uses the class name as the key and associates a
 # list of tracked objects. It contains all TrackedObject instances, including

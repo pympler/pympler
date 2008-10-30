@@ -171,6 +171,9 @@ class SnapshotTestCase(unittest.TestCase):
     def setUp(self):
         clear()
 
+    def tearDown(self):
+        stop_periodic_snapshots()
+
     def test_timestamp(self):
         """Test timestamp of snapshots.
         """
@@ -225,17 +228,18 @@ class SnapshotTestCase(unittest.TestCase):
         """Test background monitoring.
         """
         import pympler.heapmonitor
+        import time
 
         start_periodic_snapshots(0.1)
-        assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.1
-        assert pympler.heapmonitor.heapmonitor._periodic_thread.getName() == 'BackgroundMonitor'
+        assert pympler.heapmonitor._periodic_thread.interval == 0.1
+        assert pympler.heapmonitor._periodic_thread.getName() == 'BackgroundMonitor'
         for x in range(10): # try to interfere
             create_snapshot(str(x))
         time.sleep(0.5)
         start_periodic_snapshots(0.2)
-        assert pympler.heapmonitor.heapmonitor._periodic_thread.interval == 0.2
+        assert pympler.heapmonitor._periodic_thread.interval == 0.2
         stop_periodic_snapshots()
-        assert pympler.heapmonitor.heapmonitor._periodic_thread is None
+        assert pympler.heapmonitor._periodic_thread is None
         assert len(footprint) > 10
 
 
