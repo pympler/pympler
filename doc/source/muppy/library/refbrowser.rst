@@ -20,3 +20,7 @@ Classes
 .. autoclass:: FileBrowser
  
 	.. automethod:: print_tree
+
+.. autoclass:: InteractiveBrowser
+ 
+ 	.. automethod:: main

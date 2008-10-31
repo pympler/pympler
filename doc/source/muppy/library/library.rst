@@ -18,7 +18,6 @@ Modules
 
    muppy
    refbrowser
-   refbrowser-gui
    summary
    tracker
 

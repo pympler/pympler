@@ -9,7 +9,6 @@ if sys.hexversion < 0x2040000:
     raise NotImplementedError('pympler.muppy requires Python 2.4 or newer')
 
 __all__ = ['refbrowser',
-           'refbrowser_gui',
            'tracker',
            'summary']
 

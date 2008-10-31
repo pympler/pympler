@@ -185,8 +185,8 @@ e.g. the ConsoleBrowser we just started and the current execution context.
 This console browsing is of course kind of inconvenient. Much better would be an
 InteractiveBrowser. Let's see what we got.
 
->>> from pympler.muppy import refbrowser_gui
->>> ib = refbrowser_gui.InteractiveBrowser(root)
+>>> from pympler.muppy import refbrowser
+>>> ib = refbrowser.InteractiveBrowser(root)
 >>> ib.main()
 
 .. image:: ../images/muppy_guibrowser.png
