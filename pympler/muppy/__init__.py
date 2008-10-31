@@ -5,9 +5,8 @@ gathered to remove reference cycles.
 
 """
 import sys
-version = sys.version[0] + sys.version[2]
-if int(version) < 24:
-    raise NotImplementedError('muppy requires Python 2.4 or newer.')
+if sys.hexversion < 0x2040000:
+    raise NotImplementedError('pympler.muppy requires Python 2.4 or newer')
 
 __all__ = ['refbrowser',
            'refbrowser_gui',
