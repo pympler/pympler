@@ -21,7 +21,7 @@ import gc
 import inspect
 import sys
 
-import summary
+from pympler.muppy import summary
 
 class _Node(object):
     """A node as it is used in the tree structure.
@@ -107,7 +107,7 @@ class RefBrowser(object):
             # XXX: find a better way to ignore dict of _Node objects
             if isinstance(o, dict):
                 sampleNode = _Node(1)
-                if sampleNode.__dict__.keys() == o.keys():
+                if list(sampleNode.__dict__.keys()) == list(o.keys()):
                     continue
             _id = id(o)
             if not self.repeat and (_id in self.already_included):
@@ -235,12 +235,8 @@ try:
     import Tkinter as _Tkinter
     from idlelib import TreeWidget as _TreeWidget
 
-    import muppy
+    import pympler.muppy
     
-    def gui_default_str_function(o):
-        """Default str function for InteractiveBrowser."""
-        return summary._repr(o) + '(id=%s)' % id(o)
-
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
         
@@ -360,6 +356,9 @@ try:
 except ImportError:
     _Tkinter = _TreeWidget = None
 
+def gui_default_str_function(o):
+    """Default str function for InteractiveBrowser."""
+    return summary._repr(o) + '(id=%s)' % id(o)
     
 class InteractiveBrowser(RefBrowser):
     """Interactive referrers browser.

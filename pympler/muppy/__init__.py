@@ -12,7 +12,7 @@ __all__ = ['refbrowser',
            'tracker',
            'summary']
 
-from muppy import *
+from pympler.muppy import *
 
 def print_summary():
     """Print a summary of all known objects."""

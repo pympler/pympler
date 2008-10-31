@@ -5,7 +5,7 @@ Memory usage profiler for Python.
 import inspect
 import sys
 
-import muppy
+from pympler.muppy import muppy
 
 class MProfiler(object):
     """A memory usage profiler class.
@@ -68,7 +68,7 @@ class MProfiler(object):
             if self.codepoint_included(cp):
                 objects = muppy.get_objects()
                 size = muppy.get_size(objects)
-                if cp not in self.memories.keys():
+                if cp not in self.memories:
                     self.memories[cp] = [0,0,0,0]
                     self.memories[cp][0] = 1
                     self.memories[cp][1] = size
@@ -83,7 +83,7 @@ class MProfiler(object):
     def run(self, cmd):
         sys.setprofile(self.profile)
         try:
-            exec cmd
+            exec(cmd)
         finally:
             sys.setprofile(None)
         return self

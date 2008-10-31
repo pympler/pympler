@@ -1,6 +1,6 @@
 import gc
 
-import summary
+from pympler.muppy import summary
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
@@ -232,10 +232,6 @@ def _remove_duplicates(objects):
         marker = id(item)
         if marker in seen: 
             continue
-
-        if (str(type(item)) == "<type 'tkapp'>") and (marker in seen):
-            print "shouldn't add it .. but I did"
-
         seen[marker] = 1
         result.append(item)
     return result

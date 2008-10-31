@@ -12,8 +12,8 @@ one time and compare with objects from an earlier time.
 import gc
 import inspect
 
-import muppy
-import summary
+from pympler.muppy import muppy
+from pympler.muppy import summary
 
 class SummaryTracker(object):
     """ Helper class to track changes between two summaries taken.
@@ -88,7 +88,7 @@ class SummaryTracker(object):
             res = summary.summarize(muppy.get_objects())
 
             # remove ids stored in the ref_counter
-            for _id in ref_counter.keys():
+            for _id in ref_counter:
                 # referenced in frame, ref_counter, ref_counter.keys()
                 if len(gc.get_referrers(_id)) == (3):
                     summary._subtract(res, _id)
