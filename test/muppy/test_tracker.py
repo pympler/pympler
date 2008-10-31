@@ -5,8 +5,6 @@ import unittest
 from pympler.muppy import summary
 from pympler.muppy import tracker
 
-# used to create an indicattor object to track changes between snapshots
-import bz2
 
 class TrackerTest(unittest.TestCase):
 
@@ -24,13 +22,14 @@ class TrackerTest(unittest.TestCase):
 
     def _get_indicator(self):
         """Create an indicattor object to track changes between snashots."""
-        return bz2.BZ2Compressor()
+        class UniqueIndicator(object): pass
+        return UniqueIndicator()
         
     def _contains_indicator(self, summary):
         """How many indicator objects does the summary contain."""
         res = None
         for row in summary:
-            if row[0].find('bz2.BZ2Compressor')!= -1:
+            if row[0].find('UniqueIndicator')!= -1:
                 res = row[1]
         return res
         
