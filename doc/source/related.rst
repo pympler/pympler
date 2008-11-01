@@ -23,7 +23,7 @@ asizeof has become a part of Pympler.
 
 URL: http://code.activestate.com/recipes/546530/
 
-HeapMonitor
+Heapmonitor
 -----------
 
 "The Heapmonitor is a facility delivering insight into the memory distribution
@@ -32,12 +32,12 @@ objects of certain classes." It was developed in 2008 by Ludwig Haehne.
 
 URL: http://www.scons.org/wiki/LudwigHaehne/HeapMonitor
 
-HeapMonitor has become a part of Pympler.
+Heapmonitor has become a part of Pympler.
 
 Heapy
 -----
 
-Heapy was part of the Master thesis by Sverker Nillson done in 2006. It is part
+Heapy was part of the Master thesis by Sverker Nilsson done in 2006. It is part
 of the umbrella project guppy. Heapy has a very mathematical approach as it
 works in terms of sets, partitions, and equivalence relations.  It allows to
 gather information about objects at any given time, but only objects starting

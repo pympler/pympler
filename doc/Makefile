@@ -6,8 +6,7 @@
 SPHINXOPTS    =
 # use non-standard sphinx-build, because versions before 0.4.2 has a bug
 # when using automethod
-#SPHINXBUILD   = sphinx-build
-SPHINXBUILD   = ./sphinx-build
+SPHINXBUILD  := $(if $(realpath sphinx-build),./sphinx-build,sphinx-build)
 PAPER         =
 
 # Internal variables.
