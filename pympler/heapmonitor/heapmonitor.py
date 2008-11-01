@@ -539,8 +539,11 @@ try:
     def _memory_generic():
         res = resource.getrusage(resource.RUSAGE_SELF)[4]
         if res == 0:
-            stat = open('/proc/self/stat')
-            if stat:
+            try:
+                stat = open('/proc/self/stat')
+            except IOError:
+                pass
+            else:
                 res = int( stat.read().split()[22] )
         return res
     memory = _memory_generic
