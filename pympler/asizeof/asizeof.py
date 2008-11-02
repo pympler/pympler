@@ -149,7 +149,7 @@ import sys
 import types    as     Types
 import weakref  as     Weakref
 
-__version__ = '5.9 (Oct 25, 2008)'
+__version__ = '5.10 (Oct 30, 2008)'
 __all__     = ['adict', 'asized', 'asizeof', 'asizesof',
                'Asized', 'Asizer',  # classes
                'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
@@ -256,7 +256,7 @@ try:  # only used to get the referents of
       # returns () for dict...-iterators
     from gc import get_referents as _getreferents
 except ImportError:
-    def _getreferents(obj):
+    def _getreferents(unused):
         return ()  # sorry, no refs
 
  # sys.getsizeof() new in Python 2.6
@@ -422,7 +422,7 @@ def _objs_opts(objs, all=None, **opts):
             globals(), stack(sys.getrecursionlimit()))
     else:
         raise ValueError('invalid option: %s=%r' % ('all', all))
-    return t, opts
+    return t, opts  #PYCHOK OK
 
 def _p100(part, total, prec=1):
     '''Return percentage as string.
@@ -639,7 +639,7 @@ def _weak_refs(obj, unused):  # named unused for PyChecker
     try:  # ignore 'key' of KeyedRef
         return (obj(),)
     except:  # XXX ReferenceError
-        return ()
+        return ()  #PYCHOK OK
 
 _all_refs = (None, _class_refs,   _co_refs,   _dict_refs,  _enum_refs,
                    _exc_refs,     _file_refs, _frame_refs, _func_refs,
@@ -934,7 +934,7 @@ class _Typedef(object):
     def __init__(self, **kwds):
         self.reset(**kwds)
 
-    def __lt__(self, other):  # for Python 3.0
+    def __lt__(self, unused):  # for Python 3.0
         return True
 
     def __repr__(self):
@@ -1158,7 +1158,7 @@ except NameError:  # missing
 try:  # Exception is type in Python 3.0
     _typedef_both(Exception, refs=_exc_refs)
 except:  # missing
-    pass
+    pass  #PYCHOK OK
 
 try:
     _typedef_both(file, refs=_file_refs)
@@ -1219,7 +1219,7 @@ try:
     _typedef_both(type(stat(   curdir)), refs=_stat_refs)     # stat_result
     _typedef_both(type(statvfs(curdir)), refs=_statvfs_refs,  # statvfs_result
                                          item=_sizeof_Cvoidp, leng=_len)
-except:
+except ImportError:  # missing
     pass
 
 try:
@@ -1458,13 +1458,32 @@ class Asized(object):
 class Asizer(object):
     '''Sizer state and options.
     '''
-    _cutoff = 0  # in percent
-    _excl_d = {}
-    _ign_d  = _kind_ignored
+    _align_    = 8
+    _clip_     = 80
+    _code_     = False
+    _derive_   = False
+    _detail_   = 0  # for Asized only
+    _infer_    = False
+    _limit_    = 100
+    _stats_    = 0
+
+    _cutoff    = 0  # in percent
+    _depth     = 0  # recursion depth
+    _duplicate = 0
+    _excl_d    = None  # {}
+    _ign_d     = _kind_ignored
+    _incl      = ''  # or ' (incl. code)'
+    _mask      = 7   # see _align_
+    _missed    = 0   # due to errors
+    _profile   = False
+    _profs     = None  # {}
+    _seen      = None  # {}
+    _total     = 0   # total size
 
     def __init__(self, **opts):
         '''See method  reset for the available options.
         '''
+        self._excl_d = {}
         self.reset(**opts)
 
     def _clear(self):
@@ -1875,7 +1894,7 @@ def asized(*objs, **opts):
     '''
     if 'all' in opts:
         raise KeyError('invalid option: %s=%r' % ('all', opts['all']))
-    elif objs:
+    if objs:
         _asizer.reset(**opts)
         t = _asizer.asized(*objs)
         _asizer.print_stats(objs, sized=t, **opts)  # show opts as _kwdstr
@@ -1971,7 +1990,7 @@ def asizesof(*objs, **opts):
     '''
     if 'all' in opts:
         raise KeyError('invalid option: %s=%r' % ('all', opts['all']))
-    elif objs:  # size given objects
+    if objs:  # size given objects
         _asizer.reset(**opts)
         t = _asizer.asizesof(*objs)
         _asizer.print_stats(objs, sizes=t, **opts)  # show opts as _kwdstr
@@ -2056,6 +2075,57 @@ def refs(obj, **opts):
         if v and _callable(v):
             v = v(obj, False)
     return v
+
+
+def test_flatsize(failf=None, stdf=None):
+    '''Compare the results of  flatsize() *without* using  sys.getsizeof()
+       with the accurate sizes returned by  sys.getsizeof().
+
+       Return the total number of tests or number of unexpected failures.
+
+       Expect differences for sequences as dicts, lists, sets, tuples, etc.
+       While this is no proof for the accuracy of  flatsize() on Python
+       builds without  sys.getsizeof(), it does provide some evidence that
+       function  flatsize() produces reasonable and usable results.
+    '''
+    global _getsizeof
+    t, g, e = [], _getsizeof, 0
+    if g:
+        for v in _values(_typedefs):
+            t.append(v.type)
+            try:  # creating one instance
+                if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
+                    t.append(v.type())
+            except (AttributeError, SystemError, TypeError, ValueError):  # ignore errors
+                pass
+        t.extend(({1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8},
+                  [1,2,3,4,5,6,7,8], ['1', '2', '3'], [0] * 100,
+                  '12345678', 'x' * 1001,
+                  (1,2,3,4,5,6,7,8), ('1', '2', '3'), (0,) * 100,
+                  _Slots((1,2,3,4,5,6,7,8)), _Slots(('1', '2', '3')), _Slots((0,) * 100),
+                  0, 1 << 8, 1 << 16, 1 << 32, 1 << 64, 1 << 128,
+                  complex(0, 1), True, False))
+        _getsizeof = None  # zap _getsizeof for flatsize()
+        for o in t:
+            a = flatsize(o)
+            s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
+            if a != s:
+                 # flatsize() approximates length of sequences
+                 # (sys.getsizeof(bool) on 3.0b3 is not correct)
+                if type(o) in (dict, list, set, frozenset, tuple) or (
+                   type(o) in (bool,) and sys.version_info[0] == 3):
+                    x = ', expected failure'
+                else:
+                    x = ', %r' % _typedefof(o)
+                    e += 1
+                    if failf:  # report failure
+                       failf('%s vs %s for %s: %s',
+                              a, s, _nameof(type(o)), _repr(o))
+                if stdf:
+                   _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s',
+                            a, s, _nameof(type(o)), _repr(o), file=stdf)
+        _getsizeof = g  # restore
+    return len(t), e
 
 
 if __name__ == '__main__':
@@ -2167,8 +2237,8 @@ if __name__ == '__main__':
 
     class E(D):
         def __init__(self, a1=1, a2=2):  #PYCHOK OK
-            self._attr1 = a1
-            self._attr2 = a2
+            self._attr1 = a1  #PYCHOK OK
+            self._attr2 = a2  #PYCHOK OK
 
     class P(object):
         _p = None
@@ -2383,49 +2453,11 @@ if __name__ == '__main__':
             _printf('%s %s: %s', w, k, s)
 
     if _opts('-test'):
-         # compare the results of flatsize() *without* using sys.getsizeof()
-         # with the accurate sizes returned by sys.getsizeof() but expect
-         # differences for sequences as dicts, lists, sets, tuples, etc.
-         # while this is no proof for the accuracy of flatsize() on Python
-         # builds without sys.getsizeof(), it does provide some evidence
-         # that that flatsize() produces reasonable and usable results
         _printf('%sflatsize() vs sys.getsizeof() ... %s', linesep, '-test')
-        t, g, e = [], _getsizeof, 0
-        if g:
-            for v in _values(_typedefs):
-                t.append(v.type)
-                try:  # creating one instance
-                    if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
-                        t.append(v.type())
-                except (AttributeError, SystemError, TypeError, ValueError):  # ignore errors
-                    pass
-            t.extend(({1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8},
-                      [1,2,3,4,5,6,7,8], ['1', '2', '3'], [0] * 100,
-                      '12345678', 'x' * 1001,
-                      (1,2,3,4,5,6,7,8), ('1', '2', '3'), (0,) * 100,
-                      _Slots((1,2,3,4,5,6,7,8)), _Slots(('1', '2', '3')), _Slots((0,) * 100),
-                      0, 1 << 8, 1 << 16, 1 << 32, 1 << 64, 1 << 128,
-                      complex(0, 1), True, False))
-            _getsizeof = None  # zap _getsizeof for flatsize()
-            for o in t:
-                a = flatsize(o)
-                s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
-                if a != s:
-                     # flatsize approximates the length of sequences
-                     # (sys.getsizeof(bool) on 3.0b3 is not correct)
-                    if type(o) in (dict, list, set, frozenset, tuple) or (
-                       type(o) in (bool,) and sys.version_info[0] == 3):
-                        x = ', expected failure'
-                    else:
-                        x = ', %r' % _typedefof(o)
-                        e += 1
-                    _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s%s', 
-                             a, s, _nameof(type(o)), _repr(o), x)
-            _getsizeof = g  # restore
-        n = len(t)
+        n, e = test_flatsize(stdf=sys.stdout)
         if e:
             _printf('%s%d of %d tests failed or %s', linesep, e, n, _p100(e, n))
-        elif g:
+        elif _getsizeof:
             _printf('no unexpected failures in %d tests', n)
         else:
             _printf('no sys.%s() in this python %s', 'getsizeof', sys.version.split()[0])
