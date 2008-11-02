@@ -7,6 +7,8 @@ import re
 from tempfile import mkstemp
 from optparse import OptionParser
 
+_Python_path = sys.executable  # this Python binary
+
 def get_files(location = 'test', pattern = '^test_[^\n]*.py$'):
     '''
     Get all files in directory `location` recursively that match the specified
@@ -29,7 +31,7 @@ def remove_duplicates(list):
     d = {}.fromkeys(list)
     return d.keys()
 
-def run_unittests(project_path, python_path='python', locations=[]):
+def run_unittests(project_path, python_path=_Python_path, locations=[]):
     '''
     Run unittests for all modules found in the specified locations.
 
@@ -40,8 +42,7 @@ def run_unittests(project_path, python_path='python', locations=[]):
     tests = []
     for location in locations:
         tests.extend(get_files(location))
-    tests = remove_duplicates(tests)
-    tests.sort()
+    tests = sorted(remove_duplicates(tests))
     (fd, test_list) = mkstemp(suffix='.txt')
     f = os.fdopen(fd, 'w')
     for t in tests:
@@ -66,11 +67,12 @@ def run_pychecker(locations = []):
     if locations == []:
         locations = ['pympler']
     for location in locations:
-        sources.extend(get_files(location = location, pattern = '[^\n]*.py$'))
+        sources.extend(get_files(location, pattern = '[^\n]*.py$'))
     for src in sources:
         print ("CHECKING %s" % src)
-        subprocess.call(['python', 'tools/pychok.py', '-no', '--stdlib', 
-                         '--quiet', src])
+        subprocess.call([_Python_path,
+                         'tools/pychok.py', '-no',
+                         '--stdlib', '--quiet', src])
 
 def test_docs(path, actions=['html', 'doctest']):
     '''Test documentation with sphinx.
@@ -93,7 +95,7 @@ def main():
     usage = "usage: %prog [options] tests"
     parser = OptionParser(usage)
     parser.add_option("-P", "--python", type="string", 
-                      dest="python", default="python")
+                      dest="python", default=_Python_path)
     parser.add_option("--no-unittests", action='store_true', default=False,
                       dest="no_unittests", help="Do not run unittests.")
     parser.add_option("--html", action='store_true', default=False,
@@ -115,25 +117,25 @@ def main():
         options.doctest = True
         options.no_unittests = False
     if options.html:
-        print "Create documention"
-        print "=================="
+        print ("Create documention")
+        print ("==================")
         test_docs(doc_path, actions=['html'])
         print
     if options.doctest:
-        print "Run doctests"
-        print "============"
+        print ("Run doctests")
+        print ("============")
         test_docs(doc_path, actions=['doctest'])
         print 
     if options.pychecker:
-        print "Run pychecker"
-        print "============="
+        print ("Run pychecker")
+        print ("=============")
         run_pychecker(args)
         return
     if options.no_unittests:
         return
         
-    print "Run unittests"
-    print "============="
+    print ("Run unittests")
+    print ("=============")
     run_unittests(project_path, options.python, args)
 
 if __name__ == '__main__':
