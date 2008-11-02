@@ -545,6 +545,7 @@ try:
                 pass
             else:
                 res = int( stat.read().split()[22] )
+                stat.close()
         return res
     memory = _memory_generic
 
