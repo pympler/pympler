@@ -32,6 +32,8 @@ except ImportError: # Python 3.0
     def instancemethod(*args):
         return args[0]
 from inspect     import stack, getmembers
+from subprocess  import Popen, PIPE
+from os          import getpid
 
 try:
     import cPickle as pickle
@@ -531,23 +533,56 @@ else:
 
 # Get memory allocated to the process. How to get hold of this information is
 # platform specific. First try to use the resource module. If that does not
-# exist, try a fallback for Windows. If 0 is returned (Linux), try to read the
-# stat file. If all fails, return 0.
+# exist, try a fallback for Windows. If 0 is returned (Linux/Solaris), try to read the
+# stat file and the ps command. If all fails, return 0.
 memory = lambda : 0
-try:
+
+def _memory_ps():
+    """
+    Get virtual size of current process by 'ps'.
+    This should work for MacOS X, Solaris, Linux.
+    """
+    try:
+        p = Popen(['/bin/ps', '-p%s' % getpid(), '-o', 'rss,vsz'],
+                  stdout=PIPE, stderr=PIPE)
+    except OSError:
+        pass
+    else:
+        s = p.communicate()[0].split()
+        if p.returncode == 0 and len(s) >= 2:
+            return int(s[-1]) * 1024
+    return 0
+
+def _memory_proc():
+    """
+    Get virtual size of current process by reading the process' stat file.
+    This should work for Linux.
+    """
+    vsz = 0
+    try:
+        stat = open('/proc/self/stat')
+    except IOError:
+        pass
+    else:
+        vsz = int( stat.read().split()[22] )
+        stat.close()
+    return vsz
+    
+try:    
     import resource
     def _memory_generic():
-        res = resource.getrusage(resource.RUSAGE_SELF)[4]
-        if res == 0:
-            try:
-                stat = open('/proc/self/stat')
-            except IOError:
-                pass
-            else:
-                res = int( stat.read().split()[22] )
-                stat.close()
-        return res
-    memory = _memory_generic
+        """
+        Get resident set size of current process through resource module. Only
+        available on Unix. Does not work with any platform tested on.
+        """
+        return resource.getrusage(resource.RUSAGE_SELF)[4]
+
+    if _memory_generic():
+        memory = _memory_generic
+    elif _memory_ps():
+        memory = _memory_ps
+    elif _memory_proc():
+        memory = _memory_proc
 
 except ImportError:
     try:
