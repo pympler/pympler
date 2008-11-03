@@ -579,10 +579,10 @@ try:
 
     if _memory_generic():
         memory = _memory_generic
-    elif _memory_ps():
-        memory = _memory_ps
     elif _memory_proc():
         memory = _memory_proc
+    elif _memory_ps():
+        memory = _memory_ps
 
 except ImportError:
     try:
