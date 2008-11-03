@@ -13,7 +13,7 @@ The muppy module
 
 Muppy allows you to get hold of all objects,
 
->>> from pympler import muppy
+>>> from pympler.muppy import muppy
 >>> all_objects = muppy.get_objects()
 >>> len(all_objects)                           # doctest: +SKIP
 9495
