@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import os
 import sys
 import unittest
@@ -5,19 +7,19 @@ import unittest
 from glob import glob
 
 testfile_pattern = 'test_*.py'
-module_list = ''
 
 def get_tests(dir='.'):
     '''Get a list of module names of all tests included in dir.'''
     res = []
      # walk recursively through all subdirectories
-    for sub in os.listdir(dir):
-        path = dir + os.sep + sub
-        if os.path.isdir(path):
-            if dir == '.':
-                res.extend(get_tests(sub))
-            else:
-                res.extend(get_tests(path))
+    if not dir.endswith('.py'):
+        for sub in os.listdir(dir):
+            path = dir + os.sep + sub
+            if os.path.isdir(path):
+                if dir == '.':
+                    res.extend(get_tests(sub))
+                else:
+                    res.extend(get_tests(path))
      # attach module names of all tests
     for moduleName in glob(dir + os.sep + testfile_pattern):
         if dir == '.':
@@ -27,18 +29,6 @@ def get_tests(dir='.'):
         moduleName = moduleName.replace('.py', '')
         res.append(moduleName.replace(os.sep, '.'))
     return res  # sorted(res)
-
-
-def get_tests_from_file(fname):
-    tests = []
-    f = open(fname)
-    try:
-        for test in f.readlines():
-            tests.append(test.strip())            
-    finally:
-        f.close()
-    return tests
-
 
 def suite(dirs=['.'], verbosity=2):
     '''Create a suite with all tests included in the directory of this script.

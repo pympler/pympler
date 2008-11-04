@@ -109,11 +109,15 @@ def main():
     '''
     Find and run all specified tests.
     '''
-    usage = ('usage: %prog --test [test|test/module|test/module/test_suite.py ...]',
-             '   or  %prog <option> [<args> ...]')
+    usage = ('usage: %prog <options> [<args> ...]', '',
+             '  e.g. %prog --doctest',
+             '       %prog --html',
+             '       %prog --latex [-paper=letter|a4]',
+             '       %prog --pychecker [--OKd] [pympler | pympler/module]',
+             '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
-                      dest='all', help='run all tests and docs')
+                      dest='all', help='run all tests and create all docs')
     parser.add_option('-c', '--changes', action='store_true', default=False,
                       dest='changes', help='create the documentation changes')
     parser.add_option('-d', '--doctest', action='store_true', default=False,
@@ -126,8 +130,6 @@ def main():
                       dest='paper', help='select LaTeX paper size (letter)')
     parser.add_option('-i', '--linkcheck', action='store_true', default=False,
                       dest='linkcheck', help='check the documentation links')
-    parser.add_option('-k', '--pickle', action='store_true', default=False,
-                      dest='pickle', help='create the Pickle files')
     parser.add_option('-p', '--pychecker', action='store_true', default=False,
                       dest='pychecker', help='run static code analyzer PyChecker')
     parser.add_option('--OKd', action='store_true', default=False,
@@ -171,10 +173,6 @@ def main():
     if options.linkcheck:
         print2('Checking documention links', options.V)
         run_sphinx(doc_path, ['linkcheck'])
-
-    if options.pickle:
-        print2('Creating Pickle files', options.V)
-        run_sphinx(doc_path, ['pickle'])
 
     if options.test:
         print2('Running unittests', options.V)
