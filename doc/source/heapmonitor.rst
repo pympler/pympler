@@ -7,7 +7,7 @@ Heapmonitor Documentation
 Introduction
 ------------
 
-.. automodule:: pympler.heapmonitor.heapmonitor
+.. automodule:: pympler.heapmonitor
 
 Usage
 -----

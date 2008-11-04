@@ -7,7 +7,7 @@ asizeof Documentation
 Introduction
 ------------
 
-.. automodule:: pympler.asizeof.asizeof
+.. automodule:: pympler.asizeof
 
 Asizer
 ------
