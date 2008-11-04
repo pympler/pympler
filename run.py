@@ -7,6 +7,7 @@ import re
 from optparse import OptionParser
 
 _Python_path = sys.executable  # this Python binary
+_Sphinx_path = 'sphinx-build'  # Sphinx build command
 
 try:
     from subprocess import call as _call
@@ -71,18 +72,28 @@ def run_pychecker(dirs, OKd=False, verbose=1):
                '--stdlib', '--quiet',
                 src)
 
-def run_docs(path, actions=['html', 'doctest']):
-    '''Test documentation with sphinx.
+def dir_clear(path):
+    '''Clear a directory.
+    '''
+    _spawn('/bin/mkdir', '-p', path)  # os.makedirs(path)
+    _spawn('/bin/rm', '-rf', os.path.join(path, '*'))
 
-    Possible entries for the actions list are all valid parameters
-    for the 'make' command inside the documentation directory.
+def run_sphinx(doc_path, builders=['html', 'doctest'], paper=''):
+    '''Create and test documentation with Sphinx.
     '''
     cwd = os.getcwd()
-    os.chdir(path)
-    for action in actions:
-        _spawn('make', 'clean')
-        _spawn('make',  action)
-        _spawn('make', 'clean')
+    os.chdir(doc_path)
+    doctrees = os.path.join('build', 'doctrees')
+    for builder in builders:
+        dir = os.path.join('build', builder)
+        dir_clear(dir)
+        dir_clear(doctrees)
+         # see _Sphinx_path -help
+        opts = '-d', doctrees
+        if paper:  # 'letter' or 'a4'
+            opts += '-D', ('latex_paper_size=%s' % paper)
+        opts += 'source', dir  # source and out dirs
+        _spawn(_Sphinx_path, '-b', builder, *opts)
     os.chdir(cwd)
 
 def print2(text, verbose=1):
@@ -98,18 +109,29 @@ def main():
     '''
     Find and run all specified tests.
     '''
-    usage = "usage: %prog <options> [test | test/module | test/module/test_suite.py ...]"
-    parser = OptionParser(usage)
+    usage = ('usage: %prog --test [test|test/module|test/module/test_suite.py ...]',
+             '   or  %prog <option> [<args> ...]')
+    parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
-                      dest='all', help='run all tests and docs.')
+                      dest='all', help='run all tests and docs')
+    parser.add_option('-c', '--changes', action='store_true', default=False,
+                      dest='changes', help='create the documentation changes')
     parser.add_option('-d', '--doctest', action='store_true', default=False,
-                      dest='doctest', help='run the documentation tests.')
+                      dest='doctest', help='run the documentation tests')
     parser.add_option('-H', '--html', action='store_true', default=False,
-                      dest='html', help='create the HTML documentation.')
-    parser.add_option('-P', '--pychecker', action='store_true', default=False,
-                      dest='pychecker', help='run static code analyser PyChecker')
+                      dest='html', help='create the HTML documentation')
+    parser.add_option('-L','--latex', action='store_true', default=False,
+                      dest='latex', help='create the LaTeX (PDF) documentation')
+    parser.add_option('--paper', default='letter',  # or 'a4'
+                      dest='paper', help='select LaTeX paper size (letter)')
+    parser.add_option('-i', '--linkcheck', action='store_true', default=False,
+                      dest='linkcheck', help='check the documentation links')
+    parser.add_option('-k', '--pickle', action='store_true', default=False,
+                      dest='pickle', help='create the Pickle files')
+    parser.add_option('-p', '--pychecker', action='store_true', default=False,
+                      dest='pychecker', help='run static code analyzer PyChecker')
     parser.add_option('--OKd', action='store_true', default=False,
-                      dest='OKd', help='include OKd PyChecker warnings')
+                      dest='OKd', help='include PyChecker warnings OKd in source')
     parser.add_option('-v', '--verbose', default=2,
                       dest='V', help='set verbosity level for unit tests (2)')
     parser.add_option('-t', '--test', action='store_true', default=False,
@@ -130,13 +152,29 @@ def main():
         print2('Running pychecker', options.V)
         run_pychecker(args or ['pympler'], options.OKd, options.V)
 
-    if options.html:
-        print2('Creating documention', options.V)
-        run_docs(doc_path, actions=['html'])
+    if options.changes:
+        print2('Creating documentation changes', options.V)
+        run_sphinx(doc_path, ['changes'])
 
     if options.doctest:
         print2('Running doctest', options.V)
-        run_docs(doc_path, actions=['doctest'])
+        run_sphinx(doc_path, ['doctest'])
+
+    if options.html:
+        print2('Creating HTML documention', options.V)
+        run_sphinx(doc_path, ['html'])
+
+    if options.latex:
+        print2('Creating LaTex (PDF) documention', options.V)
+        run_sphinx(doc_path, ['latex'], paper=options.paper)
+
+    if options.linkcheck:
+        print2('Checking documention links', options.V)
+        run_sphinx(doc_path, ['linkcheck'])
+
+    if options.pickle:
+        print2('Creating Pickle files', options.V)
+        run_sphinx(doc_path, ['pickle'])
 
     if options.test:
         print2('Running unittests', options.V)
