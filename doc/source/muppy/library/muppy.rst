@@ -4,7 +4,7 @@
 muppy
 =====
 
-.. automodule:: pympler.muppy
+.. automodule:: pympler.muppy.muppy
 
 Functions
 ---------
