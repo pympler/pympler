@@ -6,44 +6,59 @@
 # <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/546530>
 # <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/544288>
 
-'''This module exposes 9 functions and 2 classes to obtain lengths
-   and sizes of Python objects (for Python 2.2 or later).
+'''
+This module exposes 9 functions and 2 classes to obtain lengths and
+sizes of Python objects (for Python 2.2 or later [#test]_).
 
-   Function  asizeof calculates the combined (approximate) size
-   of one or several Python objects in bytes.  Function  asizesof
+**Public Functions** [#unsafe]_
+
+   Function **asizeof** calculates the combined (approximate) size
+   of one or several Python objects in bytes.  Function **asizesof**
    returns a tuple containing the (approximate) size in bytes for
-   each given Python object separately.  Function  asized returns
-   for each object an instance of class Asized containing all the
-   size information of the object and a tuple of referents.
+   each given Python object separately.  Function **asized** returns
+   for each object an instance of class **Asized** containing all the
+   size information of the object and a tuple with the referents.
 
-   Functions  basicsize and  itemsize return the basic resp. item
+   Functions **basicsize** and **itemsize** return the basic resp. item
    size of the given object.
 
-   Function  flatsize returns the flat size of a Python object in
+   Function **flatsize** returns the flat size of a Python object in
    bytes defined as the basic size plus the item size times the
    length of the given object.
 
-   Function  leng returns the length of an object, like standard
-   len but extended for several types, e.g. the  leng of a multi-
-   precision int (or long) is the number of digits**.  For most
-   mutable sequence objects, the length includes an estimate of
-   the over-allocation and therefore, the  leng value may differ
-   from the standard  len result.
+   Function **leng** returns the length of an object, like standard
+   ``len`` but extended for several types, e.g. the **leng** of a
+   multi-precision int (or long) is the number of ``digits`` [#digit]_.
+   The length of most mutable sequence objects includes an estimate of
+   the over-allocation and therefore, the **leng** value may differ
+   from the standard ``len`` result.
 
-   Function  refs returns (a generator for) the referents of the
+   Function **refs** returns (a generator for) the referents of the
    given object, i.e. the objects referenced by the given object.
 
-   Certain classes are known to be sub-classes of or behave as
-   dict objects.  Function  adict can be used to install other
+   Certain classes are known to be sub-classes of or to behave as
+   dict objects.  Function **adict** can be used to install other
    class objects to be treated like dict.
 
-   Class  Asizer can be used to accumulate the results of several
-   asizeof or  asizesof calls.  After creating an  Asizer instance,
-   use methods  asizeof and  asizesof to size additional objects.
-   Call methods  exclude_refs and/or  exclude_types to exclude
-   references to resp. instances or types of certain objects.
-   Use one of the  print\_... methods to report the statistics.
+**Public Classes** [#unsafe]_
 
+   Class **Asizer** may be used to accumulate the results of several
+   **asizeof** or **asizesof** calls.  After creating an **Asizer** instance,
+   use methods **asizeof** and **asizesof** as needed to size any
+   number of additional objects.
+
+   Call methods **exclude_refs** and/or **exclude_types** to exclude
+   references to resp. instances or types of certain objects.
+   Use one of the **print\_... methods** to report the statistics.
+
+**Duplicate Objects**
+
+   Any duplicate, given objects are sized only once and the size
+   is included in the combined total only once.  But functions
+   **asizesof** and **asized** do return a size value resp. an
+   **Asized** instance for each given object, including duplicates.
+
+**Definitions** [#arb]_
 
    The size of an object is defined as the sum of the flat size
    of the object plus the sizes of any referents.  Referents are
@@ -55,43 +70,45 @@
    The flat size does include the size for the items (references
    to the referents), but not the referents themselves.
 
-   The flat size returned by function  flatsize equals the result
-   of the  asizeof function with options code=True, ignored=False,
-   limit=0 and option  align set to the same value.
+   The flat size returned by function **flatsize** equals the result
+   of the **asizeof** function with options *code=True*, *ignored=False*,
+   *limit=0* and option *align* set to the same value.
 
    The accurate flat size for an object is obtained from function
-   sys.getsizeof() where available.  Otherwise, the length and
+   ``sys.getsizeof()`` where available.  Otherwise, the length and
    size of sequence objects as dicts, lists, sets, etc. is based
    on an estimate for the number of allocated items.  As a result,
-   the reported length and size reported may substantially differ
-   from the actual length and size.
+   the reported length and size may substantially differ from the
+   actual length and size.
 
-   The basic and item sizes are obtained from the __basicsize__
-   resp. __itemsize__ attributes of the (type of the) object.
-   Where necessary (e.g. sequence objects), a zero __itemsize__
-   is replaced by the size of a corresponding C type.  The over-
-   head for Python's garbage collector (GC) is included in the
-   basic size (of GC managed objects) as well as the space for
-   refcounts (used only in certain Python builds).
+   The basic and item sizes are obtained from the ``__basicsize__``
+   resp. ``__itemsize__`` attributes of the (type of the) object.
+   Where necessary (e.g. sequence objects), a zero ``__itemsize__``
+   is replaced by the size of a corresponding C type.  The basic
+   size (of GC managed objects) objects includes the overhead for
+   Python's garbage collector (GC) as well as the space needed for
+   ``refcounts`` (used only in certain Python builds).
 
-   Optionally, sizes can be aligned to any power of 2 multiple.
+   Optionally, size values can be aligned to any power of 2 multiple.
 
-   The (byte)code size of objects as classes, functions, methods,
-   modules, etc. can be included by setting option  code.  Built-
-   in objects are ignored by default, option  ingored can be used
-   to include those.
+**Size of (byte)code**
+
+   The (byte)code size of objects like classes, functions, methods,
+   modules, etc. can be included by setting option *code=True*.
 
    Iterators are handled similar to sequences: iterated object(s)
-   are sized only if the recursion limit permit (and if function
-   gc.get_referents() returns the iterator referent object).
+   are sized like referents, only if the recursion *limit* permits.
+   Also, function ``gc.get_referents()`` must return the referent
+   object of iterators.
 
-   Generators are sized as (byte)code only but generated objects
-   are never sized.
+   Generators are sized as (byte)code only, but the generated
+   objects are never sized.
 
+**Old- and New-style Classes**
 
-   All class, instance and type objects, new- and old-style are
-   handled uniformly such that instance objects are distinguished
-   from class objects and instances of different old-style classes
+   All old- and new-style class, instance and type objects, are
+   handled uniformly such that (a) instance objects are distinguished
+   from class objects and (b) instances of different old-style classes
    can be dealt with separately.
 
    Class and type objects are represented as <class ....* def>
@@ -100,48 +117,47 @@
    old-style classes are shown as new-style ones but with an '*'
    at the end of the name, like <class module.name*>.
 
-   Any duplicate, given objects are sized only once and the size
-   is included in the combined total only once.  But functions
-   asizesof and  asized do return a size value resp. an  Asized
-   instance for each given object, the same for duplicates.
+**Ignored Objects**
 
-   To avoid excessive sizes, several object types are ignored by
-   default, e.g. built-in functions, built-in types and classes,
+   To avoid excessive sizes, several object types are ignored [#arb]_ by
+   default, e.g. built-in functions, built-in types and classes [#bi]_,
    function globals and module referents.  However, any instances
    thereof are sized and module objects will be sized when passed
    as given objects.  Ignored object types are included if option
-   ignored is set accordingly.
+   *ignored* is set accordingly.
 
-   In addition, many __...__ attributes of callable objects are
-   ignored, except crucial ones, e.g. class attributes __dict__,
-   __doc__, __name__ and __slots__.  For more details, see the
-   type-specific _..._refs() and _len_...() functions below.
+   In addition, many ``__...__`` attributes of callable objects are
+   ignored [#arb]_, except crucial ones, e.g. class attributes ``__dict__``,
+   ``__doc__``, ``__name__`` and ``__slots__``.  For more details, see the
+   type-specific ``_..._refs()`` and ``_len_...()`` functions below.
 
-   Types and classes are considered built-in if the module of the
-   type or class is listed in  _builtin_modules below.
+.. rubric:: Footnotes
+.. [#unsafe] The functions and classes in this module are not thread-safe.
 
-   These definitions and other assumptions are rather arbitrary
-   and may need corrections or adjustments.
+.. [#digit] See Python source file ``.../Include/longinterp.h`` for the
+     C ``typedef`` of ``digit`` used in multi-precision int (or
+     long) objects.  The C ``sizeof(digit)`` in bytes can be obtained
+     in Python from the int (or long) ``__itemsize__`` attribute.
+     Function **leng** determines the number of ``digits`` of an
+     int (or long) value.
 
-   Tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
-   3.0rc1 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel)
-   and Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit
-   Python and on RHEL 3u7 and Solaris 10 both 64-bit Python.
+.. [#arb] These definitions and other assumptions are rather arbitrary
+     and may need corrections or adjustments.
 
-   The functions and classes in this module are not thread-safe.
+.. [#bi] Types and classes are considered built-in if the ``__module__``
+     of the type or class is listed in ``_builtin_modules`` below.
 
-   \**) See Python source file .../Include/longinterp.h for the
-        C typedef of digit used in multi-precision int (or long)
-        objects.  The size of digit in bytes can be obtained in
-        Python from the int (or long) __itemsize__ attribute.
-        Function  leng (rather _len_int) below deterimines the
-        number of digits from the int (or long) value.
+.. [#test] Tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
+     3.0rc3 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel)
+     and Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit
+     Python and on RHEL 3u7 and Solaris 10 both 64-bit Python.
+
 '''  #PYCHOK expected
 
-from __future__ import generators  # for yield in Python 2.2
+from __future__ import generators  #PYCHOK for yield in Python 2.2
 
-from inspect    import currentframe, isbuiltin, isclass, iscode, \
-                       isframe, isfunction, ismethod, ismodule, stack
+from inspect    import isbuiltin, isclass, iscode, isframe, \
+                       isfunction, ismethod, ismodule, stack
 from math       import log
 from os         import linesep
 from struct     import calcsize  # type/class Struct only in Python 2.5+
@@ -323,7 +339,7 @@ def _derive_typedef(typ):
 
 def _dir2(obj, pref='', excl=(), slots=None, itor=''):
     '''Return an attribute name, object 2-tuple for certain
-       attributes or for the '__slots__' attributes of the
+       attributes or for the ``__slots__`` attributes of the
        given object, but not both.  Any iterator referent
        objects are returned with the given name if the
        latter is non-empty.
@@ -1439,11 +1455,14 @@ class Asized(object):
     '''Store the results of a sized object
        in these attributes:
 
-       size - total size of the object
-       flat - flat size of the object
-       name - name or repr of the object
-       refs - tuple containing an instance
-              of Asized for each referent
+         *size*  -- total size of the object
+
+         *flat*  -- flat size of the object
+
+         *name*  -- name or ``repr`` of the object
+
+         *refs*  -- tuple containing an instance
+                    of **Asized** for each referent
     '''
     def __init__(self, size, flat, refs=(), name=None):
         self.size = size  # total size
@@ -1481,7 +1500,7 @@ class Asizer(object):
     _total     = 0   # total size
 
     def __init__(self, **opts):
-        '''See method  reset for the available options.
+        '''See method **reset** for the available options.
         '''
         self._excl_d = {}
         self.reset(**opts)
@@ -1506,7 +1525,7 @@ class Asizer(object):
         return _nameof(obj, '') or self._repr(obj)
 
     def _prepr(self, obj):
-        '''Like prepr().
+        '''Like **prepr()**.
         '''
         return _prepr(obj, clip=self._clip_)
 
@@ -1519,7 +1538,7 @@ class Asizer(object):
         return p
 
     def _repr(self, obj):
-        '''Like repr().
+        '''Like ``repr()``.
         '''
         return _repr(obj, clip=self._clip_)
 
@@ -1579,7 +1598,7 @@ class Asizer(object):
         return s
 
     def _sizes(self, objs, sized=None):
-        '''Return the size or an Asized instance for each
+        '''Return the size or an **Asized** instance for each
            given object and the total size.  The total
            includes the size of duplicates only once.
         '''
@@ -1601,12 +1620,12 @@ class Asizer(object):
         return s, tuple(t)
 
     def asized(self, *objs, **opts):
-        '''Size each object and return an Asized instance with
+        '''Size each object and return an **Asized** instance with
            size information and referents up to the given detail
-           level (and with modified options, see method  .set).
+           level (and with modified options, see method **set**).
 
            If only one object is given, the return value is the
-           Asized instance for that object.
+           **Asized** instance for that object.
         '''
         if opts:
             self.set(**opts)
@@ -1617,7 +1636,7 @@ class Asizer(object):
 
     def asizeof(self, *objs, **opts):
         '''Return the combined size of the given objects
-           (with modified options, see method  .set).
+           (with modified options, see method **set**).
         '''
         if opts:
             self.set(**opts)
@@ -1626,7 +1645,7 @@ class Asizer(object):
 
     def asizesof(self, *objs, **opts):
         '''Return the individual sizes of the given objects
-           (with modified options, see method  .set).  
+           (with modified options, see method  **set**).  
         '''
         if opts:
             self.set(**opts)
@@ -1638,7 +1657,7 @@ class Asizer(object):
 
            While any references to the given objects are excluded, the
            objects will be sized if specified as positional arguments
-           in subsequent calls to methods  asizeof and  asizesof.
+           in subsequent calls to methods **asizeof** and **asizesof**.
         '''
         for o in objs:
             self._seen.setdefault(id(o), 0)
@@ -1648,7 +1667,7 @@ class Asizer(object):
 
            All instances and types of the given objects are excluded,
            even objects specified as positional arguments in subsequent
-           calls to methods  asizeof and  asizesof.
+           calls to methods **asizeof** and **asizesof**.
         '''
         for o in objs:
             for t in _keytuple(o):
@@ -1656,7 +1675,13 @@ class Asizer(object):
                     self._excl_d[t] = 0
 
     def print_profiles(self, w=0, cutoff=0, **print3opts):
-        '''Print the profiles above cutoff percentage.
+        '''Print the profiles above *cutoff* percentage.
+
+               *w=0*           -- indentation for each line
+
+               *cutoff=0*      -- minimum percentage printed
+
+               *print3options* -- print options, ala Python 3.0
         '''
          # get the profiles with non-zero size or count
         t = [(v, k) for k, v in _items(self._profs) if v.total > 0 or v.number > 1]
@@ -1685,42 +1710,64 @@ class Asizer(object):
             if z > 0:
                 _printf('%+*d %r object%s', w, z, 'zero', _plural(z), **print3opts)
 
-    def print_stats(self, objs=(), sized=(), sizes=(), stats=3, **opts):
+    def print_stats(self, objs=(), opts={}, sized=(), sizes=(), stats=3.0, **print3opts):
         '''Print the statistics.
+
+               *w=0*           -- indentation for each line
+
+               *objs=()*       -- optional, list of objects
+
+               *opts={}*       -- optional, dict of options used
+
+               *sized=()*      -- optional, tuple of **Asized** instances returned
+
+               *sizes=()*      -- optional, tuple of sizes returned
+
+               *stats=0.0*     -- print stats, see function **asizeof**
+
+               *print3options* -- print options, as in Python 3.0
         '''
-        s = min(stats, self._stats_)
+        s = min(opts.get('stats', stats) or 0, self._stats_)
         if s > 0:  # print stats
             t = self._total + self._missed + _sum(_values(self._seen))
             w = len(str(t)) + 1
+            t = c = ''
+            o = _kwdstr(**opts)
+            if o and objs:
+                c = ', '
              # print header line(s)
             if sized and objs:
                 n = len(objs)
                 if n > 1:
-                    _printf('%sasized(..., %s) ...', linesep, _kwdstr(**opts))
+                    _printf('%sasized(...%s%s) ...', linesep, c, o, **print3opts)
                     for i in range(n):  # no enumerate in Python 2.2.3
-                        _printf('%*d: %s', w-1, i, sized[i])
+                        _printf('%*d: %s', w-1, i, sized[i], **print3opts)
                 else:
-                    _printf('%sasized(%s): %s', linesep, _kwdstr(**opts), sized)
+                    _printf('%sasized(%s): %s', linesep, o, sized, **print3opts)
             elif sizes and objs:
-                _printf('%sasizesof(..., %s) ...', linesep, _kwdstr(**opts))
+                _printf('%sasizesof(...%s%s) ...', linesep, c, o, **print3opts)
                 for z, o in zip(sizes, objs):
-                    _printf('%*d bytes%s%s:  %s', w, z, _SI(z), self._incl, self._repr(o))
+                    _printf('%*d bytes%s%s:  %s', w, z, _SI(z), self._incl, self._repr(o), **print3opts)
             else:
-                t = c = ''  # title
                 if objs:
                     t = self._repr(objs)
-                    if opts:
-                        c = ', '
-                _printf('%sasizeof(%s%s%s) ...', linesep, t, c, _kwdstr(**opts))
+                _printf('%sasizeof(%s%s%s) ...', linesep, t, c, o, **print3opts)
              # print summary
-            self.print_summary(w=w, objs=objs)
+            self.print_summary(w=w, objs=objs, **print3opts)
             if s > 1:  # print profile
-                self.print_profiles(w=w)
+                c = int(s - int(s)) * 100
+                self.print_profiles(w=w, cutoff=c, **print3opts)
                 if s > 2:  # print typedefs
-                    self.print_typedefs(w=w)
+                    self.print_typedefs(w=w, **print3opts)
 
     def print_summary(self, w=0, objs=(), **print3opts):
         '''Print the summary statistics.
+
+               *w=0*            -- indentation for each line
+
+               *objs=()*        -- optional, list of objects
+
+               *print3options*  -- print options, as in Python 3.0
         '''
         _printf('%*d bytes%s%s', w, self._total, _SI(self._total), self._incl, **print3opts)
         if self._mask:
@@ -1746,6 +1793,10 @@ class Asizer(object):
 
     def print_typedefs(self, w=0, **print3opts):
         '''Print the types and dict tables.
+
+               *w=0*            -- indentation for each line
+
+               *print3options*  -- print options, as in Python 3.0
         '''
         for k in _all_kinds:
              # XXX Python 3.0 doesn't sort type objects
@@ -1763,14 +1814,19 @@ class Asizer(object):
                 _printf('%*s %s:  %s', w, '', m, self._prepr(v), **print3opts)
 
     def set(self, align=None, code=None, detail=None, limit=None, stats=None):
-        '''Set some options.  Any options not set
-           remain the same as the previous setting.:
+        '''Set some options.  See also **reset**.
 
-           .set(align=8,     # size alignment
-                code=False,  # incl. (byte)code size
-                detail=0     # Asized refs level
-                limit=100,   # recursion limit
-                stats=0)     # print statistics
+               *align*   -- size alignment
+
+               *code*    -- incl. (byte)code size
+
+               *detail*  -- Asized refs level
+
+               *limit*   -- recursion limit
+
+               *stats*   -- print statistics, see function **asizeof**
+
+        Any options not set remain unchanged from the previous setting.
         '''
          # adjust
         if align is not None:
@@ -1817,18 +1873,29 @@ class Asizer(object):
 
     def reset(self, align=8,  clip=80,      code=False,  derive=False,
                     detail=0, ignored=True, infer=False, limit=100,  stats=0):
-        '''Reset options, state, etc.  The available
-           options and default values are:
+        '''Reset options, state, etc.
 
-           .reset(align=8,      # size alignment
-                  clip=80,      # clip repr() strings
-                  code=False,   # incl. (byte)code size
-                  derive=False  # derive from super type
-                  detail=0      # Asized refs level
-                  ignored=True  # ignore certain types
-                  infer=False   # try to infer types
-                  limit=100,    # recursion limit
-                  stats=0)      # print statistics
+        The available options and default values are:
+
+             *align=8*       -- size alignment
+
+             *clip=80*       -- clip repr() strings
+
+             *code=False*    -- incl. (byte)code size
+
+             *derive=False*  -- derive from super type
+
+             *detail=0*      -- Asized refs level
+
+             *ignored=True*  -- ignore certain types
+
+             *infer=False*   -- try to infer types
+
+             *limit=100*     -- recursion limit
+
+             *stats=0.0*     -- print statistics, see function **asizeof**
+
+        See function **asizeof** for a description of the options.
         '''
          # options
         self._align_  = align
@@ -1868,26 +1935,34 @@ def adict(*classes):
 _asizer = Asizer()
 
 def asized(*objs, **opts):
-    '''Return a tuple containing an Asized instance for each
+    '''Return a tuple containing an **Asized** instance for each
        object passed as positional argment using the following
        options.
 
-       asized(obj, ..., align=8,      # size alignment
-                        clip=80,      # clip repr() strings
-                        code=False,   # incl. (byte)code size
-                        derive=False  # derive from super type
-                        detail=0      # Asized refs level
-                        ignored=True  # ignore certain types
-                        infer=False   # try to infer types
-                        limit=100,    # recursion limit
-                        stats=0)      # print statistics
+           *align=8*       -- size alignment
 
-       If only one object is given, the return value is the Asized
+           *clip=80*       -- clip repr() strings
+
+           *code=False*    -- incl. (byte)code size
+
+           *derive=False*  -- derive from super type
+
+           *detail=0*      -- Asized refs level
+
+           *ignored=True*  -- ignore certain types
+
+           *infer=False*   -- try to infer types
+
+           *limit=100*     -- recursion limit
+
+           *stats=0.0*     -- print statistics
+
+       If only one object is given, the return value is the **Asized**
        instance for that object.
-       
-       Set  detail to the desired referents level (recursion depth).
 
-       See function  asizeof for descriptions of the other options.
+       Set *detail* to the desired referents level (recursion depth).
+
+       See function **asizeof** for descriptions of the other options.
 
        The length of the returned tuple matches the number of given
        objects, if more than one object is given.
@@ -1897,74 +1972,78 @@ def asized(*objs, **opts):
     if objs:
         _asizer.reset(**opts)
         t = _asizer.asized(*objs)
-        _asizer.print_stats(objs, sized=t, **opts)  # show opts as _kwdstr
+        _asizer.print_stats(objs, opts=opts, sized=t)  # show opts as _kwdstr
         _asizer._clear()
     else:
         t = ()
     return t
 
 def asizeof(*objs, **opts):
-    '''Return the combined size in bytes of all objects passed
-       as positional argments using the following options.
+    '''Return the combined size in bytes of all objects passed as positional argments.
 
-       asizeof(obj, ..., align=8,      # size alignment
-                         all=False,    # all current objects
-                         clip=80,      # clip repr() strings
-                         code=False,   # incl. (byte)code size
-                         derive=False  # derive from super type
-                         ignored=True  # ignore certain types
-                         infer=False   # try to infer types
-                         limit=100,    # recursion limit
-                         stats=0)      # print statistics
+    The available options and defaults are the following.
 
-       Set  align to a power of 2 to align sizes.  Any value less
-       than 2 avoids size alignment.
+         *align=8*       -- size alignment
 
-       All current module, global and stack objects are sized if
-       all is True and if no positional arguments are supplied.
+         *all=False*     -- all current objects
 
-       A positive  clip value truncates all repr() strings to at
-       most  clip characters.
+         *clip=80*       -- clip ``repr()`` strings
 
-       The (byte)code size of callable objects like functions,
-       methods, classes, etc. is included only if  code is True.
+         *code=False*    -- incl. (byte)code size
 
-       If  derive is True, new types are handled like an existing
-       (super) type provided there is one and only of those.
+         *derive=False*  -- derive from super type
 
-       By default, certain base types like object are ignored for
-       sizing.  Set  ignored to False to force all ignored types
-       in the size of objects.
+         *ignored=True*  -- ignore certain types
 
-       By default certain base types like object, super, etc. are
-       ignored.  Set  ignored to False to include those.
+         *infer=False*   -- try to infer types
 
-       If  infer is True, new types are inferred from attributes
-       (only implemented for dict types on callable attributes
-       as get, has_key, items, keys and values).
+         *limit=100*     -- recursion limit
 
-       Set  limit to a positive value to accumulate the sizes of
-       the referents of each object, recursively up to the limit.
-       Using  limit zero returns the sum of the flat** sizes of
-       the given objects.  High  limit values may cause runtime
-       errors and miss objects for sizing.  
+         *stats=0.0*     -- print statistics
 
-       A positive value for  stats prints up to 8 statistics, (1)
-       a summary of the number of objects sized and seen, (2) a
-       simple profile of the sized objects by type and (3+) up to
-       6 tables showing the static, dynamic, derived, ignored,
-       inferred and dict types used, found resp. installed.  The
-       fractional part of the  stats value (x 100) is the cutoff
-       percentage for simple profiles.
+    Set *align* to a power of 2 to align sizes.  Any value less
+    than 2 avoids size alignment.
 
-       \**) See the documentation of this module for the definition
-            of flat size.
+    All current module, global and stack objects are sized if
+    *all* is True and if no positional arguments are supplied.
+
+    A positive *clip* value truncates all repr() strings to at
+    most *clip* characters.
+
+    The (byte)code size of callable objects like functions,
+    methods, classes, etc. is included only if *code* is True.
+
+    If *derive* is True, new types are handled like an existing
+    (super) type provided there is one and only of those.
+
+    By default certain base types like object, super, etc. are
+    ignored.  Set *ignored* to False to include those.
+
+    If *infer* is True, new types are inferred from attributes
+    (only implemented for dict types on callable attributes
+    as get, has_key, items, keys and values).
+
+    Set *limit* to a positive value to accumulate the sizes of
+    the referents of each object, recursively up to the limit.
+    Using *limit=0* returns the sum of the flat[4] sizes of
+    the given objects.  High *limit* values may cause runtime
+    errors and miss objects for sizing.  
+
+    A positive value for *stats* prints up to 8 statistics, (1)
+    a summary of the number of objects sized and seen, (2) a
+    simple profile of the sized objects by type and (3+) up to
+    6 tables showing the static, dynamic, derived, ignored,
+    inferred and dict types used, found resp. installed.  The
+    fractional part of the *stats* value (x100) is the cutoff
+    percentage for simple profiles.
+
+    [4] See the documentation of this module for the definition of flat size.
     '''
     t, p = _objs_opts(objs, **opts)
     if t:
         _asizer.reset(**p)
         s = _asizer.asizeof(*t)
-        _asizer.print_stats(objs=t, **opts)  # show opts as _kwdstr
+        _asizer.print_stats(objs=t, opts=opts)  # show opts as _kwdstr
         _asizer._clear()
     else:
         s = 0
@@ -1974,26 +2053,33 @@ def asizesof(*objs, **opts):
     '''Return a tuple containing the size in bytes of all objects
        passed as positional argments using the following options.
 
-       asizesof(obj, ..., align=8,      # size alignment
-                          clip=80,      # clip repr() strings
-                          code=False,   # incl. (byte)code size
-                          derive=False  # derive from super type
-                          ignored=True  # ignore certain types
-                          infer=False   # try to infer types
-                          limit=100,    # recursion limit
-                          stats=0)      # print statistics
+           *align=8*       -- size alignment
 
-       See function  asizeof for a description of the options.
+           *clip=80*       -- clip ``repr()`` strings
 
-       The length of the returned tuple matches the number of
-       given objects.
+           *code=False*    -- incl. (byte)code size
+
+           *derive=False*  -- derive from super type
+
+           *ignored=True*  -- ignore certain types
+
+           *infer=False*   -- try to infer types
+
+           *limit=100*     -- recursion limit
+
+           *stats=0.0*     -- print statistics
+
+       See function **asizeof** for a description of the options.
+
+       The length of the returned tuple equals the number of given
+       objects.
     '''
     if 'all' in opts:
         raise KeyError('invalid option: %s=%r' % ('all', opts['all']))
     if objs:  # size given objects
         _asizer.reset(**opts)
         t = _asizer.asizesof(*objs)
-        _asizer.print_stats(objs, sizes=t, **opts)  # show opts as _kwdstr
+        _asizer.print_stats(objs, opts=opts, sizes=t)  # show opts as _kwdstr
         _asizer._clear()
     else:
         t = ()
@@ -2013,10 +2099,13 @@ def _typedefof(obj, save=False, **opts):
 def basicsize(obj, **opts):
     '''Return the basic size of an object (in bytes).
 
-       Valid options and default values are
-           derive=False  # derive type from super type
-           infer=False   # try to infer types
-           save=False    # save typedef if new
+       Valid options and defaults are
+
+           *derive=False*  -- derive type from super type
+
+           *infer=False*   -- try to infer types
+
+           *save=False*    -- save typedef if new
     '''
     v = _typedefof(obj, **opts)
     if v:
@@ -2027,8 +2116,8 @@ def flatsize(obj, align=0, **opts):
     '''Return the flat size of an object (in bytes),
        optionally aligned to a given power of 2.
 
-       See function  basicsize for a description of
-       the other options and see the documentation of
+       See function **basicsize** for a description of
+       the other options.  See the documentation of
        this module for the definition of flat size.
     '''
     v = _typedefof(obj, **opts)
@@ -2044,7 +2133,8 @@ def flatsize(obj, align=0, **opts):
 
 def itemsize(obj, **opts):
     '''Return the item size of an object (in bytes).
-       See function  basicsize for a description of
+
+       See function **basicsize** for a description of
        the options.
     '''
     v = _typedefof(obj, **opts)
@@ -2054,7 +2144,8 @@ def itemsize(obj, **opts):
 
 def leng(obj, **opts):
     '''Return the length of an object (in items).
-       See function  basicsize for a description of
+
+       See function **basicsize** for a description of
        the options.
     '''
     v = _typedefof(obj, **opts)
@@ -2066,8 +2157,10 @@ def leng(obj, **opts):
 
 def refs(obj, **opts):
     '''Return (a generator for) specific referents of an
-       object.  See function  basicsize for a description
-       of the options.
+       object.
+
+       See function **basicsize** for a description of
+       the options.
     '''
     v = _typedefof(obj, **opts)
     if v:
@@ -2078,15 +2171,15 @@ def refs(obj, **opts):
 
 
 def test_flatsize(failf=None, stdf=None):
-    '''Compare the results of  flatsize() *without* using  sys.getsizeof()
-       with the accurate sizes returned by  sys.getsizeof().
+    '''Compare the results of **flatsize()** without using ``sys.getsizeof()``
+       with the accurate sizes returned by ``sys.getsizeof()``.
 
        Return the total number of tests or number of unexpected failures.
 
        Expect differences for sequences as dicts, lists, sets, tuples, etc.
-       While this is no proof for the accuracy of  flatsize() on Python
-       builds without  sys.getsizeof(), it does provide some evidence that
-       function  flatsize() produces reasonable and usable results.
+       While this is no proof for the accuracy of **flatsize()** on Python
+       builds without ``sys.getsizeof()``, it does provide some evidence that
+       function **flatsize()** produces reasonable and usable results.
     '''
     global _getsizeof
     t, g, e = [], _getsizeof, 0
@@ -2122,8 +2215,8 @@ def test_flatsize(failf=None, stdf=None):
                        failf('%s vs %s for %s: %s',
                               a, s, _nameof(type(o)), _repr(o))
                 if stdf:
-                   _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s',
-                            a, s, _nameof(type(o)), _repr(o), file=stdf)
+                   _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s%s',
+                            a, s, _nameof(type(o)), _repr(o), x, file=stdf)
         _getsizeof = g  # restore
     return len(t), e
 
