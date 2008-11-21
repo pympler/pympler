@@ -586,9 +586,12 @@ try:
 
 except ImportError:
     try:
+        # Requires pywin32
         from win32process import GetProcessMemoryInfo
         from win32api import GetCurrentProcess
     except ImportError:
+        # TODO Emit Warning:
+        #print "It is recommended to install pywin32 when running pympler on Microsoft Windows."
         pass
     else:
         def _memory_windows():
