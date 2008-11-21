@@ -3,71 +3,102 @@
 import os
 import sys
 import unittest
+import glob
 
-from glob import glob
+_glob_test_py = 'test_*.py'
 
-testfile_pattern = 'test_*.py'
-
-def get_tests(dir='.'):
-    '''Get a list of module names of all tests included in dir.'''
-    res = []
+def get_tests(dir='.', clean=False):
+    '''Get a list of test module names in the given directory.
+    '''
+    res, dir_ = [], ''
      # walk recursively through all subdirectories
-    if not dir.endswith('.py'):
+    if os.path.isdir(dir):
+        if dir != '.':
+           dir_ = dir.rstrip(os.sep) + os.sep
         for sub in os.listdir(dir):
-            path = dir + os.sep + sub
-            if os.path.isdir(path):
-                if dir == '.':
-                    res.extend(get_tests(sub))
-                else:
-                    res.extend(get_tests(path))
-     # attach module names of all tests
-    for moduleName in glob(dir + os.sep + testfile_pattern):
-        if dir == '.':
-            moduleName = os.path.basename(moduleName)
-        else:
-            moduleName = dir + '.' + os.path.basename(moduleName)
-        moduleName = moduleName.replace('.py', '')
-        res.append(moduleName.replace(os.sep, '.'))
+            if sub[0] != '.':  # os.curdir
+               sub = dir_ + sub
+               if os.path.isdir(sub):
+                   res.extend(get_tests(sub))
+        glob_py = dir_ + _glob_test_py
+#   elif dir[-3:] == '.py':
+#       glob_py = dir
+#       sub = os.path.split(dir)[0]
+#       if sub:  # prefix
+#           dir_ = sub + os.sep
+    else:
+        return res
+     # append all tests as module names
+    for test in glob.glob(glob_py):
+        test = dir_ + os.path.basename(test)
+        if clean:  # remove existing bytecodes
+            for co in ('c', 'o'):
+                try:
+                    os.remove(test + co)
+                except OSError:
+                    pass
+         # convert to module name
+        test = test[:-3].replace(os.sep, '.')
+        res.append(test)
     return res  # sorted(res)
 
-def suite(dirs=['.'], verbosity=2):
-    '''Create a suite with all tests included in the directory of this script.
+def suite(dirs=['.'], clean=False, verbose=2):
+    '''Create a suite with all tests from the given directories.
 
     This will also include tests from subdirectories.
-
     '''
     res = unittest.TestSuite()
     for dir in dirs:
-        for test_module in get_tests(dir):
-            components = test_module.split('.')
-            module = components[-1]
+        for test in get_tests(dir, clean):
             try:
-                if len(components) == 1:
-                    testModule = __import__(test_module)
-                else:
-                    testModule = __import__(test_module, globals(), locals(), [module])
-                res.addTest(unittest.defaultTestLoader.loadTestsFromModule(testModule))
+                mod = test.rfind('.') + 1
+                if mod > 0:  # from test import mod
+                   mod = test[mod:]
+                   mod = __import__(test, globals(), locals(), [mod])
+                else:  # import test
+                   mod = __import__(test)
+                res.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
             except (SyntaxError, NameError, ImportError):
-                print ("WARNING: Ignoring '%s' due to an error while importing!" % test_module)
-                if verbosity > 2:
+                print('WARNING: Ignoring %r due to an error while importing' % test)
+                if verbose > 2:
                     raise  # show the error
     return res
-    
+
+
 if __name__ == '__main__':
 
-    verbose, dirs = 2, sys.argv[1:]
-    if dirs and '-verbose'.startswith(dirs[0]):
-        verbose = int(dirs[1])
-        dirs = dirs[2:]
-
-    dirs = dirs or ['.']
-    if verbose > 3:
-        print('dirs: %r' % dirs)
+     # get -clean and -verbose <level> options
+     # and the test case directories (files?)
+    clean, verbose, dirs = False, 3, sys.argv[1:]
+    while dirs:
+        t = dirs[0]
+        if '-clean'.startswith(t):
+            clean = True
+        elif '-verbose'.startswith(t):
+            verbose = int(dirs.pop(1))
+        else:
+            break
+        dirs = dirs[1:]
+    else:
+        dirs = ['.']
 
      # insert parent directory such that
      # the code modules can be imported
-    sys.path.insert(0, os.path.split(sys.path[0])[0])
-    if verbose > 4:
-        print('sys.path: %r ...' % sys.path[:4])
+    t = os.path.split(sys.path[0])
+    if t:
+       sys.path.insert(1, t[0])
 
-    unittest.TextTestRunner(verbosity=verbose).run(suite(dirs, verbose))
+     # print some details
+    if verbose > 2:
+        t = '\n           '
+        print('Python %s\n' % sys.version.replace('\n', t))
+        if verbose > 4:
+            print('Sys.path:  %s\n' % t.join(sys.path))
+        if verbose > 3:
+            print('Test dirs: %r\n' % dirs)
+
+     # build and run single test suite
+    tst = suite(dirs, clean, verbose)
+    res = unittest.TextTestRunner(verbosity=verbose).run(tst)
+    if not res.wasSuccessful():
+        sys.exit(1)

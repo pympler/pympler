@@ -12,18 +12,11 @@ Release a new version
 Tests
 -----
 
-* run the test suite 
-  $ python runtest.py
+* run pychecker, unit tests, doc tests, ...
+  $ python run.py -a
 
 * make sure tests work with all supported python versions, e.g.
-  $ python runtest.py -P python2.4
-
-* run doctests on the documentation
-  $ cd doc
-  $ make doctest
-
-* check sources with pychecker
-  $ python runtest.py --pychecker
+  $ python2.4 run.py --test
 
 Checks
 ------
