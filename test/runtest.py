@@ -9,7 +9,8 @@ import unittest
 _glob_test_py = 'test_*.py'
 
 if os.linesep == '\n':
-    _print = print
+    def _print(text):
+        print(text)
 else:
     def _print(text):
         print(text.replace('\n', os.linesep))
