@@ -6,22 +6,35 @@ This information is used in setup.py as well as in doc/source/conf.py.
 import inspect
 import os
 
-project_name = 'pympler'
+project_name = 'Pympler'
 version      = '0.1a1'
 url          = 'http://packages.python.org/pympler/'
 license      = 'Apache License, Version 2.0' #PYCHOK valid
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
 author_email = 'pympler-dev@googlegroups.com'
 copyright    = '2008, ' + author #PYCHOK valid
-description  = ('A development tool to measure, monitor and analyze the '
-'memory behavior of Python objects.')
-long_description = '\n'
-# location of this very module
-_modulepath = os.path.abspath(os.path.dirname(inspect.getfile(lambda foo:foo)))
-introfile = open(os.path.join(_modulepath, '..', 'doc', 'source', 'intro.rst'))
-while 1:
-    line = introfile.readline()
-    if not line:
-        break
-    long_description += line
+description  = ('A development tool to measure, monitor and analyze '
+                'the memory behavior of Python objects.')
+long_description = '''
+Pympler is a development tool to measure, monitor and analyze the
+memory behavior of Python objects in a running Python application.
 
+By pympling a Python application, detailed insight in the size and
+the lifetime of Python objects can be obtained.  Undesirable or
+unexpected runtime behavior like memory bloat and other "pymples"
+can easily be identified.
+
+Pympler integrates 3 previously separate modules into a single,
+comprehensive profiling tool.  The  asizeof module provides basic
+size information for one or several Python objects, module  muppy
+is used for on-line monitoring of a Python application and module
+heapmonitor provides off-line analysis of the lifetime of selected
+Python objects.
+
+Pympler is written entirely in Python, with no dependencies other
+than standard Python modules and libraries.  All Pympler modules
+work with Python 2.4, 2.5 and 2.6.  Module  asizeof has also been
+tested with Python 2.2, 2.3 and 3.0rc2 on several Linux distros,
+MacOS X (Intel and PPC), Solaris 10 (Opteron) and Windows XP with
+32-bit and several 64-bit Python builds.
+'''
