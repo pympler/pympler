@@ -13,7 +13,7 @@
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join('..', '..')))
-from pympler import metadata
+import pympler.metadata as metadata
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
