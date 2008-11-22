@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
+import glob
 import os
+import struct
 import sys
 import unittest
-import glob
 
 _glob_test_py = 'test_*.py'
 
@@ -91,7 +92,9 @@ if __name__ == '__main__':
      # print some details
     if verbose > 2:
         t = '\n           '
-        print('Python %s\n' % sys.version.replace('\n', t))
+        print('Python %s' % sys.version.replace('\n', t))
+        print("%s-bit architecture" % (8*len(struct.pack('P', 0))))
+        print('')
         if verbose > 4:
             print('Sys.path:  %s\n' % t.join(sys.path))
         if verbose > 3:
