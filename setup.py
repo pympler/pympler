@@ -5,49 +5,12 @@ To include the compiled html documentation right in the doc/, all html files fro
 the files are removed afterwards.
 
 """
-from distutils.core import setup
-import os
-import shutil
+from distutils.core   import setup
+from distutils.errors import DistutilsExecError
+from distutils.spawn  import spawn  # raises DistutilsExecError
 
-from pympler import metadata
-
-doc_dir = 'doc'
-compiled_doc_dir = os.path.join(doc_dir, 'build', 'html')
-
-def copy_doc():
-    """Copy all docs to root doc-directory.
-
-    Returns a list of all copied files and directories.
-    """
-    res = []
-    
-    files = os.listdir(compiled_doc_dir)
-    for entry in files:
-        src = os.path.join(compiled_doc_dir, entry)
-        dst = os.path.join(doc_dir, entry)
-        if os.path.exists(dst):
-            if os.path.isfile(dst):
-                os.remove(dst)
-            elif os.path.isdir(dst):
-                shutil.rmtree(dst)
-        if os.path.isfile(src):
-            shutil.copy2(src, doc_dir)
-        elif os.path.isdir(src):
-            shutil.copytree(src, os.path.join(doc_dir, entry))
-        else:
-            raise ValueError, src + " is neither file nor directory"
-        res.append(dst)
-    return res
-
-def del_copied_docs(files):
-    """Delete all files."""
-    for file in files:
-        if os.path.isfile(file):
-            os.remove(file)
-        elif os.path.isdir(file):
-            shutil.rmtree(file)
-        else:
-            raise ValueError, file + " is neither file nor directory"
+import pympler.metadata as metadata
+import os, sys
 
 def run_setup():
     setup(name=metadata.project_name,
@@ -60,7 +23,8 @@ def run_setup():
           version=metadata.version,
 
           packages=['pympler',
-                    'pympler.asizeof', 'pympler.heapmonitor', 'pympler.muppy',
+                    'pympler.asizeof', 'pympler.heapmonitor',
+                    'pympler.muppy', 'pympler.objects',
                     'test', 'test.asizeof', 'test.heapmonitor', 'test.muppy'],
           
           license=metadata.license,
@@ -75,9 +39,20 @@ def run_setup():
                        ],
           )
 
-if os.path.isdir(compiled_doc_dir):
-    files = copy_doc()
-    run_setup()
-    del_copied_docs(files)
+_test = {'try':  '-pre-install',
+         'test': '-post-install'}
+
+if len(sys.argv) > 1 and sys.argv[1] in _test:
+     # invoke  ./test/runtest.py -[pre|post]-install ...
+     # to run the unittests before or after installation
+    args = [sys.executable,  # this Python binary
+            os.path.join('test', 'runtest.py'),
+           _test[sys.argv[1]]]
+    args.extend(sys.argv[2:])
+    try:
+        sys.exit(spawn(args))
+    except DistutilsExecError:
+        print("\nError: test failed or did not run.  Try '... %s -verbose 3'" % ' '.join(sys.argv))
+        sys.exit(1)
 else:
     run_setup()

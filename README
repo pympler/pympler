@@ -2,9 +2,17 @@ README for pympler
 ==================
 
 
+Before installing Pympler, try it with your Python version::
+
+    python setup.py try
+
+If any errors are reported, check whether your Python version
+is supported by all the Pympler modules.
+
+
 Installation
-------------
-1. Build the package::
+
+1. Build the Pympler package::
 
     python setup.py build
 
@@ -12,23 +20,29 @@ Installation
 
     sudo python setup.py install
 
-2.b) For a user-specific installation run::
+2.b) For a user-specific** installation run::
 
     python setup.py --user install
 
-Note that the user-specific installation requires Python 2.6 or higher.
+3) Test the installed Pympler package::
+
+    python setup.py test
+
+
+**) Note, the user-specific installation requires
+    Python 2.6 or higher.
 
 
 Usage
 -----
-The usage of pympler is described in the documentation. It is available either
-in this distribution at *doc/index.html* or you can read it online at
-*http://packages.python.org/pympler/*.
+The usage of pympler is described in the documentation.  It is
+available either in this distribution at *doc/index.html* or
+you can read it online at *http://packages.python.org/pympler/*.
 
 
 Contributing
 ------------
-You can post wishes, bug reports or patches at our issue tracker under
-*http://code.google.com/p/pympler/issues/* or write an email to
-*pympler-dev@googlegroups.com*.
+You can post wishes, bug reports or patches at our issue tracker
+under *http://code.google.com/p/pympler/issues/* or write an
+email to *pympler-dev@googlegroups.com*.
 
