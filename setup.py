@@ -24,7 +24,7 @@ def run_setup():
 
           packages=['pympler',
                     'pympler.asizeof', 'pympler.heapmonitor',
-                    'pympler.muppy', 'pympler.objects',
+                    'pympler.muppy',
                     'test', 'test.asizeof', 'test.heapmonitor', 'test.muppy'],
           
           license=metadata.license,
