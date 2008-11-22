@@ -131,7 +131,7 @@ def run_unittests(project_path, dirs=[]):
     _spawn(_Python_path,  # use this Python binary
             os.path.join('test', 'runtest.py'),
            '-verbose', str(_Verbose + 1),
-           '-clean', *dirs)
+           '-clean', '-pre', *dirs)
 
 def print2(text):
     '''Print a headline text.
@@ -148,7 +148,7 @@ def main():
     Find and run all specified tests.
     '''
     usage = ('usage: %prog <options> [<args> ...]', '',
-             '  e.g. %prog --dist [gztar] [zip]'
+             '  e.g. %prog --dist [gztar] [zip]',
              '       %prog --doctest',
              '       %prog --html [--keep]',
              '       %prog --latex [--paper=letter|a4]',
@@ -157,8 +157,6 @@ def main():
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
                       dest='all', help='run all tests and create all docs')
-    parser.add_option('-c', '--changes', action='store_true', default=False,
-                      dest='changes', help='create the documentation changes')
     parser.add_option('-d', '--dist', action='store_true', default=False,
                       dest='dist', help='create the distributions')
     parser.add_option('-D', '--doctest', action='store_true', default=False,
@@ -203,10 +201,6 @@ def main():
     if options.pychecker:
         print2('Running pychecker')
         run_pychecker(args or ['pympler'], options.OKd)
-
-    if options.changes:
-        print2('Creating documentation changes')
-        run_sphinx(doc_path, ['changes'])
 
     if options.doctest:
         print2('Running doctest')
