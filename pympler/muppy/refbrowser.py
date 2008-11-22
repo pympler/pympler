@@ -235,7 +235,7 @@ try:
     import Tkinter as _Tkinter
     from idlelib import TreeWidget as _TreeWidget
 
-    import pympler.muppy
+    from pympler.muppy import muppy
     
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
@@ -277,14 +277,14 @@ try:
             # override, i.e. disable the editing of items
 
             # disable editing of TreeNodes
-            def edit(self, event=None): pass
-            def edit_finish(self, event=None): pass
-            def edit_cancel(self, event=None): pass
+            def edit(self, event=None): pass #PYCHOK see comment above
+            def edit_finish(self, event=None): pass #PYCHOK see comment above
+            def edit_cancel(self, event=None): pass #PYCHOK see comment above
 
     class _ReferrerTreeItem(_TreeWidget.TreeItem, _Tkinter.Label):
         """Tree item wrapper around _Node object."""
 
-        def __init__(self, parentwindow, node, reftree):
+        def __init__(self, parentwindow, node, reftree): #PYCHOK constr. calls
             """You need to provide the parent window, the node this TreeItem
             represents, as well as the tree (_Node) which the node
             belongs to.
@@ -392,8 +392,6 @@ class InteractiveBrowser(RefBrowser):
         windows
         
         """
-        if self.str_func == None:
-            self.str_func = default_str_function
         window = _Tkinter.Tk()
         sc = _TreeWidget.ScrolledCanvas(window, bg="white",\
                                        highlightthickness=0, takefocus=1)
