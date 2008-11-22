@@ -8,6 +8,12 @@ import unittest
 
 _glob_test_py = 'test_*.py'
 
+if os.linesep == '\n':
+    _print = print
+else:
+    def _print(text):
+        print(text.replace('\n', os.linesep))
+
 def get_tests(dir='.', clean=False):
     '''Get a list of test module names in the given directory.
     '''
@@ -43,11 +49,12 @@ def get_tests(dir='.', clean=False):
         res.append(test)
     return res  # sorted(res)
 
-def suite(dirs=['.'], clean=False, verbose=2):
+def suite(dirs=['.'], clean=False, pre=True, verbose=2):
     '''Create a suite with all tests from the given directories.
 
     This will also include tests from subdirectories.
     '''
+    all = True
     res = unittest.TestSuite()
     for dir in dirs:
         for test in get_tests(dir, clean):
@@ -60,22 +67,38 @@ def suite(dirs=['.'], clean=False, verbose=2):
                    mod = __import__(test)
                 res.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
             except (SyntaxError, NameError, ImportError):
-                print('WARNING: Ignoring %r due to an error while importing' % test)
+                if pre:
+                   _print('Warning: ignoring %r due to an error while importing' % test)
+                else:
+                   _print('Error: %r missing or not found' % test)
                 if verbose > 2:
                     raise  # show the error
-    return res
+                all = False
+    return res, all
 
 
 if __name__ == '__main__':
 
-     # get -clean and -verbose <level> options
-     # and the test case directories (files?)
-    clean, verbose, dirs = False, 3, sys.argv[1:]
+     # default values for options
+    clean   = False  # -c[lean]  -- remove all .pyo and .pyc files
+    pre     = True   # -pre[-install]  or  -try  before installation
+   #pre     = False  # -post[-install]  or  -test  after installation
+    verbose = 2      # -v[erbose] <level>  -- verbosity level
+
+     # get options and test case directories (files?)
+    dirs = sys.argv[1:]
     while dirs:
         t = dirs[0]
-        if '-clean'.startswith(t):
+        n = len(t)
+        if '-clean'.startswith(t) and n > 1:
             clean = True
-        elif '-verbose'.startswith(t):
+        elif ('-post-install'.startswith(t) and n > 4) or \
+             ('-test'.startswith(t) and n > 2):
+            pre = False
+        elif ('-pre-install'.startswith(t) and n > 3) or \
+             ('-try'.startswith(t) and n > 2):
+            pre = True
+        elif '-verbose'.startswith(t) and n > 1:
             verbose = int(dirs.pop(1))
         else:
             break
@@ -84,24 +107,26 @@ if __name__ == '__main__':
         dirs = ['.']
 
      # insert parent directory such that
-     # the code modules can be imported
+     # the code modules can be imported,
+     # but only for pre-install testing
     t = os.path.split(sys.path[0])
-    if t:
-       sys.path.insert(1, t[0])
+    if t and pre:
+        sys.path.insert(1, t[0])
 
      # print some details
-    if verbose > 2:
-        t = '\n           '
-        print('Python %s' % sys.version.replace('\n', t))
-        print("%s-bit architecture" % (8*len(struct.pack('P', 0))))
-        print('')
+    if verbose > 1:
+        t = '%d-bit [' % (struct.calcsize('P') << 3)
+        _print('Python %s\n' % sys.version.replace('[', t))
         if verbose > 4:
-            print('Sys.path:  %s\n' % t.join(sys.path))
+            t = '\n          '  # indentation
+            _print('Sys.path: %s\n' % t.join(sys.path))
         if verbose > 3:
-            print('Test dirs: %r\n' % dirs)
+            _print('Test dirs: %r\n' % dirs)
 
      # build and run single test suite
-    tst = suite(dirs, clean, verbose)
-    res = unittest.TextTestRunner(verbosity=verbose).run(tst)
-    if not res.wasSuccessful():
-        sys.exit(1)
+    tst, all = suite(dirs, clean=clean, pre=pre, verbose=verbose)
+    if pre or all:
+        res = unittest.TextTestRunner(verbosity=verbose).run(tst)
+        if res.wasSuccessful():
+            sys.exit(0)
+    sys.exit(1)
