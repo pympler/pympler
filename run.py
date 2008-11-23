@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import struct
 import sys
 import re
 
@@ -139,7 +140,9 @@ def print2(text):
     if _Verbose > 0:
         print ('')
         if text:
-            t = '%s (python %s)' % (text, sys.version.split()[0])
+            b =  struct.calcsize('P') << 3
+            p =  sys.version.split()[0]
+            t = '%s (%d-bit Python %s)' % (text, b, p)
             print (t)
             print ('=' * len(t))
 
