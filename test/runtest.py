@@ -59,6 +59,8 @@ def suite(dirs=['.'], clean=False, pre=True, verbose=2):
     res = unittest.TestSuite()
     for dir in dirs:
         for test in get_tests(dir, clean):
+            # Import tests relative to 'test' directory
+            test = test[test.find('.')+1:]
             try:
                 mod = test.rfind('.') + 1
                 if mod > 0:  # from test import mod
