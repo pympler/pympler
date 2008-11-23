@@ -12,7 +12,11 @@ from distutils.spawn  import spawn  # raises DistutilsExecError
 import pympler.metadata as metadata
 import os, sys
 
-def run_setup():
+def run_setup(include_tests=0):
+    tests = []
+    if include_tests:
+        tests = ['test', 'test.asizeof', 'test.heapmonitor', 'test.muppy']
+
     setup(name=metadata.project_name,
           description=metadata.description,
           long_description = metadata.long_description,
@@ -24,8 +28,7 @@ def run_setup():
 
           packages=['pympler',
                     'pympler.asizeof', 'pympler.heapmonitor',
-                    'pympler.muppy',
-                    'test', 'test.asizeof', 'test.heapmonitor', 'test.muppy'],
+                    'pympler.muppy'] + tests,
           
           license=metadata.license,
           platforms = ['any'],
@@ -55,4 +58,6 @@ if len(sys.argv) > 1 and sys.argv[1] in _test:
         print("\nError: test failed or did not run.  Try '... %s -verbose 3'" % ' '.join(sys.argv))
         sys.exit(1)
 else:
-    run_setup()
+    # Only include tests if creating a distribution package 
+    # (i.e. do not install the tests).
+    run_setup('sdist' in sys.argv)
