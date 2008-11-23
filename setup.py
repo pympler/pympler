@@ -57,7 +57,8 @@ if len(sys.argv) > 1 and sys.argv[1] in _test:
     try:
         sys.exit(spawn(args))
     except DistutilsExecError:
-        print("\nError: test failed or did not run.  Try '... %s -verbose 3'" % ' '.join(sys.argv))
+        print("%sError: test failed or did not run.  Try '... %s -verbose 3'" %\
+                  (os.linesep, ' '.join(sys.argv)))
         sys.exit(1)
 else:
     # Only include tests if creating a distribution package 
