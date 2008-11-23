@@ -3,8 +3,6 @@
 This information is used in setup.py as well as in doc/source/conf.py.
 
 """
-import inspect
-import os
 
 project_name = 'Pympler'
 version      = '0.1a1'
