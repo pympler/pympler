@@ -1,8 +1,10 @@
-"""Setup script for pympler.
+"""Setup script for Pympler.
 
-To include the compiled html documentation right in the doc/, all html files from
-`compiled_doc_dir` are moved directly into the `doc_dir`, the setup is executed, and
-the files are removed afterwards.
+To build, install and test Pympler and to try Pympler
+before building and installing it.
+
+The HTML documention is in the doc/ directory.  Point
+your browser to the ./doc/html/index.html file.
 
 """
 from distutils.core   import setup
