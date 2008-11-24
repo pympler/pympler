@@ -84,8 +84,8 @@ if __name__ == '__main__':
 
      # default values for options
     clean   = False  # -c[lean]  -- remove all .pyo and .pyc files
-    pre     = True   # -pre[-install]  or  -try  before installation
-   #pre     = False  # -post[-install]  or  -test  after installation
+    pre     = True   # -pre[-install]  -- try before installation
+   #pre     = False  # -post[-install]  -- test after installation
     verbose = 2      # -v[erbose] <level>  -- verbosity level
 
      # get options and test case directories (files?)
@@ -95,11 +95,9 @@ if __name__ == '__main__':
         n = len(t)
         if '-clean'.startswith(t) and n > 1:
             clean = True
-        elif ('-post-install'.startswith(t) and n > 4) or \
-             ('-test'.startswith(t) and n > 2):
+        elif '-post-install'.startswith(t) and n > 4:
             pre = False
-        elif ('-pre-install'.startswith(t) and n > 3) or \
-             ('-try'.startswith(t) and n > 2):
+        elif '-pre-install'.startswith(t) and n > 3:
             pre = True
         elif '-verbose'.startswith(t) and n > 1:
             verbose = int(dirs.pop(1))
