@@ -98,6 +98,19 @@ def run_pychecker(dirs, OKd=False):
 def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
     '''Create and test documentation with Sphinx.
     '''
+     # find the  sphinx-build script for
+     # Sphinx installed in this Python
+    for bin in (os.path.join(sys.exec_prefix, 'bin'), sys.exec_prefix,
+                os.path.join(sys.prefix, 'bin'), sys.prefix,
+                os.path.split(_Python_path)[0]):
+        sphinx = os.path.join(bin, 'sphinx-build')
+        if os.access(sphinx, os.X_OK):
+            break
+    else:  # maybe ./doc/sphinx-build.py
+        sphinx = 'sphinx-build.py'
+    if _Verbose > 1:
+        print ("Using %r ..." % sphinx)
+     # change to ./doc dir
     cwd = os.getcwd()
     os.chdir(doc_path)
     doctrees = os.path.join('build', 'doctrees')
@@ -115,7 +128,7 @@ def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
             opts += '-D', ('latex_paper_size=%s' % paper)
         opts += 'source', dir  # source and out dirs
         _spawn(_Python_path,  # use this Python binary
-               'sphinx-build.py',  # inside doc directory
+               sphinx,  # to run its Sphinx script
                '-b', builder, *opts)
         if keep:  # move dir up
             _rmtree(builder)
