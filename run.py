@@ -161,7 +161,7 @@ def main():
              '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
-                      dest='all', help='run all tests and create all documentaions')
+                      dest='all', help='run all tests and create all documentations')
     parser.add_option('-c', '--clean', action='store_true', default=False,
                       dest='clean', help='remove bytecode files from source and test directories')
     parser.add_option('-d', '--dist', action='store_true', default=False,
