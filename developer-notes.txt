@@ -2,8 +2,12 @@ Check-in new revision
 =====================
 
 * update CHANGELOG if necessary
-* run test suite
-* run doctests
+* run the test suite
+  $ run.py --test [--clean]
+* run the doctests
+  $ run.py --doctest
+* run PyChecker to check the source
+  $ run.py --pychecker ...
 
 
 Release a new version
@@ -12,24 +16,27 @@ Release a new version
 Tests
 -----
 
-* run pychecker, unit tests, doc tests, ...
-  $ python run.py -a
+* run the test suite 
+  $ run.py --test [--clean]
 
-* make sure tests work with all supported python versions, e.g.
-  $ python2.4 run.py --test
+* make sure the tests pass for all supported Python versions, e.g.
+  $ python2.4 run.py --test --clean
+
+* check the sources with PyChecker
+  $ run.py --pychecker
 
 Checks
 ------
   
 * check the meta data specified in pympler/metadata.py
-* check CHANGELOG file for missing entries
-* check NOTICE file for missing contributors
-* check the to-be-released module-distribution
-  $ python setup.py sdist
+* check the CHANGELOG file for missing entries
+* check the NOTICE file for missing contributors
+* check the to-be-released module distributions
+  $ run.py --dist [--html --keep]
 
 Release
 -------
   
-* release a new version to the python cheeseshop via
-  $ python setup.py sdist --formats=gztar,zip upload
+* release a new version to the Python cheeseshop via
+  $ run.py --upload
 * update the documentation at http://packages.python.org/pympler/
