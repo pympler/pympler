@@ -8,6 +8,7 @@ import re
 from optparse import OptionParser
 
 _Python_path = sys.executable  # this Python binary
+_Src_dir     = 'pympler'
 _Verbose     = 1
 
 try:
@@ -81,14 +82,14 @@ def run_pychecker(dirs, OKd=False):
     '''Run PyChecker against all specified source files and/or
     directories.
 
-    PyChecker is invoked thru the  tools/pychok postprocessor to
-    suppressed all warnings OK'd in the source code.
+    PyChecker is invoked thru the  tools/pychok postprocessor
+    to suppresse all warnings OK'd in the source code.
     '''
     no_OKd = {False: '-no-OKd', True: '--'}[OKd]
     sources = get_files(dirs, pattern='[^\n]*.py$')
     for src in sources:
         if _Verbose > 0:
-            print ("CHECKING %s ..." % src)
+            print ("Checking %s ..." % src)
         _spawn(_Python_path,  # use this Python binary
                'tools/pychok.py', no_OKd,
                '--stdlib', '--quiet',
@@ -129,6 +130,7 @@ def run_unittests(project_path, dirs=[]):
 
     If no tests are given, all unittests will be executed.
     '''
+     # run the tests using  test/runtest.py *dirs
     _spawn(_Python_path,  # use this Python binary
             os.path.join('test', 'runtest.py'),
            '-verbose', str(_Verbose + 1),
@@ -155,11 +157,13 @@ def main():
              '       %prog --doctest',
              '       %prog --html [--keep]',
              '       %prog --latex [--paper=letter|a4]',
-             '       %prog --pychecker [--OKd] [pympler | pympler/module]',
+           ('       %%prog --pychecker [--OKd] [%s | %s/module] ...' % (_Src_dir, _Src_dir)),
              '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
-                      dest='all', help='run all tests and create all docs')
+                      dest='all', help='run all tests and create all documentaions')
+    parser.add_option('-c', '--clean', action='store_true', default=False,
+                      dest='clean', help='remove bytecode files from source and test directories')
     parser.add_option('-d', '--dist', action='store_true', default=False,
                       dest='dist', help='create the distributions')
     parser.add_option('-D', '--doctest', action='store_true', default=False,
@@ -189,21 +193,30 @@ def main():
     doc_path = os.path.join(project_path, 'doc')
 
     os.environ['PYTHONPATH'] = os.pathsep.join([project_path,
-                                               #os.path.join(project_path, 'pympler'),
+                                               #os.path.join(project_path, _Src_dir),
                                                 os.environ.get('PYTHONPATH', '')])
     global _Verbose
     _Verbose = int(options.V)
 
     if options.all:
+        options.clean = True
+        options.doctest = True
         options.html = True
         options.keep = True
-        options.doctest = True
+        options.linkcheck = True
         options.test = True
         options.pychecker = True
 
+    if options.clean or options.dist:  # remove all bytecodes, first
+        codes = get_files([_Src_dir, 'test'], pattern='[^\n]*.py[c,o]$')
+        for code in codes:
+            if _Verbose > 1:
+                print ("Removing %r ..." % code)
+            os.remove(code)
+
     if options.pychecker:
         print2('Running pychecker')
-        run_pychecker(args or ['pympler'], options.OKd)
+        run_pychecker(args or [_Src_dir], options.OKd)
 
     if options.doctest:
         print2('Running doctest')
