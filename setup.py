@@ -7,12 +7,43 @@ The HTML documention is in the doc/ directory.  Point
 your browser to the ./doc/html/index.html file.
 
 """
+from distutils.core   import Command
 from distutils.core   import setup
+from distutils.dist   import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
+import os, sys
 
 import pympler.metadata as metadata
-import os, sys
+
+class BaseTestCommand(Command):
+    """Base class for the pre and the post installation commands. """
+    user_options = []
+    
+    def initialize_options(self):
+        self.param = None
+
+    def finalize_options(self): pass
+
+    def run(self):
+        args = [sys.executable,  # this Python binary
+                os.path.join('test', 'runtest.py'),
+                self.param]
+        args.extend(sys.argv[2:])
+        try:
+            sys.exit(spawn(args))
+        except DistutilsExecError:
+            print("%sError: test failed or did not run.  Try '... %s -verbose 3'" %\
+                      (os.linesep, ' '.join(sys.argv)))
+            sys.exit(1)
+
+class PreinstallTestCommand(BaseTestCommand):
+    description = "run pre-installation tests"
+    def initialize_options(self): self.param = '-pre-install'
+
+class PostinstallTestCommand(BaseTestCommand):
+    description = "run post-installation tests"
+    def initialize_options(self): self.param = '-post-install'
 
 def run_setup(include_tests=0):
     tests = []
@@ -42,25 +73,18 @@ def run_setup(include_tests=0):
                        'Programming Language :: Python',
                        'Topic :: Software Development :: Bug Tracking',
                        ],
+          cmdclass={'try': PreinstallTestCommand,
+                    'test': PostinstallTestCommand}
           )
 
-_test = {'try':  '-pre-install',
-         'test': '-post-install'}
+# hack Pympler commands into setup.py help output
+Distribution.common_usage += """
+Pympler commands
+  setup.py try     try Pympler before installation
+  setup.py test    test Pympler after installation
+"""
 
-if len(sys.argv) > 1 and sys.argv[1] in _test:
-     # invoke  ./test/runtest.py -[pre|post]-install ...
-     # to run the unittests before or after installation
-    args = [sys.executable,  # this Python binary
-            os.path.join('test', 'runtest.py'),
-           _test[sys.argv[1]]]
-    args.extend(sys.argv[2:])
-    try:
-        sys.exit(spawn(args))
-    except DistutilsExecError:
-        print("%sError: test failed or did not run.  Try '... %s -verbose 3'" %\
-                  (os.linesep, ' '.join(sys.argv)))
-        sys.exit(1)
-else:
-    # Only include tests if creating a distribution package 
-    # (i.e. do not install the tests).
-    run_setup('sdist' in sys.argv)
+# Only include tests if creating a distribution package 
+# (i.e. do not install the tests).
+run_setup('sdist' in sys.argv)
+
