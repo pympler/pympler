@@ -28,13 +28,11 @@ class BaseTestCommand(Command):
     def run(self):
         args = [sys.executable,  # this Python binary
                 os.path.join('test', 'runtest.py'),
-                self.param]
+                self.param, '-verbose', '3']
         args.extend(sys.argv[2:])
         try:
             sys.exit(spawn(args))
         except DistutilsExecError:
-            print("%sError: test failed or did not run.  Try '... %s -verbose 3'" %\
-                      (os.linesep, ' '.join(sys.argv)))
             sys.exit(1)
 
 class PreinstallTestCommand(BaseTestCommand):

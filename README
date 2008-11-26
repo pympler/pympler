@@ -18,7 +18,7 @@ Installation
 
 2.a) For a system-wide installation run::
 
-    sudo python setup.py install
+    python setup.py install
 
 2.b) For a user-specific** installation run::
 
