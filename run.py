@@ -110,9 +110,9 @@ def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
     '''
      # find the _Sphinx_build script for Sphinx installed
      # in this Python or the one in ./doc if present ...
-    for bin in (os.path.join(sys.exec_prefix, 'bin'), sys.exec_prefix,
-                os.path.join(sys.prefix, 'bin'), sys.prefix,
-                os.path.split(_Python_path)[0], doc_path):
+    for bin in (doc_path, os.path.join(sys.exec_prefix, 'bin'),
+                sys.exec_prefix, os.path.join(sys.prefix, 'bin'),
+                sys.prefix,  os.path.split(_Python_path)[0]):
         sphinx = os.path.join(bin, _Sphinx_build)
         if os.access(sphinx, os.X_OK):
             break
@@ -130,7 +130,7 @@ def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
         _mkpath(bildir)
          # see _Sphinx_build -help
         opts = '-d', doctrees
-        if not keep:
+        if _Verbose == 0:
             opts += '-q',  # only warnings, no output
         if paper:  # 'letter' or 'a4'
             opts += '-D', ('latex_paper_size=%s' % paper)
