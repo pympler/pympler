@@ -7,9 +7,17 @@ import re
 
 from optparse import OptionParser
 
-_Python_path = sys.executable  # this Python binary
-_Src_dir     = 'pympler'
-_Verbose     = 1
+_Python_path  =  sys.executable  # this Python binary
+_Sphinx_build = 'sphinx-build'  # Sphinx script, default
+_Src_dir      = 'pympler'
+_Verbose      =  1
+
+try:
+    from subprocess import call as _call
+  ##from distutils.spawn import spawn as _call  # raises DistutilsExecError
+except ImportError:  # no  subprocess.call
+    def _call(args):  # use partial substitute
+        return os.spawnlp(os.P_WAIT, args[0], args[0], *args[1:])
 
 try:
     from distutils.dir_util import mkpath as _mkpath
@@ -27,23 +35,6 @@ def _rmtree(dir):
      # unlike dist_utils.dir_util.remove_tree,
      # shutil.rmtree does ignore all errors
     shutil_rmtree(dir, True)
-
-try:
-    from subprocess import call as _call
-  ##from distutils.spawn import spawn as _call  # raises DistutilsExecError
-    def _spawn(*args):
-        '''Run command in sub-process.
-        '''
-        if _Verbose > 2:
-            print('Spawning: %s' % ' '.join(args))
-        return _call(args)
-except ImportError:
-    def _spawn(arg0, *args):
-        '''Run command in sub-process.
-        '''
-        if _Verbose > 2:
-            print('Spawning: %s %s' % (arg0, ' '.join(args)))
-        return os.spawnlp(os.P_WAIT, arg0, arg0, *args)
 
 def get_files(locations=['test'], pattern='^test_[^\n]*.py$'):
     '''Return all matching files in the given locations.
@@ -66,17 +57,37 @@ def get_files(locations=['test'], pattern='^test_[^\n]*.py$'):
                         res.append(os.path.join(root,fn))
     return res
 
-def run_dist(project_path, formats=[]):
+def run_clean(*dirs):
+    '''Remove all bytecode files from the given directories.
+    '''
+    codes = get_files(dirs, pattern='[^\n]*.py[c,o]$')
+    for code in codes:
+        if _Verbose > 1:
+            print ("Removing %r ..." % code)
+        os.remove(code)
+
+def run_command(*args):
+    '''Run a command in sub-process.
+    '''
+    if _Verbose > 2:
+        print('Running: %s' % ' '.join(args))
+    r = _call(args)
+    if r:
+        print("Running '%s ...' failed with exit status %r" % (' '.join(args[:2]), r))
+    return r
+
+def run_dist(project_path, formats=[], upload=False):
     '''Create the distributions.
     '''
     f = ','.join(formats) or []
     if f:
        f = ['--formats=%s' % f]
+    if upload:
+       f.append('upload')
     os.environ['PYTHONPATH'] = project_path
-    _spawn(_Python_path,  # use this Python binary
-           'setup.py', 'sdist',
-           '--force-manifest',
-           *f)
+    run_command(_Python_path,  # use this Python binary
+                'setup.py', 'sdist',
+                '--force-manifest', *f)
 
 def run_pychecker(dirs, OKd=False):
     '''Run PyChecker against all specified source files and/or
@@ -90,26 +101,23 @@ def run_pychecker(dirs, OKd=False):
     for src in sources:
         if _Verbose > 0:
             print ("Checking %s ..." % src)
-        _spawn(_Python_path,  # use this Python binary
-               'tools/pychok.py', no_OKd,
-               '--stdlib', '--quiet',
-                src)
+        run_command(_Python_path,  # use this Python binary
+                    os.path.join('tools', 'pychok.py'), no_OKd,
+                   '--stdlib', '--quiet', src)
 
 def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
     '''Create and test documentation with Sphinx.
     '''
-     # find the  sphinx-build script for
-     # Sphinx installed in this Python
+     # find the _Sphinx_build script for Sphinx installed
+     # in this Python or the one in ./doc if present ...
     for bin in (os.path.join(sys.exec_prefix, 'bin'), sys.exec_prefix,
                 os.path.join(sys.prefix, 'bin'), sys.prefix,
-                os.path.split(_Python_path)[0]):
-        sphinx = os.path.join(bin, 'sphinx-build')
+                os.path.split(_Python_path)[0], doc_path):
+        sphinx = os.path.join(bin, _Sphinx_build)
         if os.access(sphinx, os.X_OK):
             break
-    else:  # maybe ./doc/sphinx-build.py
-        sphinx = 'sphinx-build.py'
-    if _Verbose > 1:
-        print ("Using %r ..." % sphinx)
+    else:  # ... otherwise use _Sphinx_build as-is
+        sphinx = _Sphinx_build
      # change to ./doc dir
     cwd = os.getcwd()
     os.chdir(doc_path)
@@ -117,37 +125,36 @@ def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
     for builder in builders:
         _rmtree(doctrees)
         _mkpath(doctrees)
-        dir = os.path.join('build', builder)
-        _rmtree(dir)
-        _mkpath(dir)
-         # see  sphinx-build.py -help
+        bildir = os.path.join('build', builder)
+        _rmtree(bildir)
+        _mkpath(bildir)
+         # see _Sphinx_build -help
         opts = '-d', doctrees
         if not keep:
             opts += '-q',  # only warnings, no output
         if paper:  # 'letter' or 'a4'
             opts += '-D', ('latex_paper_size=%s' % paper)
-        opts += 'source', dir  # source and out dirs
-        _spawn(_Python_path,  # use this Python binary
-               sphinx,  # to run its Sphinx script
-               '-b', builder, *opts)
-        if keep:  # move dir up
+        opts += 'source', bildir  # source and out dirs
+        run_command(sphinx,  # run the Sphinx script
+                    '-b', builder, *opts)
+        if keep:  # move tmp up
             _rmtree(builder)
-            _mv(dir, builder)  # os.curdir
+            _mv(bildir, builder)  # os.curdir
         else:
-            _rmtree(dir)
+            _rmtree(bildir)
     _rmtree(doctrees)
     os.chdir(cwd)
 
-def run_unittests(project_path, dirs=[]):
+def run_unittests(test_path, dirs=[]):
     '''Run unittests for all given test directories.
 
     If no tests are given, all unittests will be executed.
     '''
-     # run the tests using  test/runtest.py *dirs
-    _spawn(_Python_path,  # use this Python binary
-            os.path.join('test', 'runtest.py'),
-           '-verbose', str(_Verbose + 1),
-           '-clean', '-pre', *dirs)
+     # run unittests using  test/runtest.py *dirs
+    run_command(_Python_path,  # use this Python binary
+                os.path.join(test_path, 'runtest.py'),
+                '-verbose', str(_Verbose + 1),
+                '-clean', '-pre', *dirs)
 
 def print2(text):
     '''Print a headline text.
@@ -165,8 +172,11 @@ def main():
     '''
     Find and run all specified tests.
     '''
+    global _Verbose
+
     usage = ('usage: %prog <options> [<args> ...]', '',
-             '  e.g. %prog --dist [gztar] [zip]',
+             '  e.g. %prog --clean',
+             '       %prog --dist [--upload] [gztar] [zip]',
              '       %prog --doctest',
              '       %prog --html [--keep]',
              '       %prog --latex [--paper=letter|a4]',
@@ -174,7 +184,7 @@ def main():
              '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
-                      dest='all', help='run all tests and create all documentations')
+                      dest='all', help='run all tests and create all documentation')
     parser.add_option('-c', '--clean', action='store_true', default=False,
                       dest='clean', help='remove bytecode files from source and test directories')
     parser.add_option('-d', '--dist', action='store_true', default=False,
@@ -195,10 +205,12 @@ def main():
                       dest='pychecker', help='run static code analyzer PyChecker')
     parser.add_option('--OKd', action='store_true', default=False,
                       dest='OKd', help='include PyChecker warnings OKd in source')
-    parser.add_option('-V', '--verbose', default='1',
-                      dest='V', help='set verbosity level (1)')
     parser.add_option('-t', '--test', action='store_true', default=False,
                       dest='test', help='run all or specific unit tests')
+    parser.add_option('--upload', action='store_true', default=False,
+                      dest='upload', help='upload distributions to the Python Cheese Shop')
+    parser.add_option('-V', '--verbose', default='1',
+                      dest='V', help='set verbosity level (%d)' % _Verbose)
     (options, args) = parser.parse_args()
 
     project_path = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -208,7 +220,6 @@ def main():
     os.environ['PYTHONPATH'] = os.pathsep.join([project_path,
                                                #os.path.join(project_path, _Src_dir),
                                                 os.environ.get('PYTHONPATH', '')])
-    global _Verbose
     _Verbose = int(options.V)
 
     if options.all:
@@ -221,11 +232,7 @@ def main():
         options.pychecker = True
 
     if options.clean or options.dist:  # remove all bytecodes, first
-        codes = get_files([_Src_dir, 'test'], pattern='[^\n]*.py[c,o]$')
-        for code in codes:
-            if _Verbose > 1:
-                print ("Removing %r ..." % code)
-            os.remove(code)
+        run_clean(_Src_dir, 'test')
 
     if options.pychecker:
         print2('Running pychecker')
@@ -249,11 +256,11 @@ def main():
 
     if options.test:
         print2('Running unittests')
-        run_unittests(project_path, args or ['test'])
+        run_unittests(test_path, args or ['test'])
 
     if options.dist:
         print2('Creating distribution')
-        run_dist(project_path, args or ['gztar', 'zip'])
+        run_dist(project_path, args or ['gztar', 'zip']) # XXX , upload=options.upload)
 
 
 if __name__ == '__main__':
