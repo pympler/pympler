@@ -18,13 +18,23 @@ Tests
 
 * run the test suite 
   $ run.py --test [--clean]
-
 * make sure the tests pass for all supported Python versions, e.g.
   $ python2.4 run.py --test --clean
-
 * check the sources with PyChecker
   $ run.py --pychecker
 
+Docs
+----
+
+* check that the documenation builds
+  $ run.py --html --verbose=1
+* check if doctests pass
+  $ run.py --doctest --verbose=1
+* check links
+  $ run.py --linkcheck --verbose=1
+* build the documenation
+  $ run.py --html --keep
+  
 Checks
 ------
   
