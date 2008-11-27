@@ -26,13 +26,13 @@ Tests
 Docs
 ----
 
-* check that the documenation builds
+* check that the documentation builds
   $ run.py --html --verbose=1
 * check if doctests pass
   $ run.py --doctest --verbose=1
 * check links
   $ run.py --linkcheck --verbose=1
-* build the documenation
+* build the documentation
   $ run.py --html --keep
   
 Checks
@@ -48,5 +48,5 @@ Release
 -------
   
 * release a new version to the Python cheeseshop via
-  $ run.py --upload
+  $ run.py --dist [--html --keep] --upload
 * update the documentation at http://packages.python.org/pympler/
