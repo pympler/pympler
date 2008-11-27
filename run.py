@@ -7,10 +7,9 @@ import re
 
 from optparse import OptionParser
 
-_Python_path  =  sys.executable  # this Python binary
-_Sphinx_build = 'sphinx-build'  # Sphinx script, default
-_Src_dir      = 'pympler'
-_Verbose      =  1
+_Python_path =  sys.executable  # this Python binary
+_Src_dir     = 'pympler'
+_Verbose     =  1
 
 try:
     from subprocess import call as _call
@@ -89,7 +88,7 @@ def run_dist(project_path, formats=[], upload=False):
                 'setup.py', 'sdist',
                 '--force-manifest', *f)
 
-def run_pychecker(dirs, OKd=False):
+def run_pychecker(project_path, dirs, OKd=False):
     '''Run PyChecker against all specified source files and/or
     directories.
 
@@ -102,25 +101,14 @@ def run_pychecker(dirs, OKd=False):
         if _Verbose > 0:
             print ("Checking %s ..." % src)
         run_command(_Python_path,  # use this Python binary
-                    os.path.join('tools', 'pychok.py'), no_OKd,
-                   '--stdlib', '--quiet', src)
+                    os.path.join(project_path, 'tools', 'pychok.py'),
+                    no_OKd, '--stdlib', '--quiet', src)
 
-def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
+def run_sphinx(project_path, builders=['html', 'doctest'], keep=False, paper=''):
     '''Create and test documentation with Sphinx.
     '''
-     # find the _Sphinx_build script for Sphinx installed
-     # in this Python or the one in ./doc if present ...
-    for bin in (doc_path, os.path.join(sys.exec_prefix, 'bin'),
-                sys.exec_prefix, os.path.join(sys.prefix, 'bin'),
-                sys.prefix,  os.path.split(_Python_path)[0]):
-        sphinx = os.path.join(bin, _Sphinx_build)
-        if os.access(sphinx, os.X_OK):
-            break
-    else:  # ... otherwise use _Sphinx_build as-is
-        sphinx = _Sphinx_build
      # change to ./doc dir
-    cwd = os.getcwd()
-    os.chdir(doc_path)
+    os.chdir(os.path.join(project_path, 'doc'))
     doctrees = os.path.join('build', 'doctrees')
     for builder in builders:
         _rmtree(doctrees)
@@ -135,24 +123,25 @@ def run_sphinx(doc_path, builders=['html', 'doctest'], keep=False, paper=''):
         if paper:  # 'letter' or 'a4'
             opts += '-D', ('latex_paper_size=%s' % paper)
         opts += 'source', bildir  # source and out dirs
-        run_command(sphinx,  # run the Sphinx script
+        run_command(_Python_path,  # use this Python binary
+                    os.path.join(project_path, 'tools', 'sphinx.py'),
                     '-b', builder, *opts)
-        if keep:  # move tmp up
+        if keep:  # move bildir up
             _rmtree(builder)
             _mv(bildir, builder)  # os.curdir
         else:
             _rmtree(bildir)
     _rmtree(doctrees)
-    os.chdir(cwd)
+    os.chdir(project_path)
 
-def run_unittests(test_path, dirs=[]):
+def run_unittests(project_path, dirs=[]):
     '''Run unittests for all given test directories.
 
     If no tests are given, all unittests will be executed.
     '''
      # run unittests using  test/runtest.py *dirs
     run_command(_Python_path,  # use this Python binary
-                os.path.join(test_path, 'runtest.py'),
+                os.path.join(project_path, 'test', 'runtest.py'),
                 '-verbose', str(_Verbose + 1),
                 '-clean', '-pre', *dirs)
 
@@ -214,9 +203,6 @@ def main():
     (options, args) = parser.parse_args()
 
     project_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-    test_path = os.path.join(project_path, 'test')
-    doc_path = os.path.join(project_path, 'doc')
-
     os.environ['PYTHONPATH'] = os.pathsep.join([project_path,
                                                #os.path.join(project_path, _Src_dir),
                                                 os.environ.get('PYTHONPATH', '')])
@@ -236,27 +222,27 @@ def main():
 
     if options.pychecker:
         print2('Running pychecker')
-        run_pychecker(args or [_Src_dir], options.OKd)
+        run_pychecker(project_path, args or [_Src_dir], options.OKd)
 
     if options.doctest:
         print2('Running doctest')
-        run_sphinx(doc_path, ['doctest'])
+        run_sphinx(project_path, ['doctest'])
 
     if options.html:
         print2('Creating HTML documention')
-        run_sphinx(doc_path, ['html'], keep=options.keep)
+        run_sphinx(project_path, ['html'], keep=options.keep)
 
     if options.latex:
         print2('Creating LaTex (PDF) documention')
-        run_sphinx(doc_path, ['latex'], paper=options.paper)
+        run_sphinx(project_path, ['latex'], paper=options.paper)
 
     if options.linkcheck:
         print2('Checking documention links')
-        run_sphinx(doc_path, ['linkcheck'])
+        run_sphinx(project_path, ['linkcheck'])
 
     if options.test:
         print2('Running unittests')
-        run_unittests(test_path, args or ['test'])
+        run_unittests(project_path, args or ['test'])
 
     if options.dist:
         print2('Creating distribution')
