@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
-    run Sphinx, the Python documentation tool,
-    if installed in the current Python build.
-    Otherwise try the  sphi.x-build command
+'''Run Sphinx, the Python documentation tool.
 
-    Originals at <http://sphinx.pocoo.org/>
+   First try running Sphinx installed in the current
+   Python build.  If that fails, try the standard
+   ``sphinx-build`` command which may by installed in
+   a different Python version.  If that fails, punt.
+
+   Originals at *http://sphinx.pocoo.org/*.
 '''
 
 import sys
