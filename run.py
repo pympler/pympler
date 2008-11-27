@@ -169,6 +169,7 @@ def main():
              '       %prog --doctest',
              '       %prog --html [--keep]',
              '       %prog --latex [--paper=letter|a4]',
+             '       %prog --linkcheck',
            ('       %%prog --pychecker [--OKd] [%s | %s/module] ...' % (_Src_dir, _Src_dir)),
              '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
