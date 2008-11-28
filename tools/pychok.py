@@ -44,7 +44,7 @@
    the Python source line.
 '''
 
-__version__ = '2.9 (Nov 26, 2008)'
+__version__ = '2.10 (Nov 28, 2008)'
 __all__     = ('Processor', 'main')
 
 import os, sys
@@ -59,11 +59,13 @@ _Out   =  sys.stdout  # output file
 try:
     from subprocess import Popen, PIPE
      # see <http://docs.python.org/library/subprocess.html#replacing-os-popen>
-    def _popen(cmd, *unused):  # mode='r' only
-        return Popen(cmd, shell=True, stdout=PIPE).stdout
+     # and <http://bugs.python.org/issue4194> for subprocess.Popen vs os.popen
+    def _popen(cmd):  # return stdout
+        return Popen(cmd, shell=True, bufsize=-1, stdout=PIPE).stdout
 
 except ImportError:  # no subprocess
-    _popen = os.popen
+    def _popen(cmd):  # return stdout
+        return os.popen(cmd, 'r')  # bufsize=-1 by default
 
 def _printf(fmt, *args, **kwds):
     '''Formatted print.
@@ -224,7 +226,7 @@ class Processor(object):
          # build cmd, run it and capture output
         c = cmd + ' ' + ' '.join(args)
         self.debugf('running %r ...', c)
-        m = _popen(c, 'r').readlines()
+        m = _popen(c).readlines()
         self.debugf('%s lines of %r output', len(m), cmd)
         return m  # output as lines
 
