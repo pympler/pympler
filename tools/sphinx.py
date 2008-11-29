@@ -5,7 +5,7 @@
 
    First try running Sphinx installed in the current
    Python build.  If that fails, try the standard
-   ``sphinx-build`` command which may by installed in
+   ``sphinx-build`` command which may be installed in
    a different Python version.  If that fails, punt.
 
    Originals at *http://sphinx.pocoo.org/*.
