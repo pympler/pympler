@@ -75,12 +75,14 @@ def run_setup(include_tests=0):
                     'test': PostinstallTestCommand}
           )
 
-# hack Pympler commands into setup.py help output
-Distribution.common_usage += """
+try:  # hack Pympler commands into setup.py help output
+    Distribution.common_usage += """
 Pympler commands
   setup.py try     try Pympler before installation
   setup.py test    test Pympler after installation
 """
+except AttributeError:
+    pass
 
 # Only include tests if creating a distribution package 
 # (i.e. do not install the tests).
