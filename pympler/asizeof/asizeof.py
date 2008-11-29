@@ -42,6 +42,9 @@ sizes of Python objects (for Python 2.2 or later [#test]_).
 
 **Public Classes** [#unsafe]_
 
+   An instance of class **Asized** is returned for each object sized
+   with the **asized** function or method.
+
    Class **Asizer** may be used to accumulate the results of several
    **asizeof** or **asizesof** calls.  After creating an **Asizer** instance,
    use methods **asizeof** and **asizesof** as needed to size any
@@ -1452,8 +1455,8 @@ class _Prof(object):
  # public classes
 
 class Asized(object):
-    '''Store the results of a sized object
-       in these attributes:
+    '''Store the results of an **asized** object
+       in these 4 attributes:
 
          *size*  -- total size of the object
 
@@ -1461,8 +1464,7 @@ class Asized(object):
 
          *name*  -- name or ``repr`` of the object
 
-         *refs*  -- tuple containing an instance
-                    of **Asized** for each referent
+         *refs*  -- tuple containing an **Asized** instance for each referent
     '''
     def __init__(self, size, flat, refs=(), name=None):
         self.size = size  # total size
@@ -1958,14 +1960,13 @@ def asized(*objs, **opts):
            *stats=0.0*     -- print statistics
 
        If only one object is given, the return value is the **Asized**
-       instance for that object.
+       instance for that object.  Otherwise, the length of the returned
+       tuple matches the number of given objects.
 
        Set *detail* to the desired referents level (recursion depth).
 
        See function **asizeof** for descriptions of the other options.
 
-       The length of the returned tuple matches the number of given
-       objects, if more than one object is given.
     '''
     if 'all' in opts:
         raise KeyError('invalid option: %s=%r' % ('all', opts['all']))

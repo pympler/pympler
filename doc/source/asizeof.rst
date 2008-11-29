@@ -12,6 +12,8 @@ Introduction
 Asizer
 ------
 
+.. autoclass:: Asized
+
 .. autoclass:: Asizer
 
    .. automethod:: asized
