@@ -12,10 +12,10 @@ http://code.google.com/p/pympler/issues.
 asizeof
 -------
 
-A Python-level implementation to estimate the size of objects by Jean
-Brouwers. This implementation has been published on
+Asizeof is a pure-Python module to estimate the size of objects by Jean
+Brouwers. This implementation has been published previously on
 aspn.activestate.com. It is possible to determine the size of an
-object and its referents recursively up to a specified level. asizeof of is
+object and its referents recursively up to a specified level. asizeof is also
 distributed with muppy and allows the usage of muppy with Python versions prior
 to Python 2.6.
 
@@ -42,7 +42,7 @@ of the umbrella project guppy. Heapy has a very mathematical approach as it
 works in terms of sets, partitions, and equivalence relations.  It allows to
 gather information about objects at any given time, but only objects starting
 from a specific root object. Type information for standard objects is supported
-by default and type information for non-standard object type information can be
+by default and type information for non-standard object types can be
 added through an interface.
 
 URL: http://guppy-pe.sourceforge.net
