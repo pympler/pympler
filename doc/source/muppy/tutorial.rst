@@ -215,11 +215,13 @@ method a bit, so that the associated commands are deleted as well::
         if index2 is None:
             index2 = index1
         cmds = []
-        for i in range(self.index(index1), self.index(index2)+1):
-            if self.entryconfig(i).has_key('command'):
-                c = str(self.entrycget(i, 'command'))
-                if c in self._tclCommands:
-                    cmds.append(c)
+        (num_index1, num_index2) = (self.index(index1), self.index(index2))
+        if (num_index1 is not None) and (num_index2 is not None):
+            for i in range(num_index1, num_index2 + 1):
+                if 'command' in self.entryconfig(i):
+                    c = str(self.entrycget(i, 'command'))
+                    if c in self._tclCommands:
+                        cmds.append(c)
         self.tk.call(self._w, 'delete', index1, index2)
         for c in cmds:
             self.deletecommand(c)
@@ -244,7 +246,10 @@ methods. Let's do it again.::
     types |   # objects |   total size
   ======= | =========== | ============
 
-Yes, this looks definitely better. The memory leak is gone. 
+Yes, this looks definitely better. The memory leak is gone.
+
+The problem is fixed for Python versions 2.5 and higher so updated
+installations will not face this leak.
 	    
 
 .. 	   http://bugs.python.org/issue1342811
