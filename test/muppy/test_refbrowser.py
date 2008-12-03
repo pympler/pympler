@@ -26,7 +26,7 @@ class TreeTest(unittest.TestCase):
             branch3.children.append(i)
         
     def test_node(self):
-        """Check node functionality.
+        """Test node functionality.
 
         _Nodes can be created, linked to each other, and the output function
         should return the expected result.
@@ -45,6 +45,7 @@ class TreeTest(unittest.TestCase):
         n.children.append(2)
         
     def test_get_tree(self):
+        """Test reference browser tree representation."""
         #root <- ref1 <- ref11
         #     <- ref11 (already included)
         #     <- ref2 <- ref22

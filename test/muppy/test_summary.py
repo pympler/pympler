@@ -14,13 +14,14 @@ except ImportError:
 class SummaryTest(unittest.TestCase):
 
     def test_repr(self):
-        """Check that the right representation is returned. """
+        """Test that the right representation is returned. """
         self.assert_(summary._repr(''), "<type 'str'>")
         self.assert_(summary._repr('', 1), "<type 'str'>")
         self.assert_(summary._repr('', verbosity=1), "<type 'str'>")
         self.assert_(summary._repr('', verbosity=100), "<type 'str'>")
 
     def test_summarize(self):
+        """Test summarize method. """
         objects = [1, 'a', 'b', 'a', 5, [], {}]
         expected = [[summary._repr(''), 3, 3*_getsizeof('a')],\
                     [summary._repr(1), 2, 2*_getsizeof(1)],\
@@ -31,6 +32,7 @@ class SummaryTest(unittest.TestCase):
             self.assert_(row_e in expected)
 
     def test_summary_diff(self):
+        """Test summary diff. """
         left = [[str(str), 3, 3*_getsizeof('a')],\
                 [str(int), 2, 2*_getsizeof(1)],\
                 [str(list), 1, _getsizeof([])],\
@@ -52,8 +54,7 @@ class SummaryTest(unittest.TestCase):
         
 
     def test_subtract(self):
-        """Check that a single object's data is correctly subtracted from a
-        summary.
+        """Test that a single object's data is correctly subtracted from a summary.
         - result in correct total size and total number of objects
         - if object was not listed before, it should be listed negative
           afterwards
@@ -97,7 +98,7 @@ class SummaryTest(unittest.TestCase):
         self.assert_(checked_str, "no str found in summ")
 
     def test_sweep(self):
-        """Check that all and only empty entries are removed from a summary."""
+        """Test that all and only empty entries are removed from a summary."""
         objects = ['the', 'quick', 'brown', 'fox', 1298, 123, 234, [], {}]
         summ = summary.summarize(objects)
         # correct removal of rows when sizes are empty
@@ -130,7 +131,7 @@ class SummaryTest(unittest.TestCase):
         self.assert_(found_string == True)
 
     def test_traverse(self):
-        """Check that all objects of a summary are traversed."""
+        """Test that all objects of a summary are traversed."""
         touched = []
         def remember(o, touched):
             touched.append(o)

@@ -15,11 +15,11 @@ except ImportError:
 class MuppyTest(unittest.TestCase):
 
     def test_objects(self):
-        """Check that objects returns a non-empty list."""
+        """Test that objects returns a non-empty list."""
         self.failUnless(len(muppy.get_objects()) > 0)
 
     def test_diff(self):
-        """Check if the diff of to object lists is correct.
+        """Test if the diff of to object lists is correct.
 
         The diff has to work in both directions, that is it has to show
         newly created objects, as well as removed objects.
@@ -49,7 +49,7 @@ class MuppyTest(unittest.TestCase):
         self.assertEqual(muppy.get_diff(list1, list4), expected)
 
     def test_filter_by_type(self):
-        """Check that only elements of a certain type are included,
+        """Test that only elements of a certain type are included,
         no elements are removed which belong to this type and 
         no elements are added."""
         s = (s1, s2, s3, s4) = ('', 'a', 'b', 'a')
@@ -64,7 +64,7 @@ class MuppyTest(unittest.TestCase):
             self.assertEqual(element in objects, True)
 
     def test_filter_by_size(self):
-        """Check that only elements within the specified size boundaries 
+        """Test that only elements within the specified size boundaries 
         are returned. 
         Also verify that if minimum is larger than maximum an exception is 
         raised."""
@@ -81,7 +81,7 @@ class MuppyTest(unittest.TestCase):
         self.assertRaises(ValueError, muppy.filter, objects, min=17, max=16)
 
     def test_get_referents(self):
-        """Check that referents are included in return value.
+        """Test that referents are included in return value.
 
         Per default, only first level referents should be returned.
         If specified otherwise referents from even more levels are included
@@ -112,7 +112,7 @@ class MuppyTest(unittest.TestCase):
             self.assert_((o in l0) or (o in l1) or (o in l2))
         
     def test_get_size(self):
-        """Check that the return value is the sum of the size of all objects."""
+        """Test that the return value is the sum of the size of all objects."""
         (o1, o2, o3, o4, o5) = (1, 'a', 'b', 4, 5)
         list = [o1, o2, o3, o4, o5]
         expected = 0
@@ -123,7 +123,7 @@ class MuppyTest(unittest.TestCase):
 
         # do to the poor performance excluded from tests, for now
 #    def test_get_usage(self):
-#        """Check that the return value reflects changes to the memory usage.
+#        """Test that the return value reflects changes to the memory usage.
 #
 #        For functions which leave the memory unchanged a None should be
 #        returned.
@@ -164,7 +164,7 @@ class MuppyTest(unittest.TestCase):
 #        self.assert_(res is not None)
 
     def test_is_containerobject(self):
-        """Check that (non-)container objects are identified correctly."""
+        """Test that (non-)container objects are identified correctly."""
         self.assertTrue(muppy._is_containerobject([]))
         self.assertTrue(muppy._is_containerobject((1,)))
         self.assertTrue(muppy._is_containerobject({}))
@@ -175,7 +175,7 @@ class MuppyTest(unittest.TestCase):
         self.assertFalse(muppy._is_containerobject(''))
         
     def test_remove_duplicates(self):
-        """Verify that this operations returns a duplicate-free lists. 
+        """Test that this operations returns a duplicate-free lists. 
         
         That, is no objects are listed twice. This does not apply to objects
         with same values."""
@@ -188,7 +188,7 @@ class MuppyTest(unittest.TestCase):
             self.assert_(o in expected)
 
     def test_sort(self):
-        """Check that objects are sorted by size."""
+        """Test that objects are sorted by size."""
         objects = ['', 'a', 'ab', 'ab', 'abc', '0']
         objects = muppy.sort(objects)
         while len(objects) > 1:

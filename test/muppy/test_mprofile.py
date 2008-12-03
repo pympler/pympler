@@ -5,7 +5,7 @@ from pympler.muppy import mprofile
 class MProfileTest(unittest.TestCase):
 
     def test_codepoint_included(self):
-        """Check that only valid codepoints are returned."""
+        """Test that only valid codepoints are returned."""
         prof = mprofile.MProfiler()
         # test single pre-defined codepoints
         prof.codepoints = [(None, None, None)]

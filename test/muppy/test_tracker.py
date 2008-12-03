@@ -34,7 +34,7 @@ class TrackerTest(unittest.TestCase):
         return res
         
     def test_stracker_diff(self):
-        """Check that the diff is computed correctly.
+        """Test that the diff is computed correctly.
 
         This includes that
         - newly created objects are listed
@@ -78,7 +78,7 @@ class TrackerTest(unittest.TestCase):
 #        self.assert_(muppy.get_usage(tmp_tracker.print_diff, [], []) == None)
         
     def test_stracker_create_summary(self):
-        """Check that a summary is created correctly.
+        """Test that a summary is created correctly.
         
         This can only be done heuristically, e.g that most recent objects are
         included.
@@ -108,7 +108,7 @@ class TrackerTest(unittest.TestCase):
         self.assert_(len(tmp) != 0)
         
     def test_stracker_store_summary(self):
-        """Check that a summary is stored under the correct key and most
+        """Test that a summary is stored under the correct key and most
         recent objects are included.
 
         """
@@ -128,6 +128,7 @@ class TrackerTest(unittest.TestCase):
 # now the tests for the object tracker
 #
     def test_otracker_get_objects(self):
+        """Test object tracker."""
         otracker = tracker.ObjectTracker()
         o = self._get_indicator()
         # indicator object should be in result set
@@ -136,6 +137,7 @@ class TrackerTest(unittest.TestCase):
         self.assert_(o not in otracker._get_objects(ignore=[o]))
 
     def test_otracker_diff(self):
+        """Test object tracker diff."""
         import inspect
         # indicator object should be listed in diff
         otracker = tracker.ObjectTracker()
