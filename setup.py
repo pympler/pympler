@@ -8,10 +8,18 @@ your browser to the ./doc/html/index.html file.
 
 """
 import sys
+import pympler.metadata as metadata
+
+def _not_supported(why):
+    print('NotImplementedError: ' + why + '.')
+    if 'try' in sys.argv:
+        print(metadata.long_description)
+    sys.exit(1)
+
 if sys.hexversion < 0x2040000:
-    raise NotImplementedError('Pympler requires Python 2.4 or newer')
+    _not_supported('Pympler requires Python 2.4 or newer')
 if sys.hexversion > 0x3000000:
-    raise NotImplementedError('Pympler not yet supported on Python ' + sys.version.split()[0])
+    _not_supported('Pympler not yet supported on Python ' + sys.version.split()[0])
 
 import os
 from distutils.core   import Command
@@ -20,7 +28,6 @@ from distutils.dist   import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
 
-import pympler.metadata as metadata
 
 class BaseTestCommand(Command):
     """Base class for the pre and the post installation commands. """

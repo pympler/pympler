@@ -32,7 +32,7 @@ Python objects.
 Pympler is written entirely in Python, with no dependencies other
 than standard Python modules and libraries.  All Pympler modules
 work with Python 2.4, 2.5 and 2.6.  Module  asizeof has also been
-tested with Python 2.2, 2.3 and 3.0rc2 on several Linux distros,
-MacOS X (Intel and PPC), Solaris 10 (Opteron) and Windows XP with
-32-bit and several 64-bit Python builds.
+tested with Python 2.2, 2.3 and 3.0 on a number of Linux distros,
+MacOS X (10.4.11 Intel and 10.3.9 PPC), Solaris 10 (Opteron) and
+Windows XP with 32-bit and several 64-bit Python builds.
 '''
