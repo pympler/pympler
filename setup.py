@@ -7,12 +7,18 @@ The HTML documention is in the doc/ directory.  Point
 your browser to the ./doc/html/index.html file.
 
 """
+import sys
+if sys.hexversion < 0x2040000:
+    raise NotImplementedError('Pympler requires Python 2.4 or newer')
+if sys.hexversion > 0x3000000:
+    raise NotImplementedError('Pympler not yet supported on Python ' + sys.version.split()[0])
+
+import os
 from distutils.core   import Command
 from distutils.core   import setup
 from distutils.dist   import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
-import os, sys
 
 import pympler.metadata as metadata
 
