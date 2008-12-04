@@ -151,9 +151,9 @@ sizes of Python objects (for Python 2.2 or later [#test]_).
      of the type or class is listed in ``_builtin_modules`` below.
 
 .. [#test] Tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
-     3.0rc3 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel)
-     and Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit
-     Python and on RHEL 3u7 and Solaris 10 both 64-bit Python.
+     3.0 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel) and
+     Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit Python
+     and on RHEL 3u7 and Solaris 10 both 64-bit Python.
 
 '''  #PYCHOK expected
 
@@ -168,7 +168,7 @@ import sys
 import types    as     Types
 import weakref  as     Weakref
 
-__version__ = '5.10 (Oct 30, 2008)'
+__version__ = '5.10 (Dec 04, 2008)'
 __all__     = ['adict', 'asized', 'asizeof', 'asizesof',
                'Asized', 'Asizer',  # classes
                'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
