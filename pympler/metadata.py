@@ -5,7 +5,7 @@ This information is used in setup.py as well as in doc/source/conf.py.
 """
 
 project_name = 'Pympler'
-version      = '0.1a1'
+version      = '0.1'
 url          = 'http://packages.python.org/pympler/'
 license      = 'Apache License, Version 2.0' #PYCHOK valid
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'

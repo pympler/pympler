@@ -104,6 +104,33 @@ def run_pychecker(project_path, dirs, OKd=False):
                     os.path.join(project_path, 'tools', 'pychok.py'),
                     no_OKd, '--stdlib', '--quiet', src)
 
+def zip_docs(path, target):
+    '''Zip the documentation to be uploaded to the Cheeseshop. 
+    Compress all files found in `path` recursively and strip the leading path
+    component. The file is written to `target`.
+    '''
+    import zipfile
+    import glob
+
+    def _strippath(file, path=path):
+        return file[len(path)+len(os.sep):]
+
+    zip = zipfile.ZipFile(target, 'w')
+    for name in glob.glob(os.path.join(path,'*')):
+        if os.path.isdir(name):
+            for dirpath, dirnames, filenames in os.walk(name):
+                for fname in filenames:
+                    file = os.path.join(dirpath, fname)
+                    if _Verbose > 1:
+                        print ("Add " + _strippath(file))
+                    zip.write(file, _strippath(file), zipfile.ZIP_DEFLATED)
+        else:
+            if _Verbose > 1:
+                print ("Add " + _strippath(name))
+            zip.write(name, _strippath(name), zipfile.ZIP_DEFLATED)
+    zip.close()
+
+
 def run_sphinx(project_path, builders=['html', 'doctest'], keep=False, paper=''):
     '''Create and test documentation with Sphinx.
     '''
@@ -129,6 +156,7 @@ def run_sphinx(project_path, builders=['html', 'doctest'], keep=False, paper='')
         if keep:  # move bildir up
             _rmtree(builder)
             _mv(bildir, builder)  # os.curdir
+            zip_docs(builder, os.path.join('..', 'dist', 'pympler-docs.zip'))
         else:
             _rmtree(bildir)
     _rmtree(doctrees)
@@ -247,7 +275,7 @@ def main():
 
     if options.dist:
         print2('Creating distribution')
-        run_dist(project_path, args or ['gztar', 'zip']) # XXX , upload=options.upload)
+        run_dist(project_path, args or ['gztar', 'zip'], upload=options.upload)
 
 
 if __name__ == '__main__':
