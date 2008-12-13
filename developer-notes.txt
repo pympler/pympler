@@ -49,4 +49,4 @@ Release
   
 * release a new version to the Python cheeseshop via
   $ run.py --dist [--html --keep] --upload
-* update the documentation at http://packages.python.org/pympler/
+* update the documentation at http://packages.python.org/Pympler/
