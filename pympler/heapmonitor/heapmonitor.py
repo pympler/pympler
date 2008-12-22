@@ -32,8 +32,6 @@ except ImportError: # Python 3.0
     def instancemethod(*args):
         return args[0]
 from inspect     import stack, getmembers
-from subprocess  import Popen, PIPE
-from os          import getpid
 
 try:
     import cPickle as pickle
@@ -42,6 +40,7 @@ except ImportError:
 import gc
 
 import pympler.asizeof as asizeof
+import pympler.process
 
 __all__ = ['TrackedObject', 'track_change', 'track_object', 'track_class',
            'detach_class', 'detach_all', 'detach_all_classes', 'clear',
@@ -531,76 +530,6 @@ else:
 # Snapshots
 #
 
-# Get memory allocated to the process. How to get hold of this information is
-# platform specific. First try to use the resource module. If that does not
-# exist, try a fallback for Windows. If 0 is returned (Linux/Solaris), try to read the
-# stat file and the ps command. If all fails, return 0.
-memory = lambda : 0
-
-def _memory_ps():
-    """
-    Get virtual size of current process by 'ps'.
-    This should work for MacOS X, Solaris, Linux.
-    """
-    try:
-        p = Popen(['/bin/ps', '-p%s' % getpid(), '-o', 'rss,vsz'],
-                  stdout=PIPE, stderr=PIPE)
-    except OSError:
-        pass
-    else:
-        s = p.communicate()[0].split()
-        if p.returncode == 0 and len(s) >= 2:
-            return int(s[-1]) * 1024
-    return 0
-
-def _memory_proc():
-    """
-    Get virtual size of current process by reading the process' stat file.
-    This should work for Linux.
-    """
-    vsz = 0
-    try:
-        stat = open('/proc/self/stat')
-    except IOError:
-        pass
-    else:
-        vsz = int( stat.read().split()[22] )
-        stat.close()
-    return vsz
-    
-try:    
-    import resource
-    def _memory_generic():
-        """
-        Get resident set size of current process through resource module. Only
-        available on Unix. Does not work with any platform tested on.
-        """
-        return resource.getrusage(resource.RUSAGE_SELF)[4]
-
-    if _memory_generic():
-        memory = _memory_generic
-    elif _memory_proc():
-        memory = _memory_proc
-    elif _memory_ps():
-        memory = _memory_ps
-
-except ImportError:
-    try:
-        # Requires pywin32
-        from win32process import GetProcessMemoryInfo
-        from win32api import GetCurrentProcess
-    except ImportError:
-        # TODO Emit Warning:
-        #print "It is recommended to install pywin32 when running pympler on Microsoft Windows."
-        pass
-    else:
-        def _memory_windows():
-            process_handle = GetCurrentProcess()
-            memory_info = GetProcessMemoryInfo( process_handle )
-            return memory_info['PeakWorkingSetSize']
-        memory = _memory_windows
-
-
 class Footprint:
     def __init__(self):
         self.tracked_total = 0
@@ -648,7 +577,7 @@ def create_snapshot(description=''):
             fp.asizeof_total = asizeof.asizeof(all=True, code=True)
         else:
             fp.asizeof_total = 0
-        fp.system_total = memory()
+        fp.system_total = pympler.process.ProcessMemoryInfo()
         fp.desc = str(description)
 
         # Compute overhead of all structures, use sizer to exclude tracked objects(!)
@@ -1047,7 +976,7 @@ class HtmlStats(MemStats):
                 _get_timestamp(fp.timestamp)))
 
             data = {}
-            data['sys']      = _pp(fp.system_total)
+            data['sys']      = _pp(fp.system_total.vsz)
             data['tracked']  = _pp(fp.tracked_total)
             data['asizeof']  = _pp(fp.asizeof_total)
             data['overhead'] = _pp(getattr(fp, 'overhead', 0))
@@ -1268,7 +1197,7 @@ def print_snapshots(fobj=sys.stdout):
         if label == '':
             label = _get_timestamp(fp.timestamp)
         sample = "%-32s %15s (%11s) %15s\n" % \
-            (label, _pp(fp.system_total), _pp(fp.asizeof_total), 
+            (label, _pp(fp.system_total.vsz), _pp(fp.asizeof_total), 
             _pp(fp.tracked_total))
         fobj.write(sample)
 

@@ -19,6 +19,7 @@ Table of Content
 * :ref:`asizeof` - A description of the asizeof module.
 * :ref:`heapmonitor` - A description of the heap monitor module.
 * :ref:`muppy` - A description of the muppy module.
+* :ref:`process` - A description of the process module.
 * :ref:`related_work` - Other projects which deal which memory profiling in
   Python are mentioned in the this section.
 * :ref:`glossary` - A few basic terms used throughout the documentation.

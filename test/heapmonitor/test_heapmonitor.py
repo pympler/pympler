@@ -33,6 +33,7 @@ except ImportError:
     from io import StringIO, BytesIO
 
 from pympler.heapmonitor.heapmonitor import *
+import pympler.process
 
 class Foo:
     def __init__(self):
@@ -200,15 +201,18 @@ class SnapshotTestCase(unittest.TestCase):
         create_snapshot()
 
         fp = footprint[0]
-        #assert fp.system_total > 0
         assert fp.overhead > 0
         assert fp.tracked_total > 0
         assert fp.asizeof_total > 0
-
-        #assert fp.system_total > fp.overhead
-        #assert fp.system_total > fp.tracked_total
-        #assert fp.system_total > fp.asizeof_total
         assert fp.asizeof_total >= fp.tracked_total
+
+        if pympler.process.is_available():
+            assert fp.system_total.vsz > 0
+            assert fp.system_total.rss > 0
+            assert fp.system_total.vsz >= fp.system_total.rss 
+            assert fp.system_total.vsz > fp.overhead
+            assert fp.system_total.vsz > fp.tracked_total
+            assert fp.system_total.vsz > fp.asizeof_total
 
     def test_desc(self):
         """Test footprint description.
