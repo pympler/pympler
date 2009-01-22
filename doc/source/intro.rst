@@ -6,16 +6,16 @@ the lifetime of Python objects can be obtained.  Undesirable or
 unexpected runtime behavior like memory bloat and other "pymples"
 can easily be identified.
 
-Pympler integrates 3 previously separate modules into a single,
+Pympler integrates three previously separate modules into a single,
 comprehensive profiling tool.  The :ref:`asizeof <asizeof>` module
 provides basic size information for one or several Python objects,
 module :ref:`muppy <muppy>` is used for on-line monitoring of a Python
-application and module :ref:`heapmonitor <heapmonitor>` provides
+application and module :ref:`Class Tracker <classtracker>` provides
 off-line analysis of the lifetime of selected Python objects.
 
 Pympler is written entirely in Python, with no dependencies to
-external libraries or projects. Both the :ref:`heapmonitor
-<heapmonitor>` and the :ref:`muppy <muppy>` module will work with
+external libraries or projects. Both the :ref:`Class Tracker
+<classtracker>` and the :ref:`muppy <muppy>` module will work with
 Python 2.4, 2.5, and 2.6. The :ref:`asizeof <asizeof>` module has
 been tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
 3.0rc3 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel) and
@@ -56,7 +56,7 @@ of memory.  She would like to reduce the memory footprint of her
 program by optimizing or restructuring her code.  She has a number of
 optimization candidates and she would like to know if optimizing one
 of them would likely reduce the total memory footprint.  Helen uses
-the :ref:`heapmonitor <heapmonitor>` to track and profile her
+the :ref:`Class Tracker <classtracker>` to track and profile her
 candidate classes.  The results tell her which class instances take up
 the largest shares of memory and are therefore best suited for
 optimization attempts.  After trying to optimize her code she runs the

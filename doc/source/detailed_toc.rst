@@ -7,9 +7,10 @@ Below you can find a complete overview of all pages of this documentation.
 
    intro
    asizeof
-   heapmonitor
+   classtracker
    muppy/muppy
-   process
+   library/library
+   tutorials/tutorials
    related
    glossary
    changes
@@ -17,5 +18,3 @@ Below you can find a complete overview of all pages of this documentation.
 
 .. the following should be part of the docs, but are not created, yet.
 ..   remarks
-..   tutorial
-..   library/library

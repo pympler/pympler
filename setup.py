@@ -59,7 +59,8 @@ class PostinstallTestCommand(BaseTestCommand):
 def run_setup(include_tests=0):
     tests = []
     if include_tests:
-        tests = ['test', 'test.asizeof', 'test.heapmonitor', 'test.muppy']
+        tests = ['test', 'test.asizeof', 'test.tracker', 'test.muppy',
+                 'test.gui']
 
     setup(name=metadata.project_name,
           description=metadata.description,
@@ -71,8 +72,8 @@ def run_setup(include_tests=0):
           version=metadata.version,
 
           packages=['pympler',
-                    'pympler.asizeof', 'pympler.heapmonitor',
-                    'pympler.muppy'] + tests,
+                    'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
+                    'pympler.muppy', 'pympler.util'] + tests,
           
           license=metadata.license,
           platforms = ['any'],

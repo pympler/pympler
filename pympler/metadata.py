@@ -5,12 +5,12 @@ This information is used in setup.py as well as in doc/source/conf.py.
 """
 
 project_name = 'Pympler'
-version      = '0.1'
+version      = '0.2a'
 url          = 'http://packages.python.org/Pympler/'
 license      = 'Apache License, Version 2.0' #PYCHOK valid
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
 author_email = 'pympler-dev@googlegroups.com'
-copyright    = '2008, ' + author #PYCHOK valid
+copyright    = '2008-2009, ' + author #PYCHOK valid
 description  = ('A development tool to measure, monitor and analyze '
                 'the memory behavior of Python objects.')
 long_description = '''
@@ -22,11 +22,11 @@ the lifetime of Python objects can be obtained.  Undesirable or
 unexpected runtime behavior like memory bloat and other "pymples"
 can easily be identified.
 
-Pympler integrates 3 previously separate modules into a single,
+Pympler integrates three previously separate modules into a single,
 comprehensive profiling tool.  The  asizeof module provides basic
 size information for one or several Python objects, module  muppy
 is used for on-line monitoring of a Python application and module
-heapmonitor provides off-line analysis of the lifetime of selected
+tracker provides off-line analysis of the lifetime of selected
 Python objects.
 
 Pympler is written entirely in Python, with no dependencies other

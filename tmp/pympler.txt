@@ -9,11 +9,11 @@ the lifetime of Python objects can be obtained.  Undesirable or
 unexpected runtime behavior like memory bloat and other "pymples"
 can easily be identified.
 
-Pympler integrates 3 previously separate modules into a single,
+Pympler integrates three previously separate modules into a single,
 comprehensive profiling tool.  The <asizeof> module provides basic
 size information for one or several Python objects, module <muppy>
 is used for on-line monitoring of a Python application and module
-<heampmonitor> provides off-line analysis of the lifetime of
+<tracker> provides off-line analysis of the lifetime of
 selected Python objects.
 
 Pympler is written entirely in Python, can be used with Python
@@ -52,7 +52,7 @@ Helen maintains a complex application that is taking up a large amount of
 memory.  She would like to reduce the memory footprint of her program by
 optimizing or restructuring her code.  She has a number of optimization
 candidates and she would like to know if optimizing one of them would
-likely reduce the total memory footprint.  Helen uses the <heapmonitor>
+likely reduce the total memory footprint.  Helen uses the <tracker>
 to track and profile her candidate classes.  The results tell her which
 class instances take up the largest shares of memory and are therefore
 best suited for optimization attempts.  After trying to optimize her code
