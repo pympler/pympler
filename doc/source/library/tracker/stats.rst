@@ -1,8 +1,8 @@
 .. _lib_tracker_stats:
    
-========================
-Class Tracker Statistics
-========================
+=======================
+ClassTracker Statistics
+=======================
 
 .. automodule:: pympler.tracker.stats
 

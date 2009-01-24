@@ -9,6 +9,7 @@ from pympler.util.stringutils import trunc, pp
 from gc import get_referents
 from inspect import getmembers
 from subprocess import Popen, PIPE
+from copy import copy
 
 __all__ = ['ReferenceGraph']
 
@@ -17,7 +18,29 @@ class _MetaObject(object):
     The _MetaObject stores meta-information, like a string representation,
     corresponding to each object passed to a ReferenceGraph.
     """
-    __slots__ = ('size', 'id', 'type', 'str')
+    __slots__ = ('size', 'id', 'type', 'str', 'group')
+
+
+class _Edge(object):
+    """
+    Describes a reference from one object `src` to another object `dst`.
+    """
+    __slots__ = ('src', 'dst', 'label', 'group')
+
+    def __init__(self, src, dst, label):
+        self.src = src
+        self.dst = dst
+        self.label = label
+        self.group = None
+
+    def __repr__(self):
+        return "<%08x => %08x, '%s', %s>" % (self.src, self.dst, self.label, self.group)
+
+    def __hash__(self):
+        return (self.src, self.dst, self.label).__hash__()
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
 
 
 class ReferenceGraph(object):
@@ -110,9 +133,90 @@ class ReferenceGraph(object):
                                     label = member.name
                     except AttributeError:
                         pass
-                self.edges.add((id(n), ref, label))
+                self.edges.add(_Edge(id(n), ref, label))
 
 
+    def _annotate_groups(self):
+        """
+        Annotate the objects belonging to separate (non-connected) graphs with
+        individual indices.
+        """
+        g = {}
+        for x in self.metadata:
+            g[x.id] = x
+
+        idx = 0
+        for x in self.metadata:
+            if not hasattr(x, 'group'):
+                x.group = idx
+                idx += 1
+            neighbors = set()
+            for e in self.edges:
+                if e.src == x.id: 
+                    neighbors.add(e.dst)
+                if e.dst == x.id:
+                    neighbors.add(e.src)
+            for nb in neighbors:
+                g[nb].group = min(x.group, getattr(g[nb], 'group', idx))
+
+        # Assign the edges to the respective groups. Both "ends" of the edge
+        # should share the same group so just use the first object's group.
+        for e in self.edges:
+            e.group = g[e.src].group
+
+        self._max_group = idx
+
+
+    def _filter_group(self, group):
+        """
+        Eliminate all objects but those which belong to `group`. Only
+        ``self.metadata`` and ``self.edges`` are modified.        
+        Returns `True` if the group is non-empty. Otherwise returns `False`.
+        """
+        self.metadata = [x for x in self.metadata if x.group == group]
+        self.count = len(self.metadata)
+        if self.metadata == []:
+            return False
+
+        self.edges = [e for e in self.edges if e.group == group]
+        
+        del self._max_group
+
+        return True
+
+
+    def split(self):
+        """
+        Split the graph into sub-graphs. Only connected objects belong to the
+        same graph. `split` yields copies of the Graph object. Shallow copies
+        are used that only replicate the meta-information, but share the same
+        object list ``self.objects``.
+
+        >>> from pympler.gui.graph import ReferenceGraph
+        >>> a = 42
+        >>> b = 'spam'
+        >>> c = {a: b}
+        >>> t = (1,2,3)
+        >>> rg = ReferenceGraph([a,b,c,t])
+        >>> for subgraph in rg.split():
+        ...   print subgraph.index
+        0
+        1
+        """
+        self._annotate_groups()
+        index = 0
+
+        for group in range(self._max_group):
+            subgraph = copy(self)
+            subgraph.metadata = self.metadata[:]
+            subgraph.edges = self.edges.copy()
+
+            if subgraph._filter_group(group):
+                subgraph.index = index
+                index += 1
+                yield subgraph
+            
+    
     def _annotate_objects(self):
         """
         Extract meta-data describing the stored objects.
@@ -147,6 +251,7 @@ class ReferenceGraph(object):
         header = '// Process this file with graphviz\n'
         fobj.write(header)
         fobj.write('digraph G {\n')
+        fobj.write('    node [shape=box];\n')
         for md in self.metadata:
             label = trunc(md.str, 48).replace('"', "'")
             extra = ''
@@ -156,29 +261,41 @@ class ReferenceGraph(object):
                 extra = ', color=orange'
             fobj.write('    "X%08x" [ label = "%s\\n%s" %s ];\n' % \
                 (md.id, label, md.type, extra))
-        for (i, j, l) in self.edges:
-            fobj.write('    X%08x -> X%08x [label="%s"];\n' % (i, j, l))
+        for e in self.edges:
+            extra = ''
+            if e.label == '__dict__':
+                extra = ',weight=100'
+            fobj.write('    X%08x -> X%08x [label="%s"%s];\n' % \
+                (e.src, e.dst, e.label, extra))
 
         fobj.write('}\n')
         fobj.close()
 
 
-    def render(self, filename, cmd='dot', format='ps'):
+    def render(self, filename, cmd='dot', format='ps', unflatten=False):
         """
         Render the graph to `filename` using graphviz. The graphviz invocation
         command may be overriden by specifying `cmd`. The `format` may be any
-        specifier recognized by the graph renderer ('-Txxx' command). If there
-        are no objects to illustrate, the method does not invoke graphviz and
-        returns False. If the renderer returns successfully (return code 0),
-        True is returned.
+        specifier recognized by the graph renderer ('-Txxx' command).  The graph
+        can be preprocessed by the *unflatten* tool if the `unflatten` parameter
+        is True.  If there are no objects to illustrate, the method does not
+        invoke graphviz and returns False. If the renderer returns successfully
+        (return code 0), True is returned.
         """
         if self.objects == []:
             return False
-
-        p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE)
-        self._emit_graphviz_data(p.stdin)
-        p.communicate()
-        return p.returncode == 0
+        
+        if unflatten:
+            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE)
+            self._emit_graphviz_data(p1.stdin)
+            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout)
+            p2.communicate()
+            return p2.returncode == 0
+        else:
+            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE)
+            self._emit_graphviz_data(p.stdin)
+            p.communicate()
+            return p.returncode == 0
 
 
     def write_graph(self, filename):

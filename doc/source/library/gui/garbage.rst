@@ -25,6 +25,8 @@ Classes
 
    .. automethod:: render
 
+   .. automethod:: split
+
    .. automethod:: write_graph
 
    .. automethod:: print_stats

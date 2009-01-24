@@ -1,8 +1,8 @@
 .. _lib_tracker_classes:
    
-=============
-Class Tracker
-=============
+============
+ClassTracker
+============
 
 .. automodule:: pympler.tracker.classes
 

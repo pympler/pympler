@@ -7,16 +7,16 @@ __all__ = ['GarbageGraph', 'start_debug_garbage', 'end_debug_garbage']
 
 class GarbageGraph(ReferenceGraph):
     """
-    The GarbageGraph is a ReferenceGraph that illustrates the objects building
+    The ``GarbageGraph`` is a ``ReferenceGraph`` that illustrates the objects building
     reference cycles. The garbage collector is switched to debug mode (all
-    identified garbage is stored in 'gc.garbage') and the garbage collector is
+    identified garbage is stored in `gc.garbage`) and the garbage collector is
     invoked. The collected objects are then illustrated in a directed graph.
 
-    Large graphs can be reduced to the actual cycles by passing 'reduce=True' to
+    Large graphs can be reduced to the actual cycles by passing ``reduce=True`` to
     the constructor. 
     
     It is recommended to disable the garbage collector when using the
-    GarbageGraph.
+    ``GarbageGraph``.
 
     >>> from pympler.gui.garbage import GarbageGraph, start_debug_garbage
     >>> start_debug_garbage()

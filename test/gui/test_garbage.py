@@ -1,6 +1,8 @@
 import unittest
 import gc
+import os
 from pympler.gui.garbage import *
+from pympler.gui.graph import _Edge
 
 class Foo:
     def __init__(self):
@@ -68,6 +70,48 @@ class GarbageTestCase(unittest.TestCase):
         assert gbar.size > 0
         assert gbar.str != ''
 
+    def test_split(self):
+        """Test splitting into subgraphs.
+        """
+        foo = Foo()
+        bar = Bar()
+
+        idfoo = id(foo)
+        idbar = id(bar)
+        idfd = id(foo.__dict__)
+        idbd = id(bar.__dict__)
+
+        foo.next = bar
+        bar.prev = foo
+
+        l = []
+        l.append(l)
+        idl = id(l)
+
+        del foo
+        del bar
+        del l
+
+        gb = GarbageGraph()
+        subs = list(gb.split())
+        assert len(subs) == 2
+
+        fbg = [x for x in subs if x.count == 4][0]
+        lig = [x for x in subs if x.count == 1][0]
+
+        assert isinstance(fbg, GarbageGraph)
+        assert isinstance(lig, GarbageGraph)
+
+        assert len(fbg.edges) == 4, fbg.edges
+        assert len(lig.edges) == 1, lig.edges
+
+        assert _Edge(idl, idl, '') in lig.edges, lig.edges
+
+        assert _Edge(idfoo, idfd, '__dict__') in fbg.edges, fbg.edges
+        assert _Edge(idfd, idbar, 'next') in fbg.edges, fbg.edges
+        assert _Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges
+        assert _Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges
+
     def test_noprune(self):
         """Test pruning of reference graph.
         """
@@ -112,10 +156,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        assert (idfoo, idfd, '__dict__') in gb.edges, gb.edges
-        assert (idfd, idbar, 'next') in gb.edges, gb.edges
-        assert (idbar, idbd, '__dict__') in gb.edges, gb.edges
-        assert (idbd, idfoo, 'prev') in gb.edges        
+        assert _Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges
+        assert _Edge(idfd, idbar, 'next') in gb.edges, gb.edges
+        assert _Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges
+        assert _Edge(idbd, idfoo, 'prev') in gb.edges        
 
     def test_edges_new(self):
         """Test referent identification for new-style classes.
@@ -136,10 +180,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        assert (idfoo, idfd, '__dict__') in gb.edges, gb.edges
-        assert (idfd, idbar, 'next') in gb.edges, gb.edges
-        assert (idbar, idbd, '__dict__') in gb.edges, gb.edges
-        assert (idbd, idfoo, 'prev') in gb.edges        
+        assert _Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges
+        assert _Edge(idfd, idbar, 'next') in gb.edges, gb.edges
+        assert _Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges
+        assert _Edge(idbd, idfoo, 'prev') in gb.edges        
 
     def test_uncollectable(self):
         """Test uncollectable object tracking.
@@ -162,6 +206,20 @@ class GarbageTestCase(unittest.TestCase):
         assert len(gfoo) == 0
         genemy = [x for x in gb.metadata if x.id == idenemy]
         assert len(genemy) == 1
+
+    def test_render(self):
+        """Test rendering of graph.
+        """
+        foo = Foo()
+        foo.parent = foo
+
+        del foo
+
+        g = GarbageGraph()
+        g.render('garbage.eps')
+        g.render('garbage.eps', unflatten=True)
+        os.unlink('garbage.eps')
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
