@@ -207,6 +207,18 @@ class GarbageTestCase(unittest.TestCase):
         genemy = [x for x in gb.metadata if x.id == idenemy]
         assert len(genemy) == 1
 
+    def test_write_graph(self):
+        """Test writing graph as text.
+        """
+        foo = Foo()
+        foo.parent = foo
+
+        del foo
+
+        g = GarbageGraph()
+        g.write_graph('garbage.dot')
+        os.unlink('garbage.dot')
+
     def test_render(self):
         """Test rendering of graph.
         """

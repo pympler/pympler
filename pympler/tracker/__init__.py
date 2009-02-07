@@ -1,1 +1,1 @@
-from classes import ClassTracker
+from pympler.tracker.classes import ClassTracker

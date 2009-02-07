@@ -1,10 +1,6 @@
 import unittest
 import re
-try:
-    from StringIO import StringIO
-    BytesIO = StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+from pympler.util.compat2and3 import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
 from pympler.tracker.stats import *
@@ -86,8 +82,8 @@ class LogTestCase(unittest.TestCase):
         stats.print_stats(filter='Bar',limit=0.5)
         assert len(stats.sorted) == tolen
         stats.print_summary()
-        clsname = f3.getvalue().split(' ')[0]
-        assert re.search('.Bar', clsname) != None, clsname
+        clsname = f3.getvalue().split('\n')[0]
+        assert re.search('\.Bar', clsname) != None, clsname
         assert len(f3.getvalue()) < len(f1.getvalue())
 
         f1.close()

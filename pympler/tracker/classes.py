@@ -8,11 +8,7 @@ an overview of memory distribution between the different tracked objects.
 import time
 
 from weakref     import ref as weakref_ref
-try:
-    from new         import instancemethod
-except ImportError: # Python 3.0
-    def instancemethod(*args):
-        return args[0]
+from pympler.util.compat2and3 import instancemethod
 import pympler.asizeof as asizeof
 import pympler.process
 

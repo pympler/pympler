@@ -6,6 +6,7 @@ installed.
 
 from pympler.asizeof import Asizer, _inst_refs
 from pympler.util.stringutils import trunc, pp
+from pympler.util.compat2and3 import encode4pipe
 from gc import get_referents
 from inspect import getmembers
 from subprocess import Popen, PIPE
@@ -244,7 +245,7 @@ class ReferenceGraph(object):
         """
         Emit a graph representing the connections between the objects described
         within the metadata list. The text representation can be transformed to
-        a graph with graphviz.
+        a graph with graphviz. Returns a string.
         """
         s = []
         header = '// Process this file with graphviz\n'
@@ -289,12 +290,12 @@ class ReferenceGraph(object):
         if unflatten:
             p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE, close_fds=True)
             p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout, close_fds=True)
-            p1.communicate(data)
+            p1.communicate(encode4pipe(data))
             p2.communicate()
             return p2.returncode == 0
         else:
             p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE, close_fds=True)
-            p.communicate(data)
+            p.communicate(encode4pipe(data))
             return p.returncode == 0
 
 
@@ -302,5 +303,7 @@ class ReferenceGraph(object):
         """
         Write raw graph data which can be post-processed using graphviz.
         """
-        self._emit_graphviz_data(open(filename, 'w'))
+        f = open(filename, 'w')
+        f.write(self._get_graphviz_data())
+        f.close()
 
