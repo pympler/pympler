@@ -240,18 +240,17 @@ class ReferenceGraph(object):
             self.metadata.append(md)
 
 
-    def _emit_graphviz_data(self, fobj):
+    def _get_graphviz_data(self):
         """
         Emit a graph representing the connections between the objects described
         within the metadata list. The text representation can be transformed to
-        a graph with graphviz. The `fobj` parameter can either be an open file
-        or a pipe to a process.  The file object has to permit write access and
-        is closed at the end of the function.
+        a graph with graphviz.
         """
+        s = []
         header = '// Process this file with graphviz\n'
-        fobj.write(header)
-        fobj.write('digraph G {\n')
-        fobj.write('    node [shape=box];\n')
+        s.append( header)
+        s.append('digraph G {\n')
+        s.append('    node [shape=box];\n')
         for md in self.metadata:
             label = trunc(md.str, 48).replace('"', "'")
             extra = ''
@@ -259,17 +258,17 @@ class ReferenceGraph(object):
                 extra = ', color=red'
             elif md.type == 'frame':
                 extra = ', color=orange'
-            fobj.write('    "X%08x" [ label = "%s\\n%s" %s ];\n' % \
-                (md.id, label, md.type, extra))
+            s.append('    "X%s" [ label = "%s\\n%s" %s ];\n' % \
+                (hex(md.id)[1:], label, md.type, extra))
         for e in self.edges:
             extra = ''
             if e.label == '__dict__':
                 extra = ',weight=100'
-            fobj.write('    X%08x -> X%08x [label="%s"%s];\n' % \
-                (e.src, e.dst, e.label, extra))
+            s.append('    X%s -> X%s [label="%s"%s];\n' % \
+                (hex(e.src)[1:], hex(e.dst)[1:], e.label, extra))
 
-        fobj.write('}\n')
-        fobj.close()
+        s.append('}\n')
+        return "".join(s)
 
 
     def render(self, filename, cmd='dot', format='ps', unflatten=False):
@@ -285,16 +284,17 @@ class ReferenceGraph(object):
         if self.objects == []:
             return False
         
+        data = self._get_graphviz_data()
+
         if unflatten:
-            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE)
-            self._emit_graphviz_data(p1.stdin)
-            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout)
+            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE, close_fds=True)
+            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout, close_fds=True)
+            p1.communicate(data)
             p2.communicate()
             return p2.returncode == 0
         else:
-            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE)
-            self._emit_graphviz_data(p.stdin)
-            p.communicate()
+            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE, close_fds=True)
+            p.communicate(data)
             return p.returncode == 0
 
 
