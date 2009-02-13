@@ -3,11 +3,12 @@
 import os
 import struct
 import sys
-import re
 
+from fnmatch import fnmatch
 from optparse import OptionParser
 
 _Python_path =  sys.executable  # this Python binary
+_Coverage    = 'python-coverage'
 _Src_dir     = 'pympler'
 _Verbose     =  1
 
@@ -35,7 +36,7 @@ def _rmtree(dir):
      # shutil.rmtree does ignore all errors
     shutil_rmtree(dir, True)
 
-def get_files(locations=['test'], pattern='^test_[^\n]*.py$'):
+def get_files(locations=['test'], pattern='test_*.py'):
     '''Return all matching files in the given locations.
 
     From the given directory locations recursively get all files
@@ -43,23 +44,23 @@ def get_files(locations=['test'], pattern='^test_[^\n]*.py$'):
     file names and match the name pattern are returned verbatim.
     '''
     res = []
-    pat = re.compile(pattern)
     for location in locations:
         if os.path.isfile(location):
             fn = os.path.basename(location)
-            if pat.match(fn):
+            if fnmatch(fn, pattern):
                 res.append(location)
         elif os.path.isdir(location):
             for root, dirs, files in os.walk(location):
                 for fn in files:
-                    if pat.match(fn):
+                    if fnmatch(fn, pattern):
                         res.append(os.path.join(root,fn))
     return res
 
 def run_clean(*dirs):
     '''Remove all bytecode files from the given directories.
     '''
-    codes = get_files(dirs, pattern='[^\n]*.py[c,o]$')
+    codes = get_files(dirs, pattern='*.py[c,o]')
+    codes.extend(get_files(dirs, pattern='*.py,cover'))
     for code in codes:
         if _Verbose > 1:
             print ("Removing %r ..." % code)
@@ -96,7 +97,7 @@ def run_pychecker(project_path, dirs, OKd=False):
     to suppresse all warnings OK'd in the source code.
     '''
     no_OKd = {False: '-no-OKd', True: '--'}[OKd]
-    sources = get_files(dirs, pattern='[^\n]*.py$')
+    sources = get_files(dirs, pattern='*.py')
     for src in sources:
         if _Verbose > 0:
             print ("Checking %s ..." % src)
@@ -162,16 +163,27 @@ def run_sphinx(project_path, builders=['html', 'doctest'], keep=False, paper='')
     _rmtree(doctrees)
     os.chdir(project_path)
 
-def run_unittests(project_path, dirs=[]):
+def run_unittests(project_path, dirs=[], coverage=False):
     '''Run unittests for all given test directories.
 
     If no tests are given, all unittests will be executed.
     '''
      # run unittests using  test/runtest.py *dirs
-    run_command(_Python_path,  # use this Python binary
-                os.path.join(project_path, 'test', 'runtest.py'),
-                '-verbose', str(_Verbose + 1),
-                '-clean', '-pre', *dirs)
+    if not coverage:
+        run_command(_Python_path,  # use this Python binary
+                    os.path.join(project_path, 'test', 'runtest.py'),
+                    '-verbose', str(_Verbose + 1),
+                    '-clean', '-pre', *dirs)
+    else:
+        run_command(_Coverage, '-x',  # use installed coverage tool
+                    os.path.join(project_path, 'test', 'runtest.py'),
+                    '-verbose', str(_Verbose + 1),
+                    '-clean', '-pre', *dirs)
+        # get all modules from pympler source, print summary and make a copy of
+        # each source module with coverage information (mod.py => mod.py,cover)
+        mods = get_files(locations=[_Src_dir], pattern='*.py')
+        run_command(_Coverage, '-r', *mods) # report
+        run_command(_Coverage, '-a', *mods) # annotate
 
 def print2(text):
     '''Print a headline text.
@@ -190,6 +202,7 @@ def main():
     Find and run all specified tests.
     '''
     global _Verbose
+    global _Coverage
 
     usage = ('usage: %prog <options> [<args> ...]', '',
              '  e.g. %prog --clean',
@@ -225,6 +238,10 @@ def main():
                       dest='OKd', help='include PyChecker warnings OKd in source')
     parser.add_option('-t', '--test', action='store_true', default=False,
                       dest='test', help='run all or specific unit tests')
+    parser.add_option('--coverage', action='store_true', default=False,
+                      dest='coverage', help='collect test coverage statistics')
+    parser.add_option('--cov-cmd', default=_Coverage, dest='covcmd', 
+                      help='coverage invocation command (%s)' % _Coverage)
     parser.add_option('--upload', action='store_true', default=False,
                       dest='upload', help='upload distributions to the Python Cheese Shop')
     parser.add_option('-V', '--verbose', default='1',
@@ -236,6 +253,7 @@ def main():
                                                #os.path.join(project_path, _Src_dir),
                                                 os.environ.get('PYTHONPATH', '')])
     _Verbose = int(options.V)
+    _Coverage = options.covcmd
 
     if options.all:
         options.clean = True
@@ -271,12 +289,14 @@ def main():
 
     if options.test:
         print2('Running unittests')
-        run_unittests(project_path, args or ['test'])
+        run_unittests(project_path, args or ['test'], coverage=options.coverage)
 
     if options.dist:
         print2('Creating distribution')
         run_dist(project_path, args or ['gztar', 'zip'], upload=options.upload)
 
+    if options.coverage:
+        os.unlink('.coverage')
 
 if __name__ == '__main__':
     main()
