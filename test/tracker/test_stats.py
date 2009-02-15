@@ -4,6 +4,7 @@ from pympler.util.compat2and3 import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
 from pympler.tracker.stats import *
+from pympler.asizeof import Asizer
 
 class Foo:
     def __init__(self):
@@ -89,6 +90,47 @@ class LogTestCase(unittest.TestCase):
         f1.close()
         f2.close()
         f3.close()
+
+    def test_merge(self):
+        """Test merging of reference trees.
+        """
+        self.tracker.track_class(Foo, name='Foo', resolution_level=2)
+
+        f1 = Foo()
+        f1.a = list(range(1000))
+        f2 = Foo()
+        f2.a = list(range(100))
+        f2.b = 'This is some stupid spam.'
+
+        self.tracker.create_snapshot('Merge test')
+
+        stats = Stats(tracker=self.tracker)
+        for fp in stats.footprint:
+            if fp.desc == 'Merge test':
+                stats.annotate_snapshot(fp)
+                assert hasattr(fp, 'classes')
+                assert 'Foo' in fp.classes, fp.classes
+                assert 'merged' in fp.classes['Foo']
+                fm = fp.classes['Foo']['merged']
+                sizer = Asizer()
+                sz = sizer.asizesof(f1, f2)
+                assert fm.size == sz[0] + sz[1], (fm.size, sz[0], sz[1])
+                # TODO check refs
+
+    def test_html(self):
+        """Test emitting HTML statistics."""
+        self.tracker.track_class(Foo, name='Foo', resolution_level=2)
+
+        f1 = Foo()
+        f1.a = list(range(1000))
+        f2 = Foo()
+        f2.a = list(range(100))
+        f2.b = 'This is some stupid spam.'
+
+        self.tracker.create_snapshot('Merge test')
+
+        stats = HtmlStats(tracker=self.tracker)
+        stats.create_html('tmp/data/footest.html')
 
 
 if __name__ == "__main__":

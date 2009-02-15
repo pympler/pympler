@@ -7,7 +7,7 @@ an overview of memory distribution between the different tracked objects.
 """
 import time
 
-from weakref     import ref as weakref_ref
+from weakref import ref as weakref_ref
 from pympler.util.compat2and3 import instancemethod
 import pympler.asizeof as asizeof
 import pympler.process
@@ -97,21 +97,7 @@ class TrackedObject(object):
         used.
         """
         for key, value in list(state.items()):
-            setattr(self, key, value)        
-
-    def _print_refs(self, fobj, refs, total, prefix='    ', level=1, 
-        minsize=0, minpct=0.1):
-        """
-        Print individual referents recursively.
-        """
-        lrefs = list(refs)
-        lrefs.sort(key=lambda x: x.size)
-        lrefs.reverse()
-        for r in lrefs:
-            if r.size > minsize and (r.size*100.0/total) > minpct:
-                fobj.write('%-50s %-14s %3d%% [%d]\n' % (trunc(prefix+str(r.name),50),
-                    pp(r.size),int(r.size*100.0/total), level))
-                self._print_refs(fobj, r.refs, total, prefix=prefix+'  ', level=level+1)
+            setattr(self, key, value)
 
     def _save_trace(self):
         """
@@ -126,38 +112,6 @@ class TrackedObject(object):
                 self.trace.insert(0, '  %s:%d in %s\n' % (f[1], f[2], f[3]))
         finally:
             del st
-
-    def print_text(self, fobj, full=0):
-        """
-        Print the gathered information in human-readable format to the specified
-        fobj.
-        """
-        if full:
-            if self.death:
-                fobj.write('%-32s ( free )   %-35s\n' % (
-                    trunc(self.name, 32, left=1), trunc(self.repr, 35)))
-            else:
-                fobj.write('%-32s 0x%08x %-35s\n' % (
-                    trunc(self.name, 32, left=1), self.id, trunc(self.repr, 35)))
-            try:
-                for line in self.trace:
-                    fobj.write(line)
-            except AttributeError:
-                pass
-            for (ts, size) in self.footprint:
-                fobj.write('  %-30s %s\n' % (pp_timestamp(ts), pp(size.size)))
-                self._print_refs(fobj, size.refs, size.size)                    
-            if self.death is not None:
-                fobj.write('  %-30s finalize\n' % pp_timestamp(ts))
-        else:
-            # TODO Print size for largest snapshot (get_size_at_time)
-            # Unused ATM: Maybe drop this type of reporting
-            size = self.get_max_size()
-            if self.repr:
-                fobj.write('%-64s %-14s\n' % (trunc(self.repr, 64), pp(size)))
-            else:
-                fobj.write('%-64s %-14s\n' % (trunc(self.name, 64), pp(size)))       
-        
 
     def track_size(self, ts, sizer):
         """

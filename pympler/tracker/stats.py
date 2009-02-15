@@ -3,7 +3,10 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle #PYCHOK Python 3.0 module
+from copy import deepcopy
 from pympler.util.stringutils import trunc, pp, pp_timestamp
+
+from pympler.asizeof import Asized
 
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
@@ -163,6 +166,40 @@ class Stats(object):
     def diff_stats(self, stats):
         return None # TODO
 
+    @staticmethod
+    def _merge_asized(a, b, level=0):
+        """
+        Merge **Asized** instances `a` and `b` into `a`.
+        """
+        ref2key = lambda r: r.name.split(':')[0]
+        a.size += b.size
+        a.flat += b.flat
+        if level > 0:
+            a.name = ref2key(a)
+        # Add refs from b to a. Any new refs are appended.
+        a.refs = list(a.refs) # we may need to append items
+        refs = {}
+        for ref in a.refs:
+            refs[ref2key(ref)] = ref
+        for ref in b.refs:
+            key = ref2key(ref)
+            if key in refs:
+                Stats._merge_asized(refs[key], ref, level=level+1)
+            else:
+                # Don't modify existing Asized instances => deepcopy
+                a.refs.append(deepcopy(ref))
+
+    @staticmethod
+    def _merge_objects(ts, merged, obj):
+        """
+        Merge the snapshot size information of multiple tracked objects.
+        The tracked object `obj` is scanned for size information at time `ts`.
+        The sizes are merged into **Asized** instance `merged`.
+        """
+        for (t, sized) in obj.footprint:
+            if t == ts:
+                Stats._merge_asized(merged, sized)
+
     def annotate_snapshot(self, snapshot):
         """
         Store addition statistical data in snapshot.
@@ -175,7 +212,9 @@ class Stats(object):
         for classname in list(self.index.keys()):
             total = 0
             active = 0
+            merged = Asized(0,0)
             for to in self.index[classname]:
+                self._merge_objects(snapshot.timestamp, merged, to)
                 total += to.get_size_at_time(snapshot.timestamp)
                 if to.birth < snapshot.timestamp and (to.death is None or 
                    to.death > snapshot.timestamp):
@@ -191,10 +230,54 @@ class Stats(object):
 
             snapshot.classes[classname] = {'sum': total, 'avg': avg, 'pct': pct, \
                 'active': active}
+            snapshot.classes[classname]['merged'] = representative
 
 
 class ConsoleStats(Stats):
 
+    def _print_refs(self, refs, total, prefix='    ', level=1, minsize=0, minpct=0.1):
+        """
+        Print individual referents recursively.
+        """
+        lrefs = list(refs)
+        lrefs.sort(key=lambda x: x.size)
+        lrefs.reverse()
+        for r in lrefs:
+            if r.size > minsize and (r.size*100.0/total) > minpct:
+                self.stream.write('%-50s %-14s %3d%% [%d]\n' % (trunc(prefix+str(r.name),50),
+                    pp(r.size),int(r.size*100.0/total), level))
+                self._print_refs(r.refs, total, prefix=prefix+'  ', level=level+1)
+
+    def print_object(self, to, full=0):
+        """
+        Print the gathered information of object `to` in human-readable format.
+        """
+        if full:
+            if to.death:
+                self.stream.write('%-32s ( free )   %-35s\n' % (
+                    trunc(to.name, 32, left=1), trunc(to.repr, 35)))
+            else:
+                self.stream.write('%-32s 0x%08x %-35s\n' % (
+                    trunc(to.name, 32, left=1), to.id, trunc(to.repr, 35)))
+            try:
+                for line in to.trace:
+                    self.stream.write(line)
+            except AttributeError:
+                pass
+            for (ts, size) in to.footprint:
+                self.stream.write('  %-30s %s\n' % (pp_timestamp(ts), pp(size.size)))
+                self._print_refs(size.refs, size.size)                    
+            if to.death is not None:
+                self.stream.write('  %-30s finalize\n' % pp_timestamp(ts))
+        else:
+            # TODO Print size for largest snapshot (get_size_at_time)
+            # Unused ATM: Maybe drop this type of reporting
+            size = to.get_max_size()
+            if to.repr:
+                self.stream.write('%-64s %-14s\n' % (trunc(to.repr, 64), pp(size)))
+            else:
+                self.stream.write('%-64s %-14s\n' % (trunc(to.name, 64), pp(size)))       
+        
     def print_stats(self, filter=None, limit=1.0):
         """
         Write tracked objects to stdout.  The output can be filtered and pruned.
@@ -223,7 +306,7 @@ class ConsoleStats(Stats):
 
         # Emit per-instance data
         for to in _sorted:
-            to.print_text(self.stream, full=1)
+            self.print_object(to, full=1)
 
     def print_summary(self):
         """
@@ -318,6 +401,8 @@ class HtmlStats(Stats):
     class_summary = """<p>%(cnt)d instances of %(cls)s were registered. The
     average size is %(avg)s, the minimal size is %(min)s, the maximum size is
     %(max)s.</p>\n"""
+    class_snapshot = '''<h3>Snapshot: %(name)s, %(total)s occupied by instances of
+    class %(cls)s</h3>\n'''
 
     def print_class_details(self, fname, classname):
         """
@@ -338,6 +423,18 @@ class HtmlStats(Stats):
         fobj.write(self.class_summary % data)
 
         fobj.write(self.charts[classname])
+
+        fobj.write("<h2>Averaged Referents per Snapshot</h2>\n")
+        for fp in self.footprint:
+            if classname in fp.classes:
+                merged = fp.classes[classname]['merged']
+                fobj.write(self.class_snapshot % {
+                    'name': fp.desc, 'cls':classname, 'total': pp(merged.size)
+                })
+                if merged.refs:
+                    self._print_refs(fobj, merged.refs, merged.size)
+                else:
+                    fobj.write('<p>No per-referent sizes recorded.</p>\n')                
 
         fobj.write("<h2>Instances</h2>\n")
         for to in self.index[classname]:
