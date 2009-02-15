@@ -230,7 +230,7 @@ class Stats(object):
 
             snapshot.classes[classname] = {'sum': total, 'avg': avg, 'pct': pct, \
                 'active': active}
-            snapshot.classes[classname]['merged'] = representative
+            snapshot.classes[classname]['merged'] = merged
 
 
 class ConsoleStats(Stats):
@@ -346,6 +346,7 @@ class HtmlStats(Stats):
     style          = """<style type="text/css">
         table { width:100%; border:1px solid #000; border-spacing:0px; }
         td, th { border:0px; }
+        div { width:200px; padding:10px; background-color:#FFEECC; }
         #nb { border:0px; }
         #tl { margin-top:5mm; margin-bottom:5mm; }
         #p1 { padding-left: 5px; }
@@ -365,8 +366,8 @@ class HtmlStats(Stats):
     </style>
     """
 
-    nopylab_msg    = """<div>Could not generate %s chart!
-    Install <a href=http://matplotlib.sourceforge.net/">Matplotlib</a> 
+    nopylab_msg    = """<div color="#FFCCCC">Could not generate %s chart!
+    Install <a href="http://matplotlib.sourceforge.net/">Matplotlib</a> 
     to generate charts.</div>\n"""
 
     chart_tag      = '<img src="%s">\n'
@@ -415,7 +416,9 @@ class HtmlStats(Stats):
         fobj.write("<h1>%s</h1>\n" % (classname))
 
         sizes = [to.get_max_size() for to in self.index[classname]]
-        total = reduce( lambda s,x: s+x, sizes )
+        total = 0
+        for s in sizes: 
+            total += s
         data = {'cnt': len(self.index[classname]), 'cls': classname}
         data['avg'] = pp(total / len(sizes))
         data['max'] = pp(max(sizes))
@@ -424,7 +427,7 @@ class HtmlStats(Stats):
 
         fobj.write(self.charts[classname])
 
-        fobj.write("<h2>Averaged Referents per Snapshot</h2>\n")
+        fobj.write("<h2>Coalesced Referents per Snapshot</h2>\n")
         for fp in self.footprint:
             if classname in fp.classes:
                 merged = fp.classes[classname]['merged']
@@ -499,7 +502,6 @@ class HtmlStats(Stats):
         for fp in self.footprint:
             fobj.write('<tr><td>\n')
             fobj.write('<table id="tl" rules="rows">\n')
-            self.annotate_snapshot(fp)
             fobj.write("<h3>%s snapshot at %s</h3>\n" % (fp.desc or 'Untitled',\
                 pp_timestamp(fp.timestamp)))
 
@@ -573,9 +575,6 @@ class HtmlStats(Stats):
         except ImportError:
             return self.nopylab_msg % ("memory allocation")
 
-        for fp in self.footprint:
-            self.annotate_snapshot(fp)
-
         classlist = list(self.index.keys())
         classlist.sort()
 
@@ -625,7 +624,6 @@ class HtmlStats(Stats):
         if not snapshot.tracked_total:
             return ''
 
-        self.annotate_snapshot(snapshot)
         classlist = []
         sizelist = []
         for k, v in list(snapshot.classes.items()):
@@ -658,6 +656,10 @@ class HtmlStats(Stats):
         self.filesdir = path.abspath(self.filesdir)
         self.links = {}
 
+        # Annotate all snapshots in advance
+        for fp in self.footprint:
+            self.annotate_snapshot(fp)
+
         # Create charts. The tags to show the images are returned and stored in
         # the self.charts dictionary. This allows to return alternative text if
         # the chart creation framework is not available.
@@ -665,7 +667,7 @@ class HtmlStats(Stats):
         fn = path.join(self.filesdir, 'timespace.png')
         self.charts['snapshots'] = self.create_snapshot_chart(fn)
 
-        for fp, idx in map(None, self.footprint, list(range(len(self.footprint)))):
+        for fp, idx in zip(self.footprint, list(range(len(self.footprint)))):
             fn = path.join(self.filesdir, 'fp%d.png' % (idx))
             self.charts[fp] = self.create_pie_chart(fp, fn)
 
