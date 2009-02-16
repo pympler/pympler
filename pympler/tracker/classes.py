@@ -8,11 +8,11 @@ an overview of memory distribution between the different tracked objects.
 import time
 
 from weakref import ref as weakref_ref
-from pympler.util.compat2and3 import instancemethod
+from pympler.util.compat import instancemethod
 import pympler.asizeof as asizeof
 import pympler.process
 
-from inspect import stack
+from inspect import stack, isclass
 from pympler.util.stringutils import trunc, pp, pp_timestamp
 
 __all__ = ["ClassTracker"]
@@ -107,9 +107,7 @@ class TrackedObject(object):
         try:
             self.trace = []
             for f in st[5:]: # eliminate our own overhead
-                for l in f[4]:
-                    self.trace.insert(0, '    '+l.strip()+'\n')
-                self.trace.insert(0, '  %s:%d in %s\n' % (f[1], f[2], f[3]))
+                self.trace.insert(0, f[1:])
         finally:
             del st
 
@@ -128,23 +126,20 @@ class TrackedObject(object):
 
     def get_max_size(self):
         """
-        Get the maximum of all sampled sizes, or return 0 if no samples were
-        recorded.
+        Get the maximum of all sampled sizes.
         """
-        try:
-            return max([s.size for (t, s) in self.footprint])
-        except ValueError:
-            return 0
+        return max([s.size for (t, s) in self.footprint])
 
     def get_size_at_time(self, ts):
         """
         Get the size of the object at a specific time (snapshot).
         If the object was not alive/sized at that instant, return 0.
         """
+        size = 0
         for (t, s) in self.footprint:
             if t == ts:
-                return s.size
-        return 0
+                size = s.size
+        return size
 
     def set_resolution_level(self, resolution_level):
         """
@@ -245,12 +240,7 @@ class ClassTracker(object):
         """
         Modifying Methods in Place - after the recipe 15.7 in the Python
         Cookbook by Ken Seehof. The original constructors may be restored later.
-        Therefore, prevent constructor chaining by multiple calls with the same
-        class.
         """
-        if self._is_tracked(klass):
-            return
-
         try:
             ki = klass.__init__
         except AttributeError:
@@ -259,7 +249,7 @@ class ClassTracker(object):
 
         # Possible name clash between keyword arguments of the tracked class'
         # constructor and the curried arguments of the injected constructor.
-        # Therefore, the additional arguments have 'magic' names to make it less
+        # Therefore, the additional argument has a 'magic' name to make it less
         # likely that an argument name clash occurs.
         self._observers[klass] = _ClassObserver(ki, name, resolution_level, keep, trace)
         klass.__init__ = instancemethod(
@@ -341,11 +331,10 @@ class ClassTracker(object):
         A constructor is injected to begin instance tracking on creation
         of the object. The constructor calls `track_object` internally.
         """
+        if not isclass(cls):
+            raise TypeError, "only class objects can be tracked"
         if name is None:
-            try:
-                name = cls.__module__ + '.' + cls.__name__
-            except AttributeError:
-                pass
+            name = cls.__module__ + '.' + cls.__name__
         if self._is_tracked(cls):
             self._track_modify(cls, name, resolution_level, keep, trace)
         else:

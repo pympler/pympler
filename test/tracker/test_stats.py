@@ -1,6 +1,6 @@
 import unittest
 import re
-from pympler.util.compat2and3 import StringIO, BytesIO
+from pympler.util.compat import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
 from pympler.tracker.stats import *
@@ -90,6 +90,28 @@ class LogTestCase(unittest.TestCase):
         f1.close()
         f2.close()
         f3.close()
+
+    def test_snapshots(self):
+        """Test multiple snapshots.
+        """
+        self.tracker.track_class(Foo, name='Foo')
+        self.tracker.track_class(Bar, name='Bar')
+        self.tracker.track_class(FooNew, name='FooNew')
+
+        self.tracker.create_snapshot()
+        f1 = Foo()
+        self.tracker.create_snapshot()
+        f2 = Foo()
+        f3 = FooNew()
+        self.tracker.create_snapshot()
+        b = Bar()
+        del b
+        self.tracker.create_snapshot()
+
+        stream = StringIO()
+        stats = ConsoleStats(tracker=self.tracker, stream=stream)
+        stats.print_stats()
+        stats.print_summary()
 
     def test_merge(self):
         """Test merging of reference trees.

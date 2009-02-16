@@ -5,6 +5,9 @@ import re
 from pympler.tracker import ClassTracker
 import pympler.process
 
+class Empty:
+    pass
+
 class Foo:
     def __init__(self):
         self.foo = 'foo'
@@ -226,17 +229,43 @@ class TrackClassTestCase(unittest.TestCase):
         self.tracker.stop_periodic_snapshots()
         self.tracker.clear()
 
+    def test_type_errors(self):
+        """Test invalid parameters for class tracking.
+        """
+        i = 42
+        j = 'Foobar'
+        k = [i,j]
+        l = {i: j}
+        foo = Foo()
+        bar = Bar()
+
+        self.assertRaises(TypeError, self.tracker.track_class, i)
+        self.assertRaises(TypeError, self.tracker.track_class, j)
+        self.assertRaises(TypeError, self.tracker.track_class, k)
+        self.assertRaises(TypeError, self.tracker.track_class, l)
+        self.assertRaises(TypeError, self.tracker.track_class, foo)
+        self.assertRaises(TypeError, self.tracker.track_class, bar)
+
+        assert id(i) not in self.tracker.objects
+        assert id(j) not in self.tracker.objects
+        assert id(k) not in self.tracker.objects
+        assert id(l) not in self.tracker.objects
+
     def test_track_class(self):
         """Test tracking objects through classes.
         """
         self.tracker.track_class(Foo)
         self.tracker.track_class(Bar)
+        self.tracker.track_class(Empty)
+        self.tracker.track_class(Foo)
 
         foo = Foo()
         bar = Bar()
+        empty = Empty()
 
         assert id(foo) in self.tracker.objects
         assert id(bar) in self.tracker.objects
+        assert id(empty) in self.tracker.objects
 
     def test_track_class_new(self):
         """Test tracking new style classes.
@@ -277,6 +306,32 @@ class TrackClassTestCase(unittest.TestCase):
 
         assert self.tracker.objects[idfoo].ref() is not None
         assert self.tracker.objects[idbar].ref() is None
+
+    def test_trace(self):
+        """Test instantiation tracing of tracked objects.
+        """
+        from inspect import stack
+
+        self.tracker.track_class(Foo, trace=True)
+        self.tracker.track_class(BarNew, trace=True)
+
+        foo = Foo()
+        bar = BarNew()
+       
+        idfoo = id(foo)
+        idbar = id(bar)
+
+        trace = []
+        st = stack()
+        try:
+            for fr in st:
+                trace.insert(0, fr[1:])
+        finally:
+            del st
+
+        assert self.tracker.objects[idfoo].trace[-1][3][0].strip() == "foo = Foo()"
+        assert self.tracker.objects[idfoo].trace[:-1] == trace[:-1], trace
+        assert self.tracker.objects[idbar].trace[:-1] == trace[:-1], trace
 
     def test_detach(self):
         """Test detaching from tracked classes.

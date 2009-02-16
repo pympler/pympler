@@ -13,6 +13,11 @@ except ImportError:
     from io import StringIO, BytesIO
 
 try:
+    import cPickle as pickle
+except ImportError:
+    import pickle #PYCHOK Python 3.0 module
+
+try:
     from new         import instancemethod
 except ImportError: # Python 3.0
     def instancemethod(*args):
