@@ -6,7 +6,7 @@ installed.
 
 from pympler.asizeof import Asizer, _inst_refs
 from pympler.util.stringutils import trunc, pp
-from pympler.util.compat2and3 import encode4pipe
+from pympler.util.compat import encode4pipe
 from gc import get_referents
 from inspect import getmembers
 from subprocess import Popen, PIPE
