@@ -228,10 +228,15 @@ class GarbageTestCase(unittest.TestCase):
         del foo
 
         g = GarbageGraph()
-        g.render('garbage.eps')
-        g.render('garbage.eps', unflatten=True)
-        os.unlink('garbage.eps')
-
+        try:
+            g.render('garbage.eps')
+            g.render('garbage.eps', unflatten=True)
+        except OSError:
+            # Graphviz not installed.
+            pass
+        else:
+            os.unlink('garbage.eps')
+            
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()

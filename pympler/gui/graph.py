@@ -5,7 +5,7 @@ installed.
 """
 
 from pympler.asizeof import Asizer, _inst_refs
-from pympler.util.stringutils import trunc, pp
+from pympler.util.stringutils import trunc
 from pympler.util.compat import encode4pipe
 from gc import get_referents
 from inspect import getmembers
@@ -281,6 +281,8 @@ class ReferenceGraph(object):
         is True.  If there are no objects to illustrate, the method does not
         invoke graphviz and returns False. If the renderer returns successfully
         (return code 0), True is returned.
+        
+        An `OSError` is raised if the graphviz tool cannot be found.
         """
         if self.objects == []:
             return False

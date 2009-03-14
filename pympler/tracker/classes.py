@@ -13,7 +13,7 @@ import pympler.asizeof as asizeof
 import pympler.process
 
 from inspect import stack, isclass
-from pympler.util.stringutils import trunc, pp, pp_timestamp
+from pympler.util.stringutils import trunc
 
 __all__ = ["ClassTracker"]
 
