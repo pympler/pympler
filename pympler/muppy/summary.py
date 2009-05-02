@@ -174,6 +174,9 @@ def print_(rows, limit=15, sort='size', order='descending'):
     sort  -- sort elements by 'size', 'type', or '#'
     order -- sort 'ascending' or 'descending'
     """
+    localrows = []
+    for row in rows:
+        localrows.append(list(row))
     # input validation
     sortby = ['type', '#', 'size']
     if sort not in sortby:
@@ -184,21 +187,21 @@ def print_(rows, limit=15, sort='size', order='descending'):
     # sort rows
     if sortby.index(sort) == 0:
         if order == "ascending":
-            rows.sort(lambda r1, r2: cmp(_repr(r1[0]),_repr(r2[0])))
+            localrows.sort(lambda r1, r2: cmp(_repr(r1[0]),_repr(r2[0])))
         elif order == "descending":
-            rows.sort(lambda r1, r2: -cmp(_repr(r1[0]),_repr(r2[0])))
+            localrows.sort(lambda r1, r2: -cmp(_repr(r1[0]),_repr(r2[0])))
     else: 
         if order == "ascending":
-            rows.sort(lambda r1, r2: r1[sortby.index(sort)] - r2[sortby.index(sort)])
+            localrows.sort(lambda r1, r2: r1[sortby.index(sort)] - r2[sortby.index(sort)])
         elif order == "descending":
-            rows.sort(lambda r1, r2: r2[sortby.index(sort)] - r1[sortby.index(sort)])
+            localrows.sort(lambda r1, r2: r2[sortby.index(sort)] - r1[sortby.index(sort)])
     # limit rows
-    rows = rows[0:limit]
-    for row in rows:
+    localrows = localrows[0:limit]
+    for row in localrows:
         row[2] = stringutils.pp(row[2])
     # print rows
-    rows.insert(0,["types", "# objects", "total size"])
-    _print_table(rows)
+    localrows.insert(0,["types", "# objects", "total size"])
+    _print_table(localrows)
 
 def _print_table(rows, header=True):
     """Print a list of lists as a pretty table.
