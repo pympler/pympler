@@ -70,11 +70,11 @@ let's call `Windows->Zoom Height` and invoke `print_diff` again.::
 
                types |   # objects |   total size
   ================== | =========== | ============
-                dict |           1 |          280
-                list |           1 |          176
-    _sre.SRE_Pattern |           1 |           88
-               tuple |           1 |           80
-                 str |           0 |            7
+                dict |           1 |     280    B
+                list |           1 |     176    B
+    _sre.SRE_Pattern |           1 |      88    B
+               tuple |           1 |      80    B
+                 str |           0 |       7    B
 
 Seems as this requires some of the above mentioned objects. Let's repeat it.::
 
@@ -90,30 +90,30 @@ at the Path Browser at `File->Path Browser`.::
 
                                                   types |   # objects |   total size
   ===================================================== | =========== | ============
-                                                   dict |          18 |        14256
-                                                  tuple |         146 |        13168
-                                                   list |           2 |        11672
-                                                    str |          97 |         7855
-                                                   code |          46 |         5520
-                                               function |          45 |         5400
-                                               classobj |           9 |          864
-                     instancemethod (<function wakeup>) |           3 |          240
-                   instancemethod (<function __call__>) |           3 |          240
-                  instance(<class Tkinter.CallWrapper>) |           3 |          216
-                                                 module |           3 |          168
-    instance(<class idlelib.WindowList.ListedToplevel>) |           1 |           72
+                                                   dict |          18 |     14.26 KB
+                                                  tuple |         146 |     13.17 KB
+                                                   list |           2 |     11.67 KB
+                                                    str |          97 |      7.85 KB
+                                                   code |          46 |      5.52 KB
+                                               function |          45 |      5.40 KB
+                                               classobj |           9 |    864     B
+                     instancemethod (<function wakeup>) |           3 |    240     B
+                   instancemethod (<function __call__>) |           3 |    240     B
+                  instance(<class Tkinter.CallWrapper>) |           3 |    216     B
+                                                 module |           3 |    168     B
+    instance(<class idlelib.WindowList.ListedToplevel>) |           1 |     72     B
 
 Let's repeat it.::
 
                                                   types |   # objects |   total size
   ===================================================== | =========== | ============
-                                                   dict |           5 |         2168
-                                                   list |           0 |          384
-                                                    str |           5 |          259
-                     instancemethod (<function wakeup>) |           3 |          240
-                   instancemethod (<function __call__>) |           3 |          240
-                  instance(<class Tkinter.CallWrapper>) |           3 |          216
-    instance(<class idlelib.WindowList.ListedToplevel>) |           1 |           72
+                                                   dict |           5 |      2.17 KB
+                                                   list |           0 |    384     B
+                                                    str |           5 |    259     B
+                     instancemethod (<function wakeup>) |           3 |    240     B
+                   instancemethod (<function __call__>) |           3 |    240     B
+                  instance(<class Tkinter.CallWrapper>) |           3 |    216     B
+    instance(<class idlelib.WindowList.ListedToplevel>) |           1 |     72     B
 
 Mh, still some new objects. Repeating this procedure several times will reveal
 that here indeed we have a leak.
@@ -231,14 +231,14 @@ After the first time the Path Browser is opened we get this::
 
        types |   # objects |   total size
   ========== | =========== | ============
-       tuple |         146 |        13168
-        dict |          13 |        12088
-        list |           2 |        11256
-         str |          92 |         7588
-        code |          46 |         5520
-    function |          45 |         5400
-    classobj |           9 |          864
-      module |           3 |          168
+       tuple |         146 |     13.17 KB
+        dict |          13 |     12.01 KB
+        list |           2 |     11.26 KB
+         str |          92 |      7.59 KB
+        code |          46 |      5.52 KB
+    function |          45 |      5.40 KB
+    classobj |           9 |    864     B
+      module |           3 |    168     B
 
 Okay, still some objects created, but no more instances and instance
 methods. Let's do it again.::

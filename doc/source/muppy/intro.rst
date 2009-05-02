@@ -16,34 +16,37 @@ Muppy allows you to get hold of all objects,
 >>> from pympler.muppy import muppy
 >>> all_objects = muppy.get_objects()
 >>> len(all_objects)                           # doctest: +SKIP
-9495
+19700
 
 or filter out certain types of objects.
 
 >>> import types
 >>> types = muppy.filter(all_objects, Type=types.ClassType)
 >>> len(types)                                    # doctest: +SKIP
-17
+72
 >>> for t in types:
 ...     print t
 ...                                               # doctest: +SKIP
-codecs.StreamWriter
-codecs.StreamReader
-codecs.StreamReaderWriter
-codecs.StreamRecoder
-encodings.utf_8.StreamWriter
-encodings.utf_8.StreamReader
 UserDict.IterableUserDict
 UserDict.UserDict
 UserDict.DictMixin
 os._Environ
-string._multimap
-re.Scanner
 sre_parse.Tokenizer
 sre_parse.SubPattern
-sre_parse.Pattern
+re.Scanner
+string._multimap
 distutils.log.Log
+encodings.utf_8.StreamWriter
+encodings.utf_8.StreamReader
+codecs.StreamWriter
+codecs.StreamReader
+codecs.StreamReaderWriter
 codecs.Codec
+codecs.StreamRecoder
+tokenize.Untokenizer
+inspect.BlockFinder
+sre_parse.Pattern
+. . .
 
 This result, for example, tells us that the number of lists remained the same,
 but the memory allocated by lists has increased by 8 bytes. The correct increase
@@ -59,36 +62,44 @@ You can create summaries
 >>> summary.print_(sum1)                          # doctest: +SKIP
                        types |   # objects |   total size
 ============================ | =========== | ============
-			list |          87 |      1805512
-                        dict |	       299 |       672776
-                         str |        3922 |       287433
-                       tuple |        2037 |	   167456
-                        code |         532 |        63840
-                    function |         496 |        59520
-          wrapper_descriptor |         654 |        52320
-                        type |          37 |        33448
-  builtin_function_or_method |         377 |        27144
-           method_descriptor |         253 |        18216
-         <class 'abc.ABCMeta |          16 |        14464
-                     weakref |         149 |        13112
-                         set |          48 |        11136
-           member_descriptor |         152 |        10944
-           getset_descriptor |          77 |         5544
+                        dict |         546 |    953.30 KB
+                         str |        8270 |    616.46 KB
+                        list |         127 |    529.44 KB
+                       tuple |        5021 |    410.62 KB
+                        code |        1378 |    161.48 KB
+                        type |          70 |     61.80 KB
+          wrapper_descriptor |         508 |     39.69 KB
+  builtin_function_or_method |         515 |     36.21 KB
+                         int |         900 |     21.09 KB
+           method_descriptor |         269 |     18.91 KB
+                     weakref |         177 |     15.21 KB
+         <class 'abc.ABCMeta |          16 |     14.12 KB
+                         set |          48 |     10.88 KB
+         function (__init__) |          81 |      9.49 KB
+           member_descriptor |         131 |      9.21 KB
 
 and compare them with other summaries.
 
 >>> sum2 = summary.summarize(muppy.get_objects())
 >>> diff = summary.get_diff(sum1, sum2)
 >>> summary.print_(diff)                          # doctest: +SKIP
-                                types |   # objects |   total size
-===================================== | =========== | ============
-                                 list |          59 |       723200
-                                  str |          55 |         3059
-                                  int |          42 |         1008
-        frame (codename: get_objects) |           1 |          488
-           frame (codename: <module>) |           1 |          424
-                                tuple |           2 |          160
-                                 code |           1 |          120
+                          types |   # objects |   total size
+=============================== | =========== | ============
+                           list |        1097 |      1.07 MB
+                            str |        1105 |     68.21 KB
+                           dict |          14 |     21.08 KB
+             wrapper_descriptor |         215 |     16.80 KB
+                            int |         121 |      2.84 KB
+                          tuple |          30 |      2.02 KB
+              member_descriptor |          25 |      1.76 KB
+                        weakref |          14 |      1.20 KB
+              getset_descriptor |          15 |      1.05 KB
+              method_descriptor |          12 |    864     B
+  frame (codename: get_objects) |           1 |    488     B
+     builtin_function_or_method |           6 |    432     B
+     frame (codename: <module>) |           1 |    424     B
+         classmethod_descriptor |           3 |    216     B
+                           code |           1 |    120     B
 
 The tracker module
 ==================
@@ -98,17 +109,17 @@ muppy's tracker.
 >>> from pympler.muppy import tracker
 >>> tr = tracker.SummaryTracker()
 >>> tr.print_diff()                               # doctest: +SKIP
-                             types |   # objects |   total size
-================================== | =========== | ============
-                              list |          65 |       467440
-                              dict |          19 |        20680
-                wrapper_descriptor |         182 |        14560
-                               str |          61 |         4722
-                 member_descriptor |          33 |         2376
-                             tuple |          34 |         2352
-                           weakref |          14 |         1232
-                 getset_descriptor |          17 |         1224
-                               int |          39 |          936
+                                 types |   # objects |   total size
+====================================== | =========== | ============
+                                  list |        1095 |    160.78 KB
+                                   str |        1093 |     66.33 KB
+                                   int |         120 |      2.81 KB
+                                  dict |           3 |    840     B
+      frame (codename: create_summary) |           1 |    560     B
+          frame (codename: print_diff) |           1 |    480     B
+                frame (codename: diff) |           1 |    464     B
+                 function (store_info) |           1 |    120     B
+                                  cell |           2 |    112     B
 
 A tracker object creates a summary (that is a summary which it will remember)
 on initialization. Now whenever you call tracker.print_diff(), a new summary of
@@ -129,8 +140,8 @@ Now check out this code snippet
 >>> tr.print_diff()                               # doctest: +SKIP
   types |   # objects |   total size
 ======= | =========== | ============
-   dict |           1 |          280
-   list |           1 |          224
+   dict |           1 |    280     B
+   list |           1 |    192     B
 
 As you can see both, the new list and the new dict appear in the summary, but
 not the 4 integers used. Why is that? Because they existed already before they
