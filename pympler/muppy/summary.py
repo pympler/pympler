@@ -47,6 +47,7 @@ import re
 import string
 import types
 
+from pympler.util import stringutils
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
     from sys import getsizeof as _getsizeof
@@ -193,6 +194,8 @@ def print_(rows, limit=15, sort='size', order='descending'):
             rows.sort(lambda r1, r2: r2[sortby.index(sort)] - r1[sortby.index(sort)])
     # limit rows
     rows = rows[0:limit]
+    for row in rows:
+        row[2] = stringutils.pp(row[2])
     # print rows
     rows.insert(0,["types", "# objects", "total size"])
     _print_table(rows)
