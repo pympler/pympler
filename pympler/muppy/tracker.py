@@ -14,6 +14,7 @@ import inspect
 
 from pympler.muppy import muppy
 from pympler.muppy import summary
+from pympler.util import compat
 
 class SummaryTracker(object):
     """ Helper class to track changes between two summaries taken.
@@ -178,7 +179,11 @@ class ObjectTracker(object):
         """
         def remove_ignore(objects, ignore=[]):
             # remove all objects listed in the ignore list
-            return [o for o in objects if o not in ignore]
+            res = []            
+            for o in objects:
+                if not compat.object_in_list(o, ignore):
+                    res.append(o)
+            return res
     
         tmp = gc.get_objects()
         ignore.append(inspect.currentframe()) #PYCHOK change ignore

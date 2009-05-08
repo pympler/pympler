@@ -4,7 +4,7 @@ import unittest
 
 from pympler.muppy import summary
 from pympler.muppy import tracker
-
+from pympler.util import compat
 
 class TrackerTest(unittest.TestCase):
 
@@ -97,6 +97,7 @@ class TrackerTest(unittest.TestCase):
         # with ignore_self enabled a second summary should not list the first
         # summary
         sn = tmp_tracker.create_summary()
+        sn = tmp_tracker.create_summary()
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
         self.assert_(len(tmp) == 0)
@@ -132,9 +133,11 @@ class TrackerTest(unittest.TestCase):
         otracker = tracker.ObjectTracker()
         o = self._get_indicator()
         # indicator object should be in result set
-        self.assert_(o in otracker._get_objects())
+        res = compat.object_in_list(o, otracker._get_objects())
+        self.assertTrue(res)
         # indicator object should not be in result set
-        self.assert_(o not in otracker._get_objects(ignore=[o]))
+        res = compat.object_in_list(o, otracker._get_objects(ignore=[o]))
+        self.assertFalse(res)
 
     def test_otracker_diff(self):
         """Test object tracker diff."""

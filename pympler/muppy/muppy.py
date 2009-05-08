@@ -1,6 +1,7 @@
 import gc
 
 from pympler.muppy import summary
+from pympler.util import compat
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
@@ -72,9 +73,9 @@ def get_diff(left, right):
         """
         res = []
         for o in foo:
-            if type(o) not in bar:
+            if not compat.object_in_list(type(o), bar):
                 res.append(o)
-            elif o not in bar[type(o)]:
+            elif not compat.object_in_list(o, bar[type(o)]):
                 res.append(o)
         return res
         

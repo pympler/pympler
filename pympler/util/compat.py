@@ -35,3 +35,14 @@ except ImportError: # Python 3.0
 encode4pipe = lambda s: s
 if sys.hexversion >= 0x3000000:
     encode4pipe = lambda s: s.encode()
+
+def object_in_list(obj, l):
+    """Returns True if object o is in list.
+
+    Required compatibility function to handle WeakSet objects.
+    """
+    for o in l:
+        if o is obj:
+            return True
+    return False
+
