@@ -91,6 +91,6 @@ class MProfiler(object):
 if __name__ == "__main__":
     p = MProfiler()
     p.run("print 'hello'")
-    print p.memories
+    print(p.memories)
 
 

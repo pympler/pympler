@@ -14,9 +14,6 @@ __all__ = ['refbrowser',
 
 from pympler.muppy import *
 
-import muppy
-import summary
-
 def print_summary():
     """Print a summary of all known objects."""
     summary.print_(summary.summarize(muppy.get_objects()))

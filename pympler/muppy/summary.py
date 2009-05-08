@@ -45,6 +45,7 @@ more detailed information at higher verbosity levels than 1.
 
 import re
 import string
+import sys
 import types
 
 from pympler.util import stringutils
@@ -58,6 +59,22 @@ except ImportError:
 representations = {}
 def _init_representations():
     global representations
+    if sys.hexversion < 0x2040000:
+        classobj = [
+            lambda c: "classobj(%s)" % repr(c),
+        ]
+        representations[types.ClassType] = classobj
+        instance = [
+            lambda f: "instance(%s)" % repr(f.__class__),
+        ]
+        representations[types.InstanceType] = instance
+        instancemethod = [
+            lambda i: "instancemethod (%s)" %\
+                                      (repr(i.im_func)),
+            lambda i: "instancemethod (%s, %s)" %\
+                                      (repr(i.im_class), repr(i.im_func)),
+        ]
+        representations[types.MethodType] = instancemethod
     frame = [
         lambda f: "frame (codename: %s)" %\
                    (f.f_code.co_name),
@@ -67,47 +84,29 @@ def _init_representations():
                    (f.f_code.co_name, f.f_code.co_filename,\
                     f.f_code.co_firstlineno)
     ]
-    classobj = [
-        lambda c: "classobj(%s)" % repr(c),
-    ]
+    representations[types.FrameType] = frame
     _dict = [
         lambda d: str(type(d)),
         lambda d: "dict, len=%s" % len(d),
     ]
+    representations[dict] = _dict
     function = [
         lambda f: "function (%s)" % f.__name__,
         lambda f: "function (%s.%s)" % (f.__module, f.__name__),
     ]
-    instance = [
-        lambda f: "instance(%s)" % repr(f.__class__),
-    ]
-    instancemethod = [
-        lambda i: "instancemethod (%s)" %\
-                                  (repr(i.im_func)),
-        lambda i: "instancemethod (%s, %s)" %\
-                                  (repr(i.im_class), repr(i.im_func)),
-    ]
+    representations[types.FunctionType] = function
     _list = [
         lambda l: str(type(l)),
         lambda l: "list, len=%s" % len(l)
     ]
+    representations[list] = _list
     module = [ lambda m: "module(%s)" % m.__name__ ]
+    representations[types.ModuleType] = module
     _set = [
         lambda s: str(type(s)),
         lambda s: "set, len=%s" % len(s)
     ]
-    
-    representations = {
-        types.ClassType: classobj,
-        dict: _dict,
-        types.FunctionType: function,
-        types.FrameType: frame,
-        types.InstanceType: instance,
-        list: _list,
-        types.MethodType: instancemethod,
-        types.ModuleType: module,
-        set: _set,
-    }
+    representations[set] = _set
 
 _init_representations()
 
@@ -227,8 +226,10 @@ def _print_table(rows, header=True):
     colWidths = [max([len(str(item))+2*padding for item in col]) for col in cols]
     borderline = vdelim.join([w*border for w in colWidths])
     for row in rows: 
-        print vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)])
-        if header: print borderline; header=False
+        print(vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)]))
+        if header:
+            print(borderline)
+            header=False
 
         
 # regular expressions used by _repr to replace default type representations

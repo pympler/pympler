@@ -42,7 +42,7 @@ def get_size(objects):
         try:
             res += _getsizeof(o)
         except AttributeError:
-            print "IGNORING: type=%s; o=%s" % (str(type(o)), str(o))
+            print("IGNORING: type=%s; o=%s" % (str(type(o)), str(o)))
     return res
 
 def get_diff(left, right):
@@ -89,7 +89,7 @@ def get_diff(left, right):
 
 def sort(objects):
     """Sort objects by size in bytes."""
-    objects.sort(lambda x, y: _getsizeof(x) - _getsizeof(y))
+    objects = sorted(objects, key=_getsizeof)
     return objects
     
 def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter

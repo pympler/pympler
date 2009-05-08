@@ -140,7 +140,7 @@ class SummaryTracker(object):
         
 class ObjectTracker(object):
     """
-    Helper class to track changes in the set of existing object.
+    Helper class to track changes in the set of existing objects.
 
     Each time you invoke a diff with this tracker, the objects which existed
     during the last invocation are compared with the objects which exist during
@@ -232,9 +232,9 @@ class ObjectTracker(object):
         # ignore this and the caller frame
         ignore.append(inspect.currentframe()) #PYCHOK change ignore
         diff = self.get_diff(ignore)
-        print "Added objects:"
+        print("Added objects:")
         summary.print_(summary.summarize(diff['+']))
-        print "Removed objects:"
+        print("Removed objects:")
         summary.print_(summary.summarize(diff['-']))
         # manual cleanup, see comment above
         del ignore[:]

@@ -55,7 +55,7 @@ class MuppyTest(unittest.TestCase):
         s = (s1, s2, s3, s4) = ('', 'a', 'b', 'a')
         t = (t1, t2) = (dict, str)
         i1 = 1
-        l1 = 1L
+        l1 = []
         objects = [s1, s2, i1, l1, t1, t2, s3, s4]
         
         objects = muppy.filter(objects, Type=str)

@@ -168,7 +168,7 @@ class ConsoleBrowser(RefBrowser):
         carryon += self.space * len(str(tree))
         if (level == self.maxdepth) or (not isinstance(tree, _Node)) or\
            (len_children == 0):
-            print prefix
+            print(prefix)
             return
         else:
             # add in between connections
@@ -195,7 +195,7 @@ class ConsoleBrowser(RefBrowser):
                     if b == (len_children-1):
                         if len(carryon.strip(' ')) == 0:
                             return
-                        print carryon[:-2].rstrip()
+                        print(carryon[:-2].rstrip())
 
 class FileBrowser(ConsoleBrowser):
     """RefBrowser implementation which prints the tree to a file."""
@@ -217,7 +217,7 @@ class FileBrowser(ConsoleBrowser):
                 sys.stdout = old_stdout
                 fsock.close()
             except Exception:
-                print "Unexpected error:", sys.exc_info()[0]
+                print("Unexpected error:", sys.exc_info()[0])
         finally:
             sys.stdout = old_stdout
             fsock.close()
@@ -253,7 +253,7 @@ try:
 
         def print_object(self):
             """Print object which this _TreeNode represents to console."""
-            print self.item.node.o
+            print(self.item.node.o)
 
         def drawtext(self):
             """Override drawtext from _TreeWidget.TreeNode.
