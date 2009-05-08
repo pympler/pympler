@@ -50,9 +50,11 @@ class TreeTest(unittest.TestCase):
         #     <- ref11 (already included)
         #     <- ref2 <- ref22
         root = 'root id'
-        ref1 = [root]
+        # the key-value pair is required since Python 2.7/3.1
+        # see http://bugs.python.org/issue4688 for details
+        ref1 = [root, []]
         ref11 = [ref1, root]
-        ref2 = {1: root}
+        ref2 = {1: root, 2:[]}
         ref22 = {1: ref2}
 
         res = refbrowser.RefBrowser(root, repeat=False).get_tree()
@@ -60,9 +62,7 @@ class TreeTest(unittest.TestCase):
         refs = [ref1, ref2]
         children = [c.o for c in res.children if isinstance(c, refbrowser._Node)]
         for r in refs:
-            if r not in children:
-                print r
-            self.assert_(r in children)
+            self.assert_(r in children, "%s not in children" % r)
         self.assert_(ref11 not in children)
         # now we test the repeat argument
         res = refbrowser.RefBrowser(root, repeat=True).get_tree()
