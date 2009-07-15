@@ -221,7 +221,7 @@ _sizeof_Cunicode = len(u)
 del u
 if sys.maxunicode >= (1 << (_sizeof_Cunicode << 3)):
     raise AssertionError('sizeof(%s) bad: %d' % ('unicode', _sizeof_Cunicode))
-    
+
 try:  # size of GC header, sizeof(PyGC_Head)
     import _testcapi as t
     _sizeof_CPyGC_Head = t.SIZEOF_PYGC_HEAD  # new in Python 2.6
@@ -1647,7 +1647,7 @@ class Asizer(object):
 
     def asizesof(self, *objs, **opts):
         '''Return the individual sizes of the given objects
-           (with modified options, see method  **set**).  
+           (with modified options, see method  **set**).
         '''
         if opts:
             self.set(**opts)
@@ -2028,7 +2028,7 @@ def asizeof(*objs, **opts):
     the referents of each object, recursively up to the limit.
     Using *limit=0* returns the sum of the flat[4] sizes of
     the given objects.  High *limit* values may cause runtime
-    errors and miss objects for sizing.  
+    errors and miss objects for sizing.
 
     A positive value for *stats* prints up to 8 statistics, (1)
     a summary of the number of objects sized and seen, (2) a
@@ -2175,7 +2175,7 @@ def test_flatsize(failf=None, stdf=None):
     '''Compare the results of **flatsize()** without using ``sys.getsizeof()``
        with the accurate sizes returned by ``sys.getsizeof()``.
 
-       Return the total number of tests or number of unexpected failures.
+       Return the total number of tests and number of unexpected failures.
 
        Expect differences for sequences as dicts, lists, sets, tuples, etc.
        While this is no proof for the accuracy of **flatsize()** on Python
@@ -2574,7 +2574,7 @@ if __name__ == '__main__':
 #   notice, this list of conditions and the following disclaimer in
 #   the documentation and/or other materials provided with the
 #   distribution.
-# 
+#
 # - Neither the name of ProphICy Semiconductor, Inc. nor the names
 #   of its contributors may be used to endorse or promote products
 #   derived from this software without specific prior written
@@ -2593,4 +2593,3 @@ if __name__ == '__main__':
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #---------------------------------------------------------------------
-
