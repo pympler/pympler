@@ -33,7 +33,7 @@ class Stats(object):
         self.sorted = []
         if filename:
             self.load_stats(filename)
-    
+
     def load_stats(self, fdump):
         """
         Load the data from a dump file.
@@ -114,7 +114,7 @@ class Stats(object):
             stats.sort_stats('size').reverse_order().print_stats()
         """
 
-        criteria = ('classname', 'tsize', 'birth', 'death', 
+        criteria = ('classname', 'tsize', 'birth', 'death',
                     'name', 'repr', 'size')
 
         if not set(criteria).issuperset(set(args)):
@@ -125,9 +125,13 @@ class Stats(object):
 
         def _sort(a, b, crit=args):
             for c in crit:
-                res = cmp(getattr(a,c), getattr(b,c))
+                res = 0
+                if getattr(a,c) < getattr(b,c):
+                    res = -1
+                elif getattr(a,c) > getattr(b,c):
+                    res = 1
                 if res:
-                    if c in ('tsize', 'size', 'death'): 
+                    if c in ('tsize', 'size', 'death'):
                         return -res
                     return res
             return 0
@@ -140,9 +144,9 @@ class Stats(object):
                 #def __cmp__(self, other):
                 #    return mycmp(self.obj, other.obj)
                 def __lt__(self, other):
-                    return mycmp(self.obj, other.obj) < 0                    
+                    return mycmp(self.obj, other.obj) < 0
             return K
-    
+
         if not self.sorted:
             self._init_sort()
 
@@ -227,7 +231,7 @@ class Stats(object):
             for to in self.index[classname]:
                 self._merge_objects(snapshot.timestamp, merged, to)
                 total += to.get_size_at_time(snapshot.timestamp)
-                if to.birth < snapshot.timestamp and (to.death is None or 
+                if to.birth < snapshot.timestamp and (to.death is None or
                    to.death > snapshot.timestamp):
                     active += 1
             try:
@@ -276,7 +280,7 @@ class ConsoleStats(Stats):
                 pass
             for (ts, size) in to.footprint:
                 self.stream.write('  %-30s %s\n' % (pp_timestamp(ts), pp(size.size)))
-                self._print_refs(size.refs, size.size)                    
+                self._print_refs(size.refs, size.size)
             if to.death is not None:
                 self.stream.write('  %-30s finalize\n' % pp_timestamp(ts))
         else:
@@ -286,8 +290,8 @@ class ConsoleStats(Stats):
             if to.repr:
                 self.stream.write('%-64s %-14s\n' % (trunc(to.repr, 64), pp(size)))
             else:
-                self.stream.write('%-64s %-14s\n' % (trunc(to.name, 64), pp(size)))       
-        
+                self.stream.write('%-64s %-14s\n' % (trunc(to.name, 64), pp(size)))
+
     def print_stats(self, filter=None, limit=1.0):
         """
         Write tracked objects to stdout.  The output can be filtered and pruned.
@@ -332,7 +336,7 @@ class ConsoleStats(Stats):
         for fp in self.footprint:
             self.annotate_snapshot(fp)
             fobj.write('%-35s %11s %12s %12s %5s\n' % \
-                (trunc(fp.desc, 35), 'active', pp(fp.asizeof_total), 
+                (trunc(fp.desc, 35), 'active', pp(fp.asizeof_total),
                  'average', 'pct'))
             for classname in classlist:
                 try:
@@ -341,7 +345,7 @@ class ConsoleStats(Stats):
                     # No such class in this snapshot, if print_stats is called
                     # multiple times there may exist older annotations in
                     # earlier snapshots.
-                    pass 
+                    pass
                 else:
                     total, avg, pct, active = info['sum'], info['avg'], info['pct'], info['active']
                     fobj.write('  %-33s %11d %12s %12s %4d%%\n' % \
@@ -377,7 +381,7 @@ class HtmlStats(Stats):
     """
 
     nopylab_msg    = """<div color="#FFCCCC">Could not generate %s chart!
-    Install <a href="http://matplotlib.sourceforge.net/">Matplotlib</a> 
+    Install <a href="http://matplotlib.sourceforge.net/">Matplotlib</a>
     to generate charts.</div>\n"""
 
     chart_tag      = '<img src="%s">\n'
@@ -427,7 +431,7 @@ class HtmlStats(Stats):
 
         sizes = [to.get_max_size() for to in self.index[classname]]
         total = 0
-        for s in sizes: 
+        for s in sizes:
             total += s
         data = {'cnt': len(self.index[classname]), 'cls': classname}
         data['avg'] = pp(total / len(sizes))
@@ -447,7 +451,7 @@ class HtmlStats(Stats):
                 if merged.refs:
                     self._print_refs(fobj, merged.refs, merged.size)
                 else:
-                    fobj.write('<p>No per-referent sizes recorded.</p>\n')                
+                    fobj.write('<p>No per-referent sizes recorded.</p>\n')
 
         fobj.write("<h2>Instances</h2>\n")
         for to in self.index[classname]:
@@ -457,7 +461,7 @@ class HtmlStats(Stats):
                 fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % to.repr)
             fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(to.birth), pp_timestamp(to.death)))
             if hasattr(to, 'trace'):
-                trace = "<pre>%s</pre>" % (self.format_trace(to.trace))                
+                trace = "<pre>%s</pre>" % (self.format_trace(to.trace))
                 fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
             for (ts, size) in to.footprint:
                 fobj.write("<tr><td>%s</td>" % pp_timestamp(ts))
@@ -469,9 +473,9 @@ class HtmlStats(Stats):
                     fobj.write("</td></tr>\n")
             fobj.write("</table>\n")
 
-        fobj.write(self.footer)    
+        fobj.write(self.footer)
         fobj.close()
-    
+
     snapshot_cls_header = """<tr>
         <th id="hl">Class</th>
         <th id="hl" align="right">Instance #</th>
@@ -538,7 +542,7 @@ class HtmlStats(Stats):
             fobj.write('</td></tr>\n')
 
         fobj.write("</table>\n")
-        fobj.write(self.footer)    
+        fobj.write(self.footer)
         fobj.close()
 
     def create_lifetime_chart(self, classname, filename=''):
@@ -573,7 +577,7 @@ class HtmlStats(Stats):
         savefig(filename)
 
         return HtmlStats.chart_tag % (filename)
-    
+
     def create_snapshot_chart(self, filename=''):
         """
         Create chart that depicts the memory allocation over time apportioned to
@@ -601,7 +605,7 @@ class HtmlStats(Stats):
                 polys.append( ((xp, yp), {'label': cn}) )
                 poly_labels.append(cn)
                 base = sz
-       
+
         figure()
         title("Snapshot Memory")
         xlabel("Execution Time [s]")
@@ -611,7 +615,7 @@ class HtmlStats(Stats):
         plot(x, y, 'r--', label='Total')
         y = [float(fp.tracked_total)/(1024*1024) for fp in self.footprint]
         plot(x, y, 'b--', label='Tracked total')
-        
+
         for (args, kwds) in polys:
             fill(*args, **kwds)
         legend(loc=2)
