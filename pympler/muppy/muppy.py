@@ -17,7 +17,7 @@ def get_objects(remove_dups=True):
 
     Keyword arguments:
     remove_dups -- if True, all duplicate objects will be removed.
-    
+
     """
     res = []
     gc.collect()
@@ -78,7 +78,7 @@ def get_diff(left, right):
             elif not compat.object_in_list(o, bar[type(o)]):
                 res.append(o)
         return res
-        
+
     # Create partitions of both lists. This will reduce the time required for
     # the comparison
     left_objects = partition(left)
@@ -92,7 +92,7 @@ def sort(objects):
     """Sort objects by size in bytes."""
     objects = sorted(objects, key=_getsizeof)
     return objects
-    
+
 def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter
     """Filter objects.
 
@@ -102,7 +102,7 @@ def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter
     Type -- object type to filter by
     min -- minimum object size
     max -- maximum object size
-    
+
     """
     res = []
     if min > max:
@@ -148,11 +148,11 @@ def _get_usage(function, *args):
 
     Note that this function is currently experimental, because it is not
     tested thoroughly and performs poorly.
-    
+
     """
     # The usage of a function is calculated by creating one summary of all
     # objects before the function is invoked and afterwards. These summaries
-    # are compared and the diff is returned. 
+    # are compared and the diff is returned.
     # This function works in a 2-steps process. Before the actual function is
     # invoked an empty dummy function is measurement to identify the overhead
     # involved in the measuring process. This overhead then is subtracted from
@@ -160,9 +160,9 @@ def _get_usage(function, *args):
     # actual usage of a function call.
     # Also, a measurement is performed twice, allowing the adjustment to
     # initializing things, e.g. modules
-    
+
     res = None
-    
+
     def _get_summaries(function, *args):
         """Get a 2-tuple containing one summary from before, and one summary
         from after the function has been invoked.
@@ -178,7 +178,7 @@ def _get_usage(function, *args):
         This function is to be used only internally. The 'real' get_usage
         function is a wrapper around _get_usage, but the workload is done
         here.
-        
+
         """
         res = []
         # init before calling
@@ -199,7 +199,7 @@ def _get_usage(function, *args):
             s_after = summary._subtract(s_after, o)
         res = summary.get_diff(s_before, s_after)
         return summary._sweep(res)
-        
+
     # calibrate; twice for initialization
     def noop(): pass
     offset = _get_usage(noop)
@@ -231,9 +231,8 @@ def _remove_duplicates(objects):
     result = []
     for item in objects:
         marker = id(item)
-        if marker in seen: 
+        if marker in seen:
             continue
         seen[marker] = 1
         result.append(item)
     return result
-

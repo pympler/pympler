@@ -1,5 +1,5 @@
 import doctest
-import random 
+import random
 import unittest
 
 import pympler.muppy
@@ -11,12 +11,12 @@ try:
 except ImportError:
     from pympler.asizeof import flatsize
     _getsizeof = flatsize
-    
+
 class MuppyTest(unittest.TestCase):
 
     def test_objects(self):
         """Test that objects returns a non-empty list."""
-        self.failUnless(len(muppy.get_objects()) > 0)
+        self.assertTrue(len(muppy.get_objects()) > 0)
 
     def test_diff(self):
         """Test if the diff of to object lists is correct.
@@ -50,23 +50,23 @@ class MuppyTest(unittest.TestCase):
 
     def test_filter_by_type(self):
         """Test that only elements of a certain type are included,
-        no elements are removed which belong to this type and 
+        no elements are removed which belong to this type and
         no elements are added."""
         s = (s1, s2, s3, s4) = ('', 'a', 'b', 'a')
         t = (t1, t2) = (dict, str)
         i1 = 1
         l1 = []
         objects = [s1, s2, i1, l1, t1, t2, s3, s4]
-        
+
         objects = muppy.filter(objects, Type=str)
         self.assertEqual(len(objects), len(s))
         for element in s:
             self.assertEqual(element in objects, True)
 
     def test_filter_by_size(self):
-        """Test that only elements within the specified size boundaries 
-        are returned. 
-        Also verify that if minimum is larger than maximum an exception is 
+        """Test that only elements within the specified size boundaries
+        are returned.
+        Also verify that if minimum is larger than maximum an exception is
         raised."""
         minimum = 42
         maximum = 958
@@ -110,7 +110,7 @@ class MuppyTest(unittest.TestCase):
         self.assertEqual(len(l1) + len(l2), len(res))
         for o in res:
             self.assert_((o in l0) or (o in l1) or (o in l2))
-        
+
     def test_get_size(self):
         """Test that the return value is the sum of the size of all objects."""
         (o1, o2, o3, o4, o5) = (1, 'a', 'b', 4, 5)
@@ -130,12 +130,12 @@ class MuppyTest(unittest.TestCase):
 #
 #        Parameters of the function should be forwarded correctly.
 #        """
-#        
+#
 #        # we need to pull some tricks here, since parsing the code, static
 #        # objects are already created, e.g. parsing "a = 'some text'" will
 #        # already create a string object for 'some text'. So we compute the
 #        # values to use dynamically.
-#        
+#
 #        # check that no increase in memory usage returns None
 #        a = 1
 #        b = 2
@@ -173,13 +173,13 @@ class MuppyTest(unittest.TestCase):
 
         self.assertFalse(muppy._is_containerobject(1))
         self.assertFalse(muppy._is_containerobject(''))
-        
+
     def test_remove_duplicates(self):
-        """Test that this operations returns a duplicate-free lists. 
-        
+        """Test that this operations returns a duplicate-free lists.
+
         That, is no objects are listed twice. This does not apply to objects
         with same values."""
-        (o1, o2, o3, o4, o5) = (1, 'a', 'b', 'a', 5)
+        (o1, o2, o3, o4, o5) = (1, 'a', 'b', 'c', 5)
         objects = [o1, o2, o3, o4, o5, o5, o4, o3, o2, o1]
         expected = set(objects)
         res = muppy._remove_duplicates(objects)
@@ -197,10 +197,10 @@ class MuppyTest(unittest.TestCase):
                  "The previous element appears to be larger than the " +\
                  "current: %s<%s" % (prev_o, objects[0]))
 
-        
-            
+
+
 def suite():
-    suite = unittest.makeSuite(MuppyTest,'test') 
+    suite = unittest.makeSuite(MuppyTest,'test')
     suite.addTest(doctest.DocTestSuite())
     return suite
 
