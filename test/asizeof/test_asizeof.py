@@ -161,15 +161,28 @@ class FunctionTest(unittest.TestCase):
     def test_basicsize(self):
         '''Test asizeof.basicsize()
         '''
+        objects = [1, '', 'a', True, None]
+        for o in objects:
+            assert asizeof.basicsize(o) == type(o).__basicsize__
+        objects = [[], (), {}]
+        for o in objects:
+            assert (asizeof.basicsize(o) - asizeof._sizeof_CPyGC_Head ==
+                    type(o).__basicsize__)
         l1 = [1,2,3,4]
         l2 = ["spam",2,3,4,"eggs",6,7,8]
         assert asizeof.basicsize(l1) == asizeof.basicsize(l2)
-        # TODO
 
     def test_itemsize(self):
         '''Test asizeof.itemsize()
         '''
-        # TODO
+        objects = [1, True, None, ()]
+        for o in objects:
+            self.assertEqual(asizeof.itemsize(o), type(o).__itemsize__)
+        itemsizes = [({}, asizeof._sizeof_CPyDictEntry),
+                     (set(), asizeof._sizeof_Csetentry),
+                     ]
+        for o, itemsize in itemsizes:
+            self.assertEqual(asizeof.itemsize(o), itemsize)
 
     def test_leng(self):
         '''Test asizeof.leng()
@@ -189,7 +202,6 @@ class FunctionTest(unittest.TestCase):
             base = long(base)
         except NameError: # Python3.0
             pass
-        # TODO I don't understand what these numbers actually represent
         assert asizeof.leng(base**8-1) == 1
         assert asizeof.leng(base**16-1) == 1
         assert asizeof.leng(base**32-1) >= 1
