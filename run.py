@@ -106,7 +106,7 @@ def run_pychecker(project_path, dirs, OKd=False):
                     no_OKd, '--stdlib', '--quiet', src)
 
 def zip_docs(path, target):
-    '''Zip the documentation to be uploaded to the Cheeseshop. 
+    '''Zip the documentation to be uploaded to the Cheeseshop.
     Compress all files found in `path` recursively and strip the leading path
     component. The file is written to `target`.
     '''
@@ -185,6 +185,11 @@ def run_unittests(project_path, dirs=[], coverage=False):
         run_command(_Coverage, '-r', *mods) # report
         run_command(_Coverage, '-a', *mods) # annotate
 
+        coverage_out_file = '.coverage'
+        if (os.path.exists(coverage_out_file) and
+            not os.path.isdir(coverage_out_file)):
+            os.unlink(coverage_out_file)
+
 def print2(text):
     '''Print a headline text.
     '''
@@ -240,7 +245,7 @@ def main():
                       dest='test', help='run all or specific unit tests')
     parser.add_option('--coverage', action='store_true', default=False,
                       dest='coverage', help='collect test coverage statistics')
-    parser.add_option('--cov-cmd', default=_Coverage, dest='covcmd', 
+    parser.add_option('--cov-cmd', default=_Coverage, dest='covcmd',
                       help='coverage invocation command (%s)' % _Coverage)
     parser.add_option('--upload', action='store_true', default=False,
                       dest='upload', help='upload distributions to the Python Cheese Shop')
@@ -294,9 +299,6 @@ def main():
     if options.dist:
         print2('Creating distribution')
         run_dist(project_path, args or ['gztar', 'zip'], upload=options.upload)
-
-    if options.coverage:
-        os.unlink('.coverage')
 
 if __name__ == '__main__':
     main()
