@@ -11,8 +11,19 @@ from gc import get_referents
 from inspect import getmembers
 from subprocess import Popen, PIPE
 from copy import copy
+from sys import platform
 
 __all__ = ['ReferenceGraph']
+
+
+# Popen might lead to deadlocks when file descriptors are leaked to
+# sub-processes on Linux. On Windows, however, close_fds=True leads to
+# ValueError if stdin/stdout/stderr is piped:
+# http://code.google.com/p/pympler/issues/detail?id=28#c1
+popen_flags = {'close_fds': True}
+if platform == 'win32':
+    del popen_flags['close_fds']
+
 
 class _MetaObject(object):
     """
@@ -290,13 +301,16 @@ class ReferenceGraph(object):
         data = self._get_graphviz_data()
 
         if unflatten:
-            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE, close_fds=True)
-            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout, close_fds=True)
+            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE, 
+                **popen_flags)
+            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout,
+                **popen_flags)
             p1.communicate(encode4pipe(data))
             p2.communicate()
             return p2.returncode == 0
         else:
-            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE, close_fds=True)
+            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE,
+                **popen_flags)
             p.communicate(encode4pipe(data))
             return p.returncode == 0
 
