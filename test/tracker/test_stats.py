@@ -4,7 +4,7 @@ from pympler.util.compat import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
 from pympler.tracker.stats import *
-from pympler.asizeof import Asizer
+from pympler.asizeof import Asizer, asizeof
 
 class Foo:
     def __init__(self):
@@ -116,15 +116,19 @@ class LogTestCase(unittest.TestCase):
     def test_merge(self):
         """Test merging of reference trees.
         """
-        self.tracker.track_class(Foo, name='Foo', resolution_level=2)
+        self.tracker.track_class(FooNew, name='Foo', resolution_level=2)
 
-        f1 = Foo()
+        f1 = FooNew()
         f1.a = list(range(1000))
-        f2 = Foo()
+        f2 = FooNew()
         f2.a = list(range(100))
         f2.b = 'This is some stupid spam.'
 
         self.tracker.create_snapshot('Merge test')
+
+        sizer = Asizer()
+        sz1 = sizer.asized(f1)
+        sz2 = sizer.asized(f2)
 
         stats = Stats(tracker=self.tracker)
         for fp in stats.footprint:
@@ -134,10 +138,17 @@ class LogTestCase(unittest.TestCase):
                 assert 'Foo' in fp.classes, fp.classes
                 assert 'merged' in fp.classes['Foo']
                 fm = fp.classes['Foo']['merged']
-                sizer = Asizer()
-                sz = sizer.asizesof(f1, f2)
-                assert fm.size == sz[0] + sz[1], (fm.size, sz[0], sz[1])
-                # TODO check refs
+                assert fm.size == sz1.size + sz2.size, (fm.size, str(sz1), str(sz2))
+                refs = {}
+                for ref in fm.refs:
+                    refs[ref.name] = ref
+                assert '__dict__' in refs.keys(), refs.keys()
+                refs2 = {}
+                for ref in refs['__dict__'].refs:
+                    refs2[ref.name] = ref
+                assert '[V] a' in refs2.keys(), refs2.keys()
+                assert '[V] b' in refs2.keys(), refs2.keys()
+                assert refs2['[V] a'].size == asizeof(f1.a, f2.a)
 
     def test_html(self):
         """Test emitting HTML statistics."""

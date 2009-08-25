@@ -20,9 +20,9 @@ __all__ = ['ReferenceGraph']
 # sub-processes on Linux. On Windows, however, close_fds=True leads to
 # ValueError if stdin/stdout/stderr is piped:
 # http://code.google.com/p/pympler/issues/detail?id=28#c1
-popen_flags = {'close_fds': True}
-if platform == 'win32':
-    del popen_flags['close_fds']
+popen_flags = {} 
+if platform not in ['win32']:
+    popen_flags['close_fds'] = True
 
 
 class _MetaObject(object):

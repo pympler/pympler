@@ -7,6 +7,44 @@ from pympler.asizeof import Asized
 
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
+
+def _merge_asized(a, b, level=0):
+    """
+    Merge **Asized** instances `a` and `b` into `a`.
+    """
+    ref2key = lambda r: r.name.split(':')[0]
+    a.size += b.size
+    a.flat += b.flat
+    if level > 0:
+        a.name = ref2key(a)
+    # Add refs from b to a. Any new refs are appended.
+    a.refs = list(a.refs) # we may need to append items
+    refs = {}
+    for ref in a.refs:
+        refs[ref2key(ref)] = ref
+    for ref in b.refs:
+        key = ref2key(ref)
+        if key in refs:
+            _merge_asized(refs[key], ref, level=level+1)
+        else:
+            # Don't modify existing Asized instances => deepcopy
+            a.refs.append(deepcopy(ref))
+            a.refs[-1].name = key
+
+def _merge_objects(ts, merged, obj):
+    """
+    Merge the snapshot size information of multiple tracked objects.
+    The tracked object `obj` is scanned for size information at time `ts`.
+    The sizes are merged into **Asized** instance `merged`.
+    """
+    sz = None
+    for (t, sized) in obj.footprint:
+        if t == ts:
+            sz = sized
+    if sz:
+        _merge_asized(merged, sized)
+
+
 #
 # Off-line Analysis
 #
@@ -181,43 +219,9 @@ class Stats(object):
     def diff_stats(self, stats):
         return None # TODO
 
-    @staticmethod
-    def _merge_asized(a, b, level=0):
-        """
-        Merge **Asized** instances `a` and `b` into `a`.
-        """
-        ref2key = lambda r: r.name.split(':')[0]
-        a.size += b.size
-        a.flat += b.flat
-        if level > 0:
-            a.name = ref2key(a)
-        # Add refs from b to a. Any new refs are appended.
-        a.refs = list(a.refs) # we may need to append items
-        refs = {}
-        for ref in a.refs:
-            refs[ref2key(ref)] = ref
-        for ref in b.refs:
-            key = ref2key(ref)
-            if key in refs:
-                Stats._merge_asized(refs[key], ref, level=level+1)
-            else:
-                # Don't modify existing Asized instances => deepcopy
-                a.refs.append(deepcopy(ref))
-
-    @staticmethod
-    def _merge_objects(ts, merged, obj):
-        """
-        Merge the snapshot size information of multiple tracked objects.
-        The tracked object `obj` is scanned for size information at time `ts`.
-        The sizes are merged into **Asized** instance `merged`.
-        """
-        for (t, sized) in obj.footprint:
-            if t == ts:
-                Stats._merge_asized(merged, sized)
-
     def annotate_snapshot(self, snapshot):
         """
-        Store addition statistical data in snapshot.
+        Store additional statistical data in snapshot.
         """
         if hasattr(snapshot, 'classes'):
             return
@@ -229,7 +233,7 @@ class Stats(object):
             active = 0
             merged = Asized(0,0)
             for to in self.index[classname]:
-                self._merge_objects(snapshot.timestamp, merged, to)
+                _merge_objects(snapshot.timestamp, merged, to)
                 total += to.get_size_at_time(snapshot.timestamp)
                 if to.birth < snapshot.timestamp and (to.death is None or
                    to.death > snapshot.timestamp):
