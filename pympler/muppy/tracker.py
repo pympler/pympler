@@ -37,7 +37,7 @@ class SummaryTracker(object):
         The number of summaries managed by the tracker has an performance
         impact on new summaries, iff you decide to exclude them from further
         summaries. Therefore it is suggested to use them economically.
-        
+
         Keyword arguments:
         ignore_self -- summaries managed by this object will be ignored.
         """
@@ -50,7 +50,7 @@ class SummaryTracker(object):
 
         See also the notes on ignore_self in the class as well as the
         initializer documentation.
-        
+
         """
         if not self.ignore_self:
             res = summary.summarize(muppy.get_objects())
@@ -68,7 +68,7 @@ class SummaryTracker(object):
             # referenced from outside the monitor's scope. If not, they will be
             # subtracted from the snapshot summary, otherwise they are
             # included (as this indicates that they are relevant to the
-            # application). 
+            # application).
 
             all_of_them = []  # every single object
             ref_counter = {}  # how often it is referenced; (id(o), o) pairs
@@ -97,9 +97,9 @@ class SummaryTracker(object):
                 # referenced in frame, summary, all_of_them
                 if len(gc.get_referrers(o)) == (ref_counter[id(o)] + 2):
                     summary._subtract(res, o)
-            
+
         return res
-    
+
     def diff(self, summary1=None, summary2=None):
         """Compute diff between to summaries.
 
@@ -121,7 +121,7 @@ class SummaryTracker(object):
             if summary1 is not None:
                 res = summary.get_diff(summary1, summary2)
             else:
-                raise ValueError("You cannot provide summary2 without summary1.""")
+                raise ValueError("You cannot provide summary2 without summary1.")
         return summary._sweep(res)
 
     def print_diff(self, summary1=None, summary2=None):
@@ -138,7 +138,7 @@ class SummaryTracker(object):
         """Store a current summary in self.summaries."""
         self.summaries[key] = self.create_summary()
 
-        
+
 class ObjectTracker(object):
     """
     Helper class to track changes in the set of existing objects.
@@ -151,14 +151,14 @@ class ObjectTracker(object):
     be stored. This means that none of these objects can be garbage collected.
     A use case for the ObjectTracker is the monitoring of a state which should
     be stable, but you see new objects being created nevertheless. With the
-    ObjectTracker you can identify these new objects. 
+    ObjectTracker you can identify these new objects.
 
     """
 
     # Some precaution needs to be taken when handling frame objects (see
     # warning at http://docs.python.org/lib/inspect-stack.html). All ignore
     # lists used need to be emptied so no frame objects remain referenced.
-    
+
     def __init__(self):
         """On initialisation, the current state of objects is stored.
 
@@ -179,12 +179,12 @@ class ObjectTracker(object):
         """
         def remove_ignore(objects, ignore=[]):
             # remove all objects listed in the ignore list
-            res = []            
+            res = []
             for o in objects:
                 if not compat.object_in_list(o, ignore):
                     res.append(o)
             return res
-    
+
         tmp = gc.get_objects()
         ignore.append(inspect.currentframe()) #PYCHOK change ignore
         ignore.append(self) #PYCHOK change ignore
@@ -212,7 +212,7 @@ class ObjectTracker(object):
         # manual cleanup, see comment above
         del ignore[:]
         return res
-        
+
     def get_diff(self, ignore=[]):
         """Get the diff to the last time the  state of objects was measured.
 
