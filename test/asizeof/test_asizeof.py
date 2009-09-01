@@ -37,7 +37,7 @@ else:
             isz = asizeof.itemsize(data)
             lng = asizeof.leng(data)
             fsz = asizeof.flatsize(data)
-            assert fsz == bsz + (lng*isz), (fsz, bsz, lng, isz)
+            self.assertEqual(fsz, bsz + (lng*isz), (fsz, bsz, lng, isz))
 
         self.assertRaises(ValueError, asizeof.flatsize, l, **{'align': 3})
 
@@ -69,18 +69,18 @@ class TypesTest(unittest.TestCase):
         gen = infinite_gen()
         s1 = asizeof.asizeof(gen, code=True)
         for i in gen:
-            assert i == 1
+            self.assertEqual(i, 1)
             break
         for i in gen:
-            assert i == 2
+            self.assertEqual(i, 2)
             break
         s2 = asizeof.asizeof(gen, code=True)
         s3 = asizeof.asizeof(gen, code=False)
         for i in gen:
-            assert i == 3
+            self.assertEqual(i, 3)
             break
-        assert s1 == s2
-        assert s3 == 0
+        self.assertEqual(s1, s2)
+        self.assertEqual(s3, 0)
 
     def test_methods(self):
         '''Test sizing methods and functions
@@ -96,19 +96,19 @@ class TypesTest(unittest.TestCase):
     def test_classes(self):
         '''Test sizing class objects and instances
         '''
-        assert asizeof.asizeof(Foo, code=True) > 0
-        assert asizeof.asizeof(ThinFoo, code=True) > 0
-        assert asizeof.asizeof(OldFoo, code=True) > 0
+        self.assert_(asizeof.asizeof(Foo, code=True) > 0)
+        self.assert_(asizeof.asizeof(ThinFoo, code=True) > 0)
+        self.assert_(asizeof.asizeof(OldFoo, code=True) > 0)
 
-        assert asizeof.asizeof(Foo([17,42,59])) > 0
-        assert asizeof.asizeof(ThinFoo([17,42,59])) > 0
-        assert asizeof.asizeof(OldFoo([17,42,59])) > 0
+        self.assert_(asizeof.asizeof(Foo([17,42,59])) > 0)
+        self.assert_(asizeof.asizeof(ThinFoo([17,42,59])) > 0)
+        self.assert_(asizeof.asizeof(OldFoo([17,42,59])) > 0)
 
         s1 = asizeof.asizeof(Foo("short"))
         s2 = asizeof.asizeof(Foo("long text ... well"))
-        assert s2 >= s1
+        self.assert_(s2 >= s1)
         s3 = asizeof.asizeof(ThinFoo("short"))
-        assert s3 <= s1
+        self.assert_(s3 <= s1)
 
 class FunctionTest(unittest.TestCase):
     '''Test exposed functions and parameters.
@@ -117,38 +117,38 @@ class FunctionTest(unittest.TestCase):
     def test_asized(self):
         '''Test asizeof.asized()
         '''
-        assert list(asizeof.asized(detail=2)) == []
+        self.assertEqual(list(asizeof.asized(detail=2)), [])
         self.assertRaises(KeyError, asizeof.asized, **{'all': True})
         sized = asizeof.asized(Foo(42), detail=2)
-        assert "Foo" in sized.name, sized.name
+        self.assert_("Foo" in sized.name, sized.name)
         refs = [ref for ref in sized.refs if ref.name == '__dict__']
-        assert len(refs) == 1
+        self.assertEqual(len(refs), 1)
         refs = [ref for ref in refs[0].refs if ref.name == '[V] data: 42']
-        assert len(refs) == 1, refs
+        self.assertEqual(len(refs), 1, refs)
         i = 42
-        assert refs[0].size == asizeof.asizeof(i), refs[0].size
+        self.assertEqual(refs[0].size, asizeof.asizeof(i), refs[0].size)
 
     def test_asizesof(self):
         '''Test asizeof.asizesof()
         '''
-        assert list(asizeof.asizesof()) == []
+        self.assertEqual(list(asizeof.asizesof()), [])
         self.assertRaises(KeyError, asizeof.asizesof, **{'all': True})
 
         objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
         sizes = list(asizeof.asizesof(*objs))
         objs.reverse()
         rsizes = list(asizeof.asizesof(*objs))
-        assert len(sizes) == 3
+        self.assertEqual(len(sizes), 3)
         rsizes.reverse()
-        assert sizes == rsizes, (sizes, rsizes)
+        self.assertEqual(sizes, rsizes, (sizes, rsizes))
         objs.reverse()
         isizes = [asizeof.asizeof(obj) for obj in objs]
-        assert sizes == isizes, (sizes, isizes)
+        self.assertEqual(sizes, isizes, (sizes, isizes))
 
     def test_asizeof(self):
         '''Test asizeof.asizeof()
         '''
-        assert asizeof.asizeof() == 0
+        self.assertEqual(asizeof.asizeof(), 0)
 
         objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
         total = asizeof.asizeof(*objs)
@@ -156,21 +156,21 @@ class FunctionTest(unittest.TestCase):
         sum = 0
         for sz in sizes:
             sum += sz
-        assert total == sum, (total, sum)
+        self.assertEqual(total, sum, (total, sum))
 
     def test_basicsize(self):
         '''Test asizeof.basicsize()
         '''
         objects = [1, '', 'a', True, None]
         for o in objects:
-            assert asizeof.basicsize(o) == type(o).__basicsize__
+            self.assertEqual(asizeof.basicsize(o), type(o).__basicsize__)
         objects = [[], (), {}]
         for o in objects:
-            assert (asizeof.basicsize(o) - asizeof._sizeof_CPyGC_Head ==
-                    type(o).__basicsize__)
+            self.assertEqual(asizeof.basicsize(o) - asizeof._sizeof_CPyGC_Head,
+                type(o).__basicsize__)
         l1 = [1,2,3,4]
         l2 = ["spam",2,3,4,"eggs",6,7,8]
-        assert asizeof.basicsize(l1) == asizeof.basicsize(l2)
+        self.assertEqual(asizeof.basicsize(l1), asizeof.basicsize(l2))
 
     def test_itemsize(self):
         '''Test asizeof.itemsize()
@@ -189,42 +189,42 @@ class FunctionTest(unittest.TestCase):
         '''
         l = [1,2,3,4]
         s = "spam"
-        assert asizeof.leng(l) >= len(l), asizeof.leng(l)
-        assert asizeof.leng(tuple(l)) == len(l)
-        assert asizeof.leng(set(l)) >= len(set(l))
-        assert asizeof.leng(s) >= len(s)
+        self.assert_(asizeof.leng(l) >= len(l), asizeof.leng(l))
+        self.assertEqual(asizeof.leng(tuple(l)), len(l))
+        self.assert_(asizeof.leng(set(l)) >= len(set(l)))
+        self.assert_(asizeof.leng(s) >= len(s))
 
         # Python 3.0 ints behave like Python 2.x longs. leng() reports
         # None for old ints and >=1 for new ints/longs.
-        assert asizeof.leng(42) in [None, 1], asizeof.leng(42)
+        self.assert_(asizeof.leng(42) in [None, 1], asizeof.leng(42))
         base = 2
         try:
             base = long(base)
         except NameError: # Python3.0
             pass
-        assert asizeof.leng(base**8-1) == 1
-        assert asizeof.leng(base**16-1) == 1
-        assert asizeof.leng(base**32-1) >= 1
-        assert asizeof.leng(base**64-1) >= 2
+        self.assertEqual(asizeof.leng(base**8-1), 1)
+        self.assertEqual(asizeof.leng(base**16-1), 1)
+        self.assert_(asizeof.leng(base**32-1) >= 1)
+        self.assert_(asizeof.leng(base**64-1) >= 2)
 
     def test_refs(self):
         '''Test asizeof.refs()
         '''
         f = Foo(42)
         refs = list(asizeof.refs(f))
-        assert len(refs) >= 1, len(refs)
-        assert {'data': 42} in refs, refs
+        self.assert_(len(refs) >= 1, len(refs))
+        self.assert_({'data': 42} in refs, refs)
 
         f = OldFoo(42)
         refs = list(asizeof.refs(f))
-        assert len(refs) >= 1, len(refs)
-        assert {'odata': 42} in refs, refs
+        self.assert_(len(refs) >= 1, len(refs))
+        self.assert_({'odata': 42} in refs, refs)
 
         f = ThinFoo(42)
         refs = list(asizeof.refs(f))
-        assert len(refs) >= 2, len(refs)
-        assert 42 in refs, refs
-        assert ('tdata',) in refs, refs # slots
+        self.assert_(len(refs) >= 2, len(refs))
+        self.assert_(42 in refs, refs)
+        self.assert_(('tdata',) in refs, refs) # slots
 
     def test_adict(self):
         '''Test asizeof.adict()

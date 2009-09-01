@@ -55,37 +55,37 @@ class LogTestCase(unittest.TestCase):
         self.tracker.clear()
 
         stats = ConsoleStats(stream=f2)
-        assert stats.index is None
-        assert stats.footprint is None
+        self.assert_(stats.index is None)
+        self.assert_(stats.footprint is None)
         tmp.seek(0)
         stats.load_stats(tmp)
         tmp.close()
-        assert 'Foo' in stats.index
+        self.assert_('Foo' in stats.index)
 
         stats.print_stats()
 
-        assert f1.getvalue() == f2.getvalue()
+        self.assertEqual(f1.getvalue(), f2.getvalue())
 
         # Test sort_stats and reverse_order
-        assert stats.sort_stats('size') == stats
-        assert stats.sorted[0].classname == 'Foo'
+        self.assertEqual(stats.sort_stats('size'), stats)
+        self.assertEqual(stats.sorted[0].classname, 'Foo')
         stats.reverse_order()
-        assert stats.sorted[0].classname == 'Bar'
+        self.assertEqual(stats.sorted[0].classname, 'Bar')
         stats.sort_stats('classname', 'birth')
-        assert stats.sorted[0].classname == 'Bar'
+        self.assertEqual(stats.sorted[0].classname, 'Bar')
         self.assertRaises(ValueError, stats.sort_stats, 'name', 42, 'classn')
-        assert stats.diff_stats(stats) == None # Not yet implemented
+        self.assertEqual(stats.diff_stats(stats), None) # Not yet implemented
 
         # Test partial printing
         stats.stream = f3 = StringIO()
         stats.sort_stats()
         tolen = len(stats.sorted)
         stats.print_stats(filter='Bar',limit=0.5)
-        assert len(stats.sorted) == tolen
+        self.assertEqual(len(stats.sorted), tolen)
         stats.print_summary()
         clsname = f3.getvalue().split('\n')[0]
-        assert re.search('\.Bar', clsname) != None, clsname
-        assert len(f3.getvalue()) < len(f1.getvalue())
+        self.assertNotEqual(re.search('\.Bar', clsname), None, clsname)
+        self.assert_(len(f3.getvalue()) < len(f1.getvalue()))
 
         f1.close()
         f2.close()
@@ -134,21 +134,21 @@ class LogTestCase(unittest.TestCase):
         for fp in stats.footprint:
             if fp.desc == 'Merge test':
                 stats.annotate_snapshot(fp)
-                assert hasattr(fp, 'classes')
-                assert 'Foo' in fp.classes, fp.classes
-                assert 'merged' in fp.classes['Foo']
+                self.assert_(hasattr(fp, 'classes'))
+                self.assert_('Foo' in fp.classes, fp.classes)
+                self.assert_('merged' in fp.classes['Foo'])
                 fm = fp.classes['Foo']['merged']
-                assert fm.size == sz1.size + sz2.size, (fm.size, str(sz1), str(sz2))
+                self.assertEqual(fm.size, sz1.size + sz2.size, (fm.size, str(sz1), str(sz2)))
                 refs = {}
                 for ref in fm.refs:
                     refs[ref.name] = ref
-                assert '__dict__' in refs.keys(), refs.keys()
+                self.assert_('__dict__' in refs.keys(), refs.keys())
                 refs2 = {}
                 for ref in refs['__dict__'].refs:
                     refs2[ref.name] = ref
-                assert '[V] a' in refs2.keys(), refs2.keys()
-                assert '[V] b' in refs2.keys(), refs2.keys()
-                assert refs2['[V] a'].size == asizeof(f1.a, f2.a)
+                self.assert_('[V] a' in refs2.keys(), refs2.keys())
+                self.assert_('[V] b' in refs2.keys(), refs2.keys())
+                self.assertEqual(refs2['[V] a'].size, asizeof(f1.a, f2.a))
 
     def test_html(self):
         """Test emitting HTML statistics."""

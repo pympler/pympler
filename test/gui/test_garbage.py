@@ -53,22 +53,22 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        assert gb.count == len(gc.garbage)
-        assert gb.count >= 2
+        self.assertEqual(gb.count, len(gc.garbage))
+        self.assert_(gb.count >= 2, gb.count)
         
         gfoo = [x for x in gb.metadata if x.id == idfoo]
-        assert len(gfoo) == 1
+        self.assertEqual(len(gfoo), 1)
         gfoo = gfoo[0]
-        assert gfoo.type == 'Foo'
-        assert gfoo.size > 0
-        assert gfoo.str != ''
+        self.assertEqual(gfoo.type, 'Foo')
+        self.assert_(gfoo.size > 0, gfoo.size)
+        self.assertNotEqual(gfoo.str, '')
 
         gbar = [x for x in gb.metadata if x.id == idbar]
-        assert len(gbar) == 1
+        self.assertEqual(len(gbar), 1)
         gbar = gbar[0]
-        assert gbar.type == 'Bar'
-        assert gbar.size > 0
-        assert gbar.str != ''
+        self.assertEqual(gbar.type, 'Bar')
+        self.assert_(gbar.size > 0, gbar.size)
+        self.assertNotEqual(gbar.str, '')
 
     def test_split(self):
         """Test splitting into subgraphs.
@@ -94,23 +94,23 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
         subs = list(gb.split())
-        assert len(subs) == 2
+        self.assertEqual(len(subs), 2)
 
         fbg = [x for x in subs if x.count == 4][0]
         lig = [x for x in subs if x.count == 1][0]
 
-        assert isinstance(fbg, GarbageGraph)
-        assert isinstance(lig, GarbageGraph)
+        self.assert_(isinstance(fbg, GarbageGraph))
+        self.assert_(isinstance(lig, GarbageGraph))
 
-        assert len(fbg.edges) == 4, fbg.edges
-        assert len(lig.edges) == 1, lig.edges
+        self.assertEqual(len(fbg.edges), 4, fbg.edges)
+        self.assertEqual(len(lig.edges), 1, lig.edges)
 
-        assert _Edge(idl, idl, '') in lig.edges, lig.edges
+        self.assert_(_Edge(idl, idl, '') in lig.edges, lig.edges)
 
-        assert _Edge(idfoo, idfd, '__dict__') in fbg.edges, fbg.edges
-        assert _Edge(idfd, idbar, 'next') in fbg.edges, fbg.edges
-        assert _Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges
-        assert _Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges
+        self.assert_(_Edge(idfoo, idfd, '__dict__') in fbg.edges, fbg.edges)
+        self.assert_(_Edge(idfd, idbar, 'next') in fbg.edges, fbg.edges)
+        self.assert_(_Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges)
+        self.assert_(_Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges)
 
     def test_noprune(self):
         """Test pruning of reference graph.
@@ -129,13 +129,13 @@ class GarbageTestCase(unittest.TestCase):
         gb1 = GarbageGraph()
         gb2 = GarbageGraph(reduce=1)
 
-        assert gb1.count == gb2.count
-        assert len(gb1.metadata) > len(gb2.metadata)
+        self.assertEqual(gb1.count, gb2.count)
+        self.assert_(len(gb1.metadata) > len(gb2.metadata))
         
         gbar = [x for x in gb1.metadata if x.id == idb]
-        assert len(gbar) == 1
+        self.assertEqual(len(gbar), 1)
         gbar = [x for x in gb2.metadata if x.id == idb]
-        assert len(gbar) == 0
+        self.assertEqual(len(gbar), 0)
 
     def test_edges_old(self):
         """Test referent identification for old-style classes.
@@ -156,10 +156,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        assert _Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges
-        assert _Edge(idfd, idbar, 'next') in gb.edges, gb.edges
-        assert _Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges
-        assert _Edge(idbd, idfoo, 'prev') in gb.edges        
+        self.assert_(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
+        self.assert_(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
+        self.assert_(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
+        self.assert_(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
 
     def test_edges_new(self):
         """Test referent identification for new-style classes.
@@ -180,10 +180,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        assert _Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges
-        assert _Edge(idfd, idbar, 'next') in gb.edges, gb.edges
-        assert _Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges
-        assert _Edge(idbd, idfoo, 'prev') in gb.edges        
+        self.assert_(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
+        self.assert_(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
+        self.assert_(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
+        self.assert_(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
 
     def test_uncollectable(self):
         """Test uncollectable object tracking.
@@ -203,9 +203,9 @@ class GarbageTestCase(unittest.TestCase):
         gb = GarbageGraph(collectable=0)
 
         gfoo = [x for x in gb.metadata if x.id == idfoo]
-        assert len(gfoo) == 0
+        self.assertEqual(len(gfoo), 0)
         genemy = [x for x in gb.metadata if x.id == idenemy]
-        assert len(genemy) == 1
+        self.assertEqual(len(genemy), 1)
 
     def test_write_graph(self):
         """Test writing graph as text.
