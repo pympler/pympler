@@ -44,6 +44,20 @@ def _merge_objects(ts, merged, obj):
     if sz:
         _merge_asized(merged, sized)
 
+def _format_trace(trace):
+    """
+    Convert the (stripped) stack-trace to a nice readable format. The stack
+    trace `trace` is a list of frame records as returned by
+    **inspect.stack** but without the frame objects.
+    Returns a string.
+    """
+    lines = []
+    for fr in trace:
+        for line in fr[3]:
+            lines.append('    '+line.strip()+'\n')
+        lines.append('  %s:%4d in %s\n' % (fr[0], fr[1], fr[2]))
+    return ''.join(lines)
+
 
 #
 # Off-line Analysis
@@ -202,20 +216,6 @@ class Stats(object):
         self.sorted.reverse()
         return self
 
-    def format_trace(trace):
-        """
-        Convert the (stripped) stack-trace to a nice readable format. The stack
-        trace `trace` is a list of frame records as returned by
-        **inspect.stack** but without the frame objects.
-        Returns a string.
-        """
-        lines = []
-        for fr in trace:
-            for line in fr[3]:
-                lines.append('    '+line.strip()+'\n')
-            lines.append('  %s:%4d in %s\n' % (fr[0], f[1], f[2]))
-        return ''.join(lines)
-
     def diff_stats(self, stats):
         return None # TODO
 
@@ -279,7 +279,7 @@ class ConsoleStats(Stats):
                 self.stream.write('%-32s 0x%08x %-35s\n' % (
                     trunc(to.name, 32, left=1), to.id, trunc(to.repr, 35)))
             try:
-                self.stream.write(self.format_trace(to.trace))
+                self.stream.write(_format_trace(to.trace))
             except AttributeError:
                 pass
             for (ts, size) in to.footprint:
@@ -465,7 +465,7 @@ class HtmlStats(Stats):
                 fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % to.repr)
             fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(to.birth), pp_timestamp(to.death)))
             if hasattr(to, 'trace'):
-                trace = "<pre>%s</pre>" % (self.format_trace(to.trace))
+                trace = "<pre>%s</pre>" % (_format_trace(to.trace))
                 fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
             for (ts, size) in to.footprint:
                 fobj.write("<tr><td>%s</td>" % pp_timestamp(ts))
