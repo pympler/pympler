@@ -2,6 +2,7 @@
 import pympler.asizeof as asizeof
 import sys
 import unittest
+import gc
 
 if hasattr(sys, 'getsizeof'):
 
@@ -109,6 +110,17 @@ class TypesTest(unittest.TestCase):
         self.assert_(s2 >= s1)
         s3 = asizeof.asizeof(ThinFoo("short"))
         self.assert_(s3 <= s1)
+
+
+    def test_ignore_frame(self):
+        '''Test whether reference cycles are created
+        '''
+        gc.collect()
+        gc.disable()
+        s = asizeof.asizeof(all=True, code=True)
+        self.assertEqual(gc.collect(), 0)
+        gc.enable()
+
 
 class FunctionTest(unittest.TestCase):
     '''Test exposed functions and parameters.

@@ -1,6 +1,7 @@
 import doctest
 import random
 import unittest
+import gc
 
 import pympler.muppy
 from pympler.muppy import muppy
@@ -197,6 +198,15 @@ class MuppyTest(unittest.TestCase):
                  "The previous element appears to be larger than the " +\
                  "current: %s<%s" % (prev_o, objects[0]))
 
+    def test_ignore_frame(self):
+        """Test whether reference cycles are created
+        """
+        gc.collect()
+        gc.disable()
+        objs = muppy.get_objects()
+        del objs
+        self.assertEqual(gc.collect(), 0)
+        gc.enable()
 
 
 def suite():

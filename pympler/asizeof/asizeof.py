@@ -438,7 +438,7 @@ def _objs_opts(objs, all=None, **opts):
          # ... modules first, globals and stack
          # (may contain duplicate objects)
         t = tuple(_values(sys.modules)) + (
-            globals(), stack(sys.getrecursionlimit()))
+            globals(), stack(sys.getrecursionlimit())[2:])
     else:
         raise ValueError('invalid option: %s=%r' % ('all', all))
     return t, opts  #PYCHOK OK

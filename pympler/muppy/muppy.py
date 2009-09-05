@@ -3,6 +3,8 @@ import gc
 from pympler.muppy import summary
 from pympler.util import compat
 
+from inspect import isframe, currentframe
+
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
     from sys import getsizeof as _getsizeof
@@ -19,9 +21,18 @@ def get_objects(remove_dups=True):
     remove_dups -- if True, all duplicate objects will be removed.
 
     """
-    res = []
     gc.collect()
+
+    # Do not initialize local variables before calling gc.get_objects or those
+    # will be included in the list. Furthermore, ignore the current and the
+    # caller's frame object or reference cycles will be created.
     tmp = gc.get_objects()
+    frame = currentframe()
+    tmp = [o for o in tmp \
+        if not isframe(o) or (o is not frame and o is not frame.f_back)]
+    del frame
+
+    res = []
     for o in tmp:
         # gc.get_objects returns only container objects, but we also want
         # the objects referenced by them
