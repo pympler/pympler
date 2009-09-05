@@ -110,9 +110,10 @@ class Processor(object):
             if f.startswith('-'):
                  # some PyChecker options
                 if f in ('--quiet', '-Q'):
-                   self._out = None
+                    pass
+                    #self._out = None
                 elif f in ('--debug', '-d'):
-                   self._debug = True
+                    self._debug = True
             else:
                 n = max(f.count(os.path.sep), 1)
                 d = os.path.realpath(f)
@@ -176,7 +177,8 @@ class Processor(object):
                 t = fmt % args
             else:
                 t = fmt
-            self._out.write(t + os.linesep)
+            if t:
+                self._out.write(t + os.linesep)
 
     def process(self, output):
         '''Split PyChecker output in OK'd
@@ -212,7 +214,7 @@ class Processor(object):
              # print other warnings (and lines)
             m = [m for m, ok in mt if not ok]
             self.printf(os.linesep.join(m))
-            if t > 0 and n == 0:
+            if t > 0 and n == 0 and self._OKd:
                 self.printf("All %s OK'd", t)
             self.printf('')
 
