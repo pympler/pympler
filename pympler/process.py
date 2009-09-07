@@ -36,6 +36,7 @@ class _ProcessMemoryInfo(object):
     pagesize = _getpagesize()
 
     def __init__(self):
+        self.pid = getpid()
         self.rss = 0
         self.vsz = 0
         self.pagefaults = 0
@@ -65,7 +66,7 @@ class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
         successful.
         """
         try:
-            p = Popen(['/bin/ps', '-p%s' % getpid(), '-o', 'rss,vsz'],
+            p = Popen(['/bin/ps', '-p%s' % self.pid, '-o', 'rss,vsz'],
                       stdout=PIPE, stderr=PIPE)
         except OSError:
             pass
@@ -92,6 +93,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
             stats = stat.read().split()
             self.vsz = int( stats[22] )
             self.rss = int( stats[23] ) * self.pagesize
+            self.pagefaults = int( stats[11] )
             stat.close()
             return True
         return False
