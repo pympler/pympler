@@ -48,6 +48,7 @@ def get_tests(dir='.', clean=False):
          # convert to module name
         test = test[:-3].replace(os.sep, '.')
         res.append(test)
+    res.sort(key=lambda s: -s.count('muppy'))
     return res  # sorted(res)
 
 def suite(dirs=['.'], clean=False, pre=True, verbose=2):
