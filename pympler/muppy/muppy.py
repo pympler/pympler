@@ -3,7 +3,7 @@ import gc
 from pympler.muppy import summary
 from pympler.util import compat
 
-from inspect import isframe, currentframe
+from inspect import isframe, stack
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
@@ -14,23 +14,26 @@ except ImportError:
 
 __TPFLAGS_HAVE_GC = 1<<14
 
-def get_objects(remove_dups=True):
-    """Return a list of all known objects.
+def get_objects(remove_dups=True, include_frames=False):
+    """Return a list of all known objects excluding frame objects.
+
+    If (outer) frame objects shall be included, pass `include_frames=True`.  In
+    order to prevent building reference cycles, the current frame object (of
+    the caller of get_objects) is ignored. This will not prevent creating
+    reference cycles if the object list is passed up the call-stack. Therefore,
+    frame objects are not included by default.
 
     Keyword arguments:
     remove_dups -- if True, all duplicate objects will be removed.
-
+    include_frames -- if True, includes frame objects.
     """
     gc.collect()
 
     # Do not initialize local variables before calling gc.get_objects or those
-    # will be included in the list. Furthermore, ignore the current and the
-    # caller's frame object or reference cycles will be created.
+    # will be included in the list. Furthermore, ignore frame objects to
+    # prevent reference cycles.
     tmp = gc.get_objects()
-    frame = currentframe()
-    tmp = [o for o in tmp \
-        if not isframe(o) or (o is not frame and o is not frame.f_back)]
-    del frame
+    tmp = [o for o in tmp if not isframe(o)]
 
     res = []
     for o in tmp:
@@ -45,6 +48,10 @@ def get_objects(remove_dups=True):
     res.extend(tmp)
     if remove_dups:
         res = _remove_duplicates(res)
+
+    if include_frames:
+        for sf in stack()[2:]:
+            res.append(sf[0])
     return res
 
 def get_size(objects):

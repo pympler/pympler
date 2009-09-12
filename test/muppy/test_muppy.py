@@ -206,6 +206,9 @@ class MuppyTest(unittest.TestCase):
         objs = muppy.get_objects()
         del objs
         self.assertEqual(gc.collect(), 0)
+        objs = muppy.get_objects(include_frames=True)
+        del objs
+        self.assertEqual(gc.collect(), 0)
         gc.enable()
 
 
