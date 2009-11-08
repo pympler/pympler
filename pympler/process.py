@@ -40,6 +40,7 @@ class _ProcessMemoryInfo(object):
         self.rss = 0
         self.vsz = 0
         self.pagefaults = 0
+        self.os_specific = []
         self.update()
 
     def update(self):
@@ -80,6 +81,20 @@ class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
 
 
 class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
+
+    key_map = {
+        'VmPeak'       : 'Peak virtual memory size',
+        'VmSize'       : 'Virtual memory size',
+        'VmLck'        : 'Locked memory size',
+        'VmHWM'        : 'Peak resident set size',
+        'VmRSS'        : 'Resident set size',
+        'VmStk'        : 'Size of stack segment',
+        'VmData'       : 'Size of data segment',
+        'VmExe'        : 'Size of code segment',
+        'VmLib'        : 'Shared library code size',
+        'VmPTE'        : 'Page table entries size',
+    }
+
     def update(self):
         """
         Get virtual size of current process by reading the process' stat file.
@@ -87,6 +102,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
         """
         try:
             stat = open('/proc/self/stat')
+            status = open('/proc/self/status')
         except IOError:
             pass
         else:
@@ -94,7 +110,15 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
             self.vsz = int( stats[22] )
             self.rss = int( stats[23] ) * self.pagesize
             self.pagefaults = int( stats[11] )
+
+            for entry in status.readlines():
+                key, value = entry.split(':')
+                key = self.key_map.get(key)
+                if key:
+                    self.os_specific.append((key, value.strip()))
+
             stat.close()
+            status.close()
             return True
         return False
 

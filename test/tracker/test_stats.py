@@ -165,6 +165,21 @@ class LogTestCase(unittest.TestCase):
         stats = HtmlStats(tracker=self.tracker)
         stats.create_html('tmp/data/footest.html')
 
+    def test_charts(self):
+        """Test emitting graphic charts."""
+        self.tracker.track_class(Foo, name='Foo', resolution_level=2)
+
+        f1 = Foo()
+        f1.a = list(range(1000))
+        f2 = Foo()
+        f2.a = list(range(100))
+        f2.b = 'This is some stupid spam.'
+
+        self.tracker.create_snapshot('Merge test')
+
+        stats = Stats(tracker=self.tracker)
+        from pympler.gui import charts
+        charts.tracker_timespace('tmp/data/timespace.png', stats)
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
