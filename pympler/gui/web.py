@@ -1,14 +1,14 @@
-from tools.bottle import route, run, template, send_file
-
-from pympler.process import ProcessMemoryInfo
-from pympler.gui.garbage import GarbageGraph
-from pympler.tracker.stats import Stats
-from pympler.gui import charts
+import os
 
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
-import os
+from tools.bottle import route, run, template, send_file
+
+from pympler.gui import charts
+from pympler.gui.garbage import GarbageGraph
+from pympler.process import ProcessMemoryInfo
+from pympler.tracker.stats import Stats
 
 
 _stats = None
@@ -71,12 +71,15 @@ def garbage_graph(index):
     send_file('%s.png' % index, root=_tmpdir)
 
 
-def show(host='localhost', port=8020, tracker=None, stats=None):
+def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     global _stats
     if tracker and not stats:
         _stats = Stats(tracker=tracker)
     else:
         _stats = stats
-    os.mkdir(_tmpdir)
-    run(host=host, port=port)
+    try:
+        os.mkdir(_tmpdir)
+    except OSError:
+        pass
+    run(host=host, port=port, **kwargs)
     rmtree(_tmpdir) 
