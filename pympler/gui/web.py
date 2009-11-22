@@ -3,7 +3,7 @@ import os
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
-from tools.bottle import route, run, template, send_file
+from tools.bottle import route, run, template, send_file, redirect
 
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph
@@ -29,9 +29,12 @@ def process():
 
 @route('/tracker')
 def tracker_index():
-    for fp in _stats.footprint:
-        _stats.annotate_snapshot(fp)
-    return template("tracker", snapshots=_stats.footprint)
+    if _stats:
+        for fp in _stats.footprint:
+            _stats.annotate_snapshot(fp)
+        return template("tracker", snapshots=_stats.footprint)
+    else:
+        return template("tracker", snapshots=[])
 
 
 @route('/tracker/distribution')
@@ -69,6 +72,12 @@ def garbage():
 @route('/garbage/graph/:index')
 def garbage_graph(index):
     send_file('%s.png' % index, root=_tmpdir)
+
+
+@route('/help')
+def help():
+    redirect('http://packages.python.org/Pympler')
+
 
 
 def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
