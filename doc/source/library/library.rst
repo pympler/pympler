@@ -10,6 +10,7 @@ Modules
 .. toctree::
    :maxdepth: 1
 
+   asizeof
    tracker/classes
    tracker/stats
    process

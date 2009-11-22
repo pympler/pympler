@@ -1,9 +1,9 @@
 import unittest
 
 from urllib2 import Request, urlopen, URLError
-
 from threading import Thread
-
+from time import sleep
+from httplib import HTTPConnection
 from HTMLParser import HTMLParser
 
 from pympler.gui.web import show
@@ -23,19 +23,25 @@ class Server(Thread):
 class WebGuiTest(unittest.TestCase):
 
 
-    defaulthost = 'http://localhost:8090'
+    defaulthost = 'localhost:8090'
+    defaulturl = 'http://' + defaulthost
+
 
     class LinkChecker(HTMLParser):
+
         def __init__(self):
             HTMLParser.__init__(self)
             self.errors = 0
 
+
         def follow(self, link):
-            address = WebGuiTest.defaulthost + link
-            try:
-                urlopen(address)
-            except URLError, err:
-                print ('%s: %s' % (address, err))
+            if link.startswith('http://'):
+                return
+            conn = HTTPConnection(WebGuiTest.defaulthost)
+            conn.request("GET", link)
+            response = conn.getresponse()
+            if response.status not in [200, 307]:
+                print ('LINK-ERROR:', link, response.status, response.reason)
                 self.errors += 1
                 
 
@@ -54,12 +60,21 @@ class WebGuiTest(unittest.TestCase):
         if not _server:
             _server = Server()
             _server.start()
+            wait = 5
+            running = False
+            while not running and wait > 0:
+                try:
+                    urlopen(self.defaulturl)
+                    running = True
+                except URLError:
+                    wait -= 1
+                    sleep(1)
 
 
     def test_overview(self):
         """Test availability of web gui."""
 
-        req = Request(self.defaulthost)
+        req = Request(self.defaulturl)
         page = urlopen(req).read()
         self.assert_("Process overview" in page)
 
@@ -67,7 +82,7 @@ class WebGuiTest(unittest.TestCase):
     def test_links(self):
         """Test all linked pages are available."""
 
-        req = Request(self.defaulthost)
+        req = Request(self.defaulturl)
         page = urlopen(req).read()
         parser = self.LinkChecker()
         parser.feed(page)
