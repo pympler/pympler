@@ -91,4 +91,4 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     except OSError:
         pass
     run(host=host, port=port, **kwargs)
-    rmtree(_tmpdir) 
+    rmtree(_tmpdir)

@@ -1,10 +1,11 @@
 import unittest
 
-from urllib2 import Request, urlopen, URLError
+from HTMLParser import HTMLParser
+from httplib import HTTPConnection
+from socket import error as socket_error
 from threading import Thread
 from time import sleep
-from httplib import HTTPConnection
-from HTMLParser import HTMLParser
+from urllib2 import Request, urlopen, URLError
 
 from pympler.gui.web import show
 
@@ -40,10 +41,12 @@ class WebGuiTest(unittest.TestCase):
             conn = HTTPConnection(WebGuiTest.defaulthost)
             conn.request("GET", link)
             response = conn.getresponse()
+            response.read()
+            conn.close()
             if response.status not in [200, 307]:
                 print ('LINK-ERROR:', link, response.status, response.reason)
                 self.errors += 1
-                
+
 
         def handle_starttag(self, tag, attrs):
             if tag == 'a':
@@ -64,9 +67,9 @@ class WebGuiTest(unittest.TestCase):
             running = False
             while not running and wait > 0:
                 try:
-                    urlopen(self.defaulturl)
+                    urlopen(WebGuiTest.defaulturl)
                     running = True
-                except URLError:
+                except (URLError, socket_error, IOError):
                     wait -= 1
                     sleep(1)
 
