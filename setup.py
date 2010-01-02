@@ -18,7 +18,7 @@ def _not_supported(why):
 
 if sys.hexversion < 0x2040000:
     _not_supported('Pympler requires Python 2.4 or newer')
-if sys.hexversion > 0x3000000:
+if sys.hexversion > 0x3020000:
     _not_supported('Pympler not yet supported on Python ' + sys.version.split()[0])
 
 import os
@@ -32,7 +32,7 @@ from distutils.spawn  import spawn  # raises DistutilsExecError
 class BaseTestCommand(Command):
     """Base class for the pre and the post installation commands. """
     user_options = []
-    
+
     def initialize_options(self):
         self.param = None
 
@@ -48,13 +48,16 @@ class BaseTestCommand(Command):
         except DistutilsExecError:
             sys.exit(1)
 
+
 class PreinstallTestCommand(BaseTestCommand):
     description = "run pre-installation tests"
     def initialize_options(self): self.param = '-pre-install'
 
+
 class PostinstallTestCommand(BaseTestCommand):
     description = "run post-installation tests"
     def initialize_options(self): self.param = '-post-install'
+
 
 def run_setup(include_tests=0):
     tests = []
@@ -74,7 +77,7 @@ def run_setup(include_tests=0):
           packages=['pympler',
                     'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
                     'pympler.muppy', 'pympler.util'] + tests,
-          
+
           license=metadata.license,
           platforms = ['any'],
           classifiers=['Development Status :: 3 - Alpha',
@@ -89,6 +92,7 @@ def run_setup(include_tests=0):
                     'test': PostinstallTestCommand}
           )
 
+
 try:  # hack Pympler commands into setup.py help output
     Distribution.common_usage += """
 Pympler commands
@@ -98,7 +102,8 @@ Pympler commands
 except AttributeError:
     pass
 
-# Only include tests if creating a distribution package 
+
+# Only include tests if creating a distribution package
 # (i.e. do not install the tests).
 run_setup('sdist' in sys.argv)
 
