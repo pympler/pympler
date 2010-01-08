@@ -64,8 +64,11 @@ def garbage():
     gb = GarbageGraph(reduce=True)
     cycles = 0
     for cycle in gb.split():
-        cycle.render(os.path.join(_tmpdir, '%d.png' % cycle.index), format='png')
-        cycles += 1
+        try:
+            cycle.render(os.path.join(_tmpdir, '%d.png' % cycle.index), format='png')
+            cycles += 1
+        except OSError:
+            pass
     return template("garbage", objects=garbage, cycles=cycles)
 
 
