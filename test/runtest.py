@@ -29,11 +29,11 @@ def get_tests(dir='.', clean=False):
                if os.path.isdir(sub):
                    res.extend(get_tests(sub))
         glob_py = dir_ + _glob_test_py
-#   elif dir[-3:] == '.py':
-#       glob_py = dir
-#       sub = os.path.split(dir)[0]
-#       if sub:  # prefix
-#           dir_ = sub + os.sep
+    elif os.path.isfile(dir):
+        glob_py = dir
+        sub = os.path.split(dir)[0]
+        if sub:  # prefix
+            dir_ = sub + os.sep
     else:
         return res
      # append all tests as module names
