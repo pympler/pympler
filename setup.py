@@ -32,7 +32,7 @@ from distutils.spawn  import spawn  # raises DistutilsExecError
 class BaseTestCommand(Command):
     """Base class for the pre and the post installation commands. """
     user_options = []
-    
+
     def initialize_options(self):
         self.param = None
 
@@ -74,7 +74,7 @@ def run_setup(include_tests=0):
           packages=['pympler',
                     'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
                     'pympler.muppy', 'pympler.util'] + tests,
-          
+
           license=metadata.license,
           platforms = ['any'],
           classifiers=['Development Status :: 3 - Alpha',
@@ -98,7 +98,7 @@ Pympler commands
 except AttributeError:
     pass
 
-# Only include tests if creating a distribution package 
+# Only include tests if creating a distribution package
 # (i.e. do not install the tests).
 run_setup('sdist' in sys.argv)
 

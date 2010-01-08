@@ -3,7 +3,7 @@ import os
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
-from tools.bottle import route, run, template, send_file, redirect
+from pympler.util.bottle import route, run, template, send_file, redirect
 
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph

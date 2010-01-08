@@ -24,7 +24,7 @@ class TrackerTest(unittest.TestCase):
         """Create an indicattor object to track changes between snashots."""
         class UniqueIndicator(object): pass
         return UniqueIndicator()
-        
+
     def _contains_indicator(self, summary):
         """How many indicator objects does the summary contain."""
         res = None
@@ -32,7 +32,7 @@ class TrackerTest(unittest.TestCase):
             if row[0].find('UniqueIndicator')!= -1:
                 res = row[1]
         return res
-        
+
     def test_stracker_diff(self):
         """Test that the diff is computed correctly.
 
@@ -68,7 +68,7 @@ class TrackerTest(unittest.TestCase):
 
 #    def test_stracker_for_leaks_in_tracker(self):
 #        """Test if any operations of the tracker leak memory."""
-#        
+#
 #        # test create_summary
 #        tmp_tracker = tracker.SummaryTracker()
 #        # XXX: TODO
@@ -76,10 +76,10 @@ class TrackerTest(unittest.TestCase):
 #        self.assert_(muppy.get_usage(tmp_tracker.store_summary, 1) == None)
 #        # test print_diff
 #        self.assert_(muppy.get_usage(tmp_tracker.print_diff, [], []) == None)
-        
+
     def test_stracker_create_summary(self):
         """Test that a summary is created correctly.
-        
+
         This can only be done heuristically, e.g that most recent objects are
         included.
         Also check that summaries managed by the tracker are excluded if
@@ -107,7 +107,7 @@ class TrackerTest(unittest.TestCase):
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
         self.assert_(len(tmp) != 0)
-        
+
     def test_stracker_store_summary(self):
         """Test that a summary is stored under the correct key and most
         recent objects are included.
@@ -118,7 +118,7 @@ class TrackerTest(unittest.TestCase):
         stracker.store_summary(key)
         s = stracker.summaries[key]
         self.assert_(s != None)
-        # check that indicator 
+        # check that indicator
         key = 2
         tmp = self._get_indicator()
         stracker.store_summary(key)
