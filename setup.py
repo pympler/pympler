@@ -28,6 +28,15 @@ from distutils.dist   import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
 
+from glob import glob
+
+
+# Hack to fix data install path:
+# http://groups.google.com/group/comp.lang.python/browse_thread/thread/35ec7b2fed36eaec/2105ee4d9e8042cb
+from distutils.command.install import INSTALL_SCHEMES
+for scheme in INSTALL_SCHEMES.values():
+    scheme['data'] = scheme['purelib']
+
 
 class BaseTestCommand(Command):
     """Base class for the pre and the post installation commands. """
@@ -74,6 +83,8 @@ def run_setup(include_tests=0):
           packages=['pympler',
                     'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
                     'pympler.muppy', 'pympler.util'] + tests,
+
+          data_files=[('views', glob('views/*.tpl') + ['views/style.css'])],
 
           license=metadata.license,
           platforms = ['any'],

@@ -82,8 +82,19 @@ def help():
     redirect('http://packages.python.org/Pympler')
 
 
-
 def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
+    """
+    Start the web server to show profiling data. The function does not return
+    until the web server is stopped.
+
+    TODO: how to stop the server
+
+    @param host: the host where the server shall run, default is localhost
+    @param port: server listens on the specified port, default is 8090 to allow
+        coexistance with common web applications
+    @param tracker: TODO
+    @param stats: TODO
+    """
     global _stats
     if tracker and not stats:
         _stats = Stats(tracker=tracker)
