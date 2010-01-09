@@ -18,7 +18,7 @@ def _not_supported(why):
 
 if sys.hexversion < 0x2040000:
     _not_supported('Pympler requires Python 2.4 or newer')
-if sys.hexversion > 0x3000000:
+if sys.hexversion > 0x3020000:
     _not_supported('Pympler not yet supported on Python ' + sys.version.split()[0])
 
 import os
@@ -57,13 +57,16 @@ class BaseTestCommand(Command):
         except DistutilsExecError:
             sys.exit(1)
 
+
 class PreinstallTestCommand(BaseTestCommand):
     description = "run pre-installation tests"
     def initialize_options(self): self.param = '-pre-install'
 
+
 class PostinstallTestCommand(BaseTestCommand):
     description = "run post-installation tests"
     def initialize_options(self): self.param = '-post-install'
+
 
 def run_setup(include_tests=0):
     tests = []
@@ -99,6 +102,7 @@ def run_setup(include_tests=0):
           cmdclass={'try': PreinstallTestCommand,
                     'test': PostinstallTestCommand}
           )
+
 
 try:  # hack Pympler commands into setup.py help output
     Distribution.common_usage += """

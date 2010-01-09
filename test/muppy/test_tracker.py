@@ -6,6 +6,9 @@ from pympler.muppy import summary
 from pympler.muppy import tracker
 from pympler.util import compat
 
+from test.base import disable
+
+
 class TrackerTest(unittest.TestCase):
 
     def setUp(self):
@@ -17,13 +20,17 @@ class TrackerTest(unittest.TestCase):
         self.old_repr = summary._repr
         summary._repr = simple_repr
 
+
     def tearDown(self):
         summary._repr = self.old_repr
+
 
     def _get_indicator(self):
         """Create an indicattor object to track changes between snashots."""
         class UniqueIndicator(object): pass
+
         return UniqueIndicator()
+
 
     def _contains_indicator(self, summary):
         """How many indicator objects does the summary contain."""
@@ -32,6 +39,7 @@ class TrackerTest(unittest.TestCase):
             if row[0].find('UniqueIndicator')!= -1:
                 res = row[1]
         return res
+
 
     def test_stracker_diff(self):
         """Test that the diff is computed correctly.
@@ -66,6 +74,7 @@ class TrackerTest(unittest.TestCase):
         # providing summary2 without summary1 should raise an exception
         self.assertRaises(ValueError, stracker.diff, summary2=sn2)
 
+
 #    def test_stracker_for_leaks_in_tracker(self):
 #        """Test if any operations of the tracker leak memory."""
 #
@@ -76,6 +85,7 @@ class TrackerTest(unittest.TestCase):
 #        self.assert_(muppy.get_usage(tmp_tracker.store_summary, 1) == None)
 #        # test print_diff
 #        self.assert_(muppy.get_usage(tmp_tracker.print_diff, [], []) == None)
+
 
     def test_stracker_create_summary(self):
         """Test that a summary is created correctly.
@@ -97,16 +107,16 @@ class TrackerTest(unittest.TestCase):
         # with ignore_self enabled a second summary should not list the first
         # summary
         sn = tmp_tracker.create_summary()
-        sn = tmp_tracker.create_summary()
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
-        self.assert_(len(tmp) == 0)
+        self.assertEqual(len(tmp), 0)
         # but with ignore_self turned off, there should be some difference
         tmp_tracker = tracker.SummaryTracker(ignore_self=False)
         sn = tmp_tracker.create_summary()
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
-        self.assert_(len(tmp) != 0)
+        self.failIfEqual(len(tmp), 0)
+
 
     def test_stracker_store_summary(self):
         """Test that a summary is stored under the correct key and most
@@ -125,6 +135,7 @@ class TrackerTest(unittest.TestCase):
         s = stracker.summaries[key]
         self.assert_(self._contains_indicator(s) == 1)
 
+
 #
 # now the tests for the object tracker
 #
@@ -139,6 +150,8 @@ class TrackerTest(unittest.TestCase):
         res = compat.object_in_list(o, otracker._get_objects(ignore=[o]))
         self.assertFalse(res)
 
+
+    @disable
     def test_otracker_diff(self):
         """Test object tracker diff."""
         import inspect
@@ -161,8 +174,10 @@ class TrackerTest(unittest.TestCase):
                 found = True
         self.assert_(not found)
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromTestCase(TrackerTest)
+
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity=2).run(suite())
