@@ -1,11 +1,10 @@
 import unittest
 
-from HTMLParser import HTMLParser
-from httplib import HTTPConnection
+from pympler.util.compat import HTMLParser, HTTPConnection
+from pympler.util.compat import Request, urlopen, URLError
 from socket import error as socket_error
 from threading import Thread
 from time import sleep
-from urllib2 import Request, urlopen, URLError
 
 from pympler.gui.web import show
 
@@ -78,7 +77,7 @@ class WebGuiTest(unittest.TestCase):
         """Test availability of web gui."""
 
         req = Request(self.defaulturl)
-        page = urlopen(req).read()
+        page = str(urlopen(req).read())
         self.assert_("Process overview" in page)
 
 
@@ -86,7 +85,7 @@ class WebGuiTest(unittest.TestCase):
         """Test all linked pages are available."""
 
         req = Request(self.defaulturl)
-        page = urlopen(req).read()
+        page = str(urlopen(req).read())
         parser = self.LinkChecker()
         parser.feed(page)
         parser.close()

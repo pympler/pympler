@@ -3,7 +3,7 @@ import os
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
-from pympler.util.bottle import route, run, template, send_file, redirect
+from pympler.util.compat import bottle
 
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph
@@ -15,46 +15,46 @@ _stats = None
 _tmpdir = '.pympler_temp'
 
 
-@route('/')
+@bottle.route('/')
 def index():
     pmi = ProcessMemoryInfo()
-    return template("index", processinfo=pmi)
+    return bottle.template("index", processinfo=pmi)
 
 
-@route('/process')
+@bottle.route('/process')
 def process():
     pmi = ProcessMemoryInfo()
-    return template("process", info=pmi)
+    return bottle.template("process", info=pmi)
 
 
-@route('/tracker')
+@bottle.route('/tracker')
 def tracker_index():
     if _stats:
         for fp in _stats.footprint:
             _stats.annotate_snapshot(fp)
-        return template("tracker", snapshots=_stats.footprint)
+        return bottle.template("tracker", snapshots=_stats.footprint)
     else:
-        return template("tracker", snapshots=[])
+        return bottle.template("tracker", snapshots=[])
 
 
-@route('/tracker/distribution')
+@bottle.route('/tracker/distribution')
 def tracker_dist():
     fn = os.path.join(_tmpdir, 'distribution.png')
     charts.tracker_timespace(fn, _stats)
-    send_file('distribution.png', root=_tmpdir)
+    bottle.send_file('distribution.png', root=_tmpdir)
 
 
-@route('/static/:filename')
+@bottle.route('/static/:filename')
 def static_file(filename):
-    send_file(filename, root="views")
+    bottle.send_file(filename, root="views")
 
 
-@route('/static/img/:filename')
+@bottle.route('/static/img/:filename')
 def serve_img(filename):
-    send_file(filename, root="views/img")
+    bottle.send_file(filename, root="views/img")
 
 
-@route('/garbage')
+@bottle.route('/garbage')
 def garbage():
     # Get all collectable objects
     gb = GarbageGraph()
@@ -69,17 +69,17 @@ def garbage():
             cycles += 1
         except OSError:
             pass
-    return template("garbage", objects=garbage, cycles=cycles)
+    return bottle.template("garbage", objects=garbage, cycles=cycles)
 
 
-@route('/garbage/graph/:index')
+@bottle.route('/garbage/graph/:index')
 def garbage_graph(index):
-    send_file('%s.png' % index, root=_tmpdir)
+    bottle.send_file('%s.png' % index, root=_tmpdir)
 
 
-@route('/help')
+@bottle.route('/help')
 def help():
-    redirect('http://packages.python.org/Pympler')
+    bottle.redirect('http://packages.python.org/Pympler')
 
 
 def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
@@ -104,5 +104,5 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
         os.mkdir(_tmpdir)
     except OSError:
         pass
-    run(host=host, port=port, **kwargs)
+    bottle.run(host=host, port=port, **kwargs)
     rmtree(_tmpdir)
