@@ -66,7 +66,7 @@ class WebGuiTest(unittest.TestCase):
             running = False
             while not running and wait > 0:
                 try:
-                    urlopen(WebGuiTest.defaulturl)
+                    urlopen(WebGuiTest.defaulturl).read()
                     running = True
                 except (URLError, socket_error, IOError):
                     wait -= 1

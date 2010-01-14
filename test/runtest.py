@@ -45,8 +45,9 @@ def get_tests(dir='.', clean=False):
                     os.remove(test + co)
                 except OSError:
                     pass
-         # convert to module name
+         # convert to module name and remove leading ./ or .\
         test = test[:-3].replace(os.sep, '.')
+        test = test.lstrip('.')
         res.append(test)
     res.sort(key=lambda s: -s.count('muppy'))
     return res  # sorted(res)

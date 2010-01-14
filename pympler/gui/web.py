@@ -1,5 +1,6 @@
 import os
 
+from cgi import escape
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
@@ -68,7 +69,10 @@ def garbage():
             cycle.render(os.path.join(_tmpdir, '%d.png' % cycle.index), format='png')
             cycles += 1
         except OSError:
-            pass
+            break
+    # Escape for display in HTML
+    for obj in garbage:
+        obj.str = escape(obj.str)
     return bottle.template("garbage", objects=garbage, cycles=cycles)
 
 

@@ -5,7 +5,7 @@ installed.
 """
 
 from pympler.asizeof import Asizer, _inst_refs
-from pympler.util.stringutils import trunc
+from pympler.util.stringutils import safe_repr, trunc
 from pympler.util.compat import encode4pipe
 from gc import get_referents
 from inspect import getmembers
@@ -20,7 +20,7 @@ __all__ = ['ReferenceGraph']
 # sub-processes on Linux. On Windows, however, close_fds=True leads to
 # ValueError if stdin/stdout/stderr is piped:
 # http://code.google.com/p/pympler/issues/detail?id=28#c1
-popen_flags = {} 
+popen_flags = {}
 if platform not in ['win32']:
     popen_flags['close_fds'] = True
 
@@ -70,7 +70,7 @@ class ReferenceGraph(object):
     """
     def __init__(self, objects, reduce=False):
         """
-        Initialize the ReferenceGraph with a collection of `objects`. 
+        Initialize the ReferenceGraph with a collection of `objects`.
         """
         self.objects = list(objects)
         self.count = len(self.objects)
@@ -164,7 +164,7 @@ class ReferenceGraph(object):
                 idx += 1
             neighbors = set()
             for e in self.edges:
-                if e.src == x.id: 
+                if e.src == x.id:
                     neighbors.add(e.dst)
                 if e.dst == x.id:
                     neighbors.add(e.src)
@@ -182,7 +182,7 @@ class ReferenceGraph(object):
     def _filter_group(self, group):
         """
         Eliminate all objects but those which belong to `group`. Only
-        ``self.metadata`` and ``self.edges`` are modified.        
+        ``self.metadata`` and ``self.edges`` are modified.
         Returns `True` if the group is non-empty. Otherwise returns `False`.
         """
         self.metadata = [x for x in self.metadata if x.group == group]
@@ -191,7 +191,7 @@ class ReferenceGraph(object):
             return False
 
         self.edges = [e for e in self.edges if e.group == group]
-        
+
         del self._max_group
 
         return True
@@ -227,12 +227,12 @@ class ReferenceGraph(object):
                 subgraph.index = index
                 index += 1
                 yield subgraph
-            
-    
+
+
     def _annotate_objects(self):
         """
         Extract meta-data describing the stored objects.
-        """        
+        """
         self.metadata = []
         sizer = Asizer()
         sizes = sizer.asizesof(*self.objects)
@@ -246,7 +246,7 @@ class ReferenceGraph(object):
             except (AttributeError, ReferenceError):
                 md.type = type(obj)
             try:
-                md.str = trunc(str(obj), 128)
+                md.str = safe_repr(obj, clip=128)
             except ReferenceError:
                 md.str = ''
             self.metadata.append(md)
@@ -292,16 +292,16 @@ class ReferenceGraph(object):
         is True.  If there are no objects to illustrate, the method does not
         invoke graphviz and returns False. If the renderer returns successfully
         (return code 0), True is returned.
-        
+
         An `OSError` is raised if the graphviz tool cannot be found.
         """
         if self.objects == []:
             return False
-        
+
         data = self._get_graphviz_data()
 
         if unflatten:
-            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE, 
+            p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE,
                 **popen_flags)
             p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout,
                 **popen_flags)
