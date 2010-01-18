@@ -2190,7 +2190,7 @@ def test_flatsize(failf=None, stdf=None):
             try:  # creating one instance
                 if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
                     t.append(v.type())
-            except (AttributeError, SystemError, TypeError, ValueError):  # ignore errors
+            except Exception:  # ignore errors
                 pass
         t.extend(({1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8},
                   [1,2,3,4,5,6,7,8], ['1', '2', '3'], [0] * 100,
