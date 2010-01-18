@@ -6,7 +6,7 @@ from pympler.muppy import summary
 from pympler.muppy import tracker
 from pympler.util import compat
 
-from test.base import disable
+from testutils import disable
 
 
 class TrackerTest(unittest.TestCase):

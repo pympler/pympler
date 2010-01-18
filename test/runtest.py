@@ -109,12 +109,13 @@ if __name__ == '__main__':
     else:
         dirs = ['.']
 
-     # insert parent directory such that
-     # the code modules can be imported,
-     # but only for pre-install testing
+    # Insert parent directory such that the code modules can be
+    # imported, but only for pre-install testing. Import test directory
+    # for pre and post-install testing.
     t = os.path.split(sys.path[0])
     if t and pre:
         sys.path.insert(1, t[0])
+    sys.path.append(os.path.join(t[0], 'test'))
 
      # print some details
     if verbose > 1:
