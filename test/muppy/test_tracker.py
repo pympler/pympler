@@ -113,6 +113,7 @@ class TrackerTest(unittest.TestCase):
         # but with ignore_self turned off, there should be some difference
         tmp_tracker = tracker.SummaryTracker(ignore_self=False)
         sn = tmp_tracker.create_summary()
+        tmp_tracker.new_obj = self._get_indicator()
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
         self.failIfEqual(len(tmp), 0)
