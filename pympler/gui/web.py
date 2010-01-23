@@ -1,3 +1,8 @@
+"""
+Web-based profiling interface. Exposes process information, tracker statistics,
+and garbage graphs.
+"""
+
 import os
 
 from cgi import escape
@@ -14,6 +19,8 @@ from pympler.tracker.stats import Stats
 
 _stats = None
 _tmpdir = '.pympler_temp'
+
+bottle.TEMPLATE_PATH.append('./templates')
 
 
 @bottle.route('/')
@@ -47,12 +54,12 @@ def tracker_dist():
 
 @bottle.route('/static/:filename')
 def static_file(filename):
-    bottle.send_file(filename, root="views")
+    bottle.send_file(filename, root="templates")
 
 
 @bottle.route('/static/img/:filename')
 def serve_img(filename):
-    bottle.send_file(filename, root="views/img")
+    bottle.send_file(filename, root="templates/img")
 
 
 @bottle.route('/garbage')
@@ -88,16 +95,16 @@ def help():
 
 def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     """
-    Start the web server to show profiling data. The function does not return
-    until the web server is stopped.
+    Start the web server to show profiling data. The function suspends the
+    Python application (the current thread) until the web server is stopped.
 
     TODO: how to stop the server
 
-    @param host: the host where the server shall run, default is localhost
-    @param port: server listens on the specified port, default is 8090 to allow
+    :param host: the host where the server shall run, default is localhost
+    :param port: server listens on the specified port, default is 8090 to allow
         coexistance with common web applications
-    @param tracker: TODO
-    @param stats: TODO
+    :param tracker: TODO
+    :param stats: TODO
     """
     global _stats
     if tracker and not stats:

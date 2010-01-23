@@ -10,10 +10,11 @@ Modules
 .. toctree::
    :maxdepth: 1
 
-   asizeof
+   ../asizeof
    tracker/classes
    tracker/stats
    process
    gui/graph
    gui/garbage
+   gui/web
 

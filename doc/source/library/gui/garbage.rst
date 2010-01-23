@@ -1,8 +1,8 @@
 .. _garbage:
    
-=======
-garbage
-=======
+===================
+pympler.gui.garbage
+===================
 
 Garbage occurs if objects refer too each other in a circular fashion. Such
 reference cycles cannot be freed automatically and must be collected by the

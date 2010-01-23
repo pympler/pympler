@@ -1,8 +1,8 @@
 .. _process:
 
-=======
-process
-=======
+===============
+pympler.process
+===============
 
 .. automodule:: pympler.process
 

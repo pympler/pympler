@@ -1,8 +1,8 @@
 .. _graph:
    
-=====
-graph
-=====
+=================
+pympler.gui.graph
+=================
 
 .. automodule:: pympler.gui.graph
 

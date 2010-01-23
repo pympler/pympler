@@ -2,8 +2,8 @@ include LICENSE
 include NOTICE
 include README
 
-include views/*.tpl
-include views/*.css
+include templates/*.tpl
+include templates/*.css
 
 recursive-include doc *
 prune doc/source
