@@ -22,6 +22,7 @@ if sys.hexversion > 0x3020000:
     _not_supported('Pympler not yet supported on Python ' + sys.version.split()[0])
 
 import os
+from distutils.command.build_py import build_py
 from distutils.core   import Command
 from distutils.core   import setup
 from distutils.dist   import Distribution
@@ -36,6 +37,19 @@ from glob import glob
 from distutils.command.install import INSTALL_SCHEMES
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = os.path.join(scheme['data'], 'share', 'pympler')
+
+
+# Write installation paths into pympler/__init__.py. Otherwise it is hardly
+# possible to retrieve the installed data files reliably.
+# http://www.mail-archive.com/distutils-sig@python.org/msg08883.html
+class BuildPyModule(build_py):
+    def build_module(self, module, module_file, package):
+        cobj = self.distribution.command_obj.get('install')
+        if cobj and package == 'pympler' and module == '__init__':
+            f = open(module_file, 'w')
+            f.write("DATA_PATH = '%s'\n" % cobj.install_data)
+            f.close()
+        build_py.build_module(self, module, module_file, package)
 
 
 class BaseTestCommand(Command):
@@ -100,7 +114,8 @@ def run_setup(include_tests=0):
                        'Topic :: Software Development :: Bug Tracking',
                        ],
           cmdclass={'try': PreinstallTestCommand,
-                    'test': PostinstallTestCommand}
+                    'test': PostinstallTestCommand,
+                    'build_py': BuildPyModule}
           )
 
 

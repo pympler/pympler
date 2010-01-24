@@ -11,6 +11,7 @@ from shutil import rmtree
 
 from pympler.util.compat import bottle
 
+from pympler import DATA_PATH
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph
 from pympler.process import ProcessMemoryInfo
@@ -20,7 +21,7 @@ from pympler.tracker.stats import Stats
 _stats = None
 _tmpdir = '.pympler_temp'
 
-bottle.TEMPLATE_PATH.append('./templates')
+bottle.TEMPLATE_PATH.append(os.path.join(DATA_PATH, 'templates'))
 
 
 @bottle.route('/')
