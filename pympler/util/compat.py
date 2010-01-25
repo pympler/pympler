@@ -41,7 +41,7 @@ except ImportError: # Python 3.0
 
 try:
     import pympler.util.bottle2 as bottle
-except SyntaxError:
+except (SyntaxError, ImportError):
     import pympler.util.bottle3 as bottle
 
 # Helper functions

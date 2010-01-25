@@ -49,6 +49,11 @@ class BuildPyModule(build_py):
             f = open(module_file, 'w')
             f.write("DATA_PATH = '%s'\n" % cobj.install_data)
             f.close()
+        # TODO: Cannot build bottle2 at Python3 and vice versa.
+        if sys.hexversion >= 0x3000000 and module == 'bottle2':
+            return
+        elif sys.hexversion < 0x3000000 and module == 'bottle3':
+            return
         build_py.build_module(self, module, module_file, package)
 
 

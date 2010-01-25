@@ -21,7 +21,9 @@ from pympler.tracker.stats import Stats
 _stats = None
 _tmpdir = '.pympler_temp'
 
-bottle.TEMPLATE_PATH.append(os.path.join(DATA_PATH, 'templates'))
+static_files = os.path.join(DATA_PATH, 'templates')
+
+bottle.TEMPLATE_PATH.append(static_files)
 
 
 @bottle.route('/')
@@ -55,7 +57,7 @@ def tracker_dist():
 
 @bottle.route('/static/:filename')
 def static_file(filename):
-    bottle.send_file(filename, root="templates")
+    bottle.send_file(filename, root=static_files)
 
 
 @bottle.route('/static/img/:filename')
