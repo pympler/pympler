@@ -6,23 +6,30 @@
 </head>
 
 %navbar = [
-%    ("Overview", "/"), 
-%    ("Process", "/process"), 
-%    ("Tracked objects", "/tracker"),
-%    ("Garbage", "/garbage"),
-%    ("Help", "/help")]
+%    ("overview", "/", ""),
+%    ("|", "", ""),
+%    ("process", "/process", ""), 
+%    ("|", "", ""),
+%    ("tracked objects", "/tracker", ""),
+%    ("|", "", ""),
+%    ("garbage", "/garbage", ""),
+%    ("help", "/help", "right")]
 
 <body>
-<div id="navbar">
-    <span class="inbar">
-        <ul>
-            %for link, href in navbar:
-                %hl = ''
-                %if link == category:
-                    %hl = ' class="navhome"'
+<div class="related">
+    <ul>
+        %for link, href, cls in navbar:
+            <li class="{{cls}}">
+                %if bool(href):
+                    <a href="{{href}}"><span>{{link}}</span></a>
+                %else:
+                    <span>{{link}}</span>
                 %end
-                <li{{hl}}><a href="{{href}}"><span>{{link}}</span></a></li>
-            %end
-        </ul>
-    </span>
+            </li>
+        %end
+    </ul>
 </div>
+<div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body">

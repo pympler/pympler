@@ -1,6 +1,6 @@
 %include header category='Garbage', title='Garbage' 
 <h1>Garbage</h1>
-<table id="tdata">
+<table class="tdata" width="100%">
     <thead>
         <tr>
             <th>id</th>

@@ -1,6 +1,9 @@
 %include header category='Process', title='Process Information'
 %from pympler.util.stringutils import pp
-<table id="tdata">
+
+<h1>Process information</h1>
+
+<table class="tdata">
     <tbody>
     <tr>
         <th>Virtual size:</th>
