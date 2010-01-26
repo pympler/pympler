@@ -29,11 +29,11 @@ def get_tests(dir='.', clean=False):
                if os.path.isdir(sub):
                    res.extend(get_tests(sub))
         glob_py = dir_ + _glob_test_py
-#   elif dir[-3:] == '.py':
-#       glob_py = dir
-#       sub = os.path.split(dir)[0]
-#       if sub:  # prefix
-#           dir_ = sub + os.sep
+    elif os.path.isfile(dir):
+        glob_py = dir
+        sub = os.path.split(dir)[0]
+        if sub:  # prefix
+            dir_ = sub + os.sep
     else:
         return res
      # append all tests as module names
@@ -45,8 +45,9 @@ def get_tests(dir='.', clean=False):
                     os.remove(test + co)
                 except OSError:
                     pass
-         # convert to module name
+         # convert to module name and remove leading ./ or .\
         test = test[:-3].replace(os.sep, '.')
+        test = test.lstrip('.')
         res.append(test)
     res.sort(key=lambda s: -s.count('muppy'))
     return res  # sorted(res)
@@ -108,12 +109,13 @@ if __name__ == '__main__':
     else:
         dirs = ['.']
 
-     # insert parent directory such that
-     # the code modules can be imported,
-     # but only for pre-install testing
+    # Insert parent directory such that the code modules can be
+    # imported, but only for pre-install testing. Import test directory
+    # for pre and post-install testing.
     t = os.path.split(sys.path[0])
     if t and pre:
         sys.path.insert(1, t[0])
+    sys.path.append(os.path.join(t[0], 'test'))
 
      # print some details
     if verbose > 1:

@@ -23,6 +23,27 @@ except ImportError: # Python 3.0
     def instancemethod(*args):
         return args[0]
 
+try:
+    from HTMLParser import HTMLParser
+except ImportError: # Python 3.0
+    from html.parser import HTMLParser
+
+try:
+    from httplib import HTTPConnection
+except ImportError: # Python 3.0
+    from http.client import HTTPConnection
+
+try:
+    from urllib2 import Request, urlopen, URLError
+except ImportError: # Python 3.0
+    from urllib.request import Request, urlopen
+    from urllib.error import URLError
+
+try:
+    import pympler.util.bottle2 as bottle
+except (SyntaxError, ImportError):
+    import pympler.util.bottle3 as bottle
+
 # Helper functions
 
 # Python 2.x expects strings when calling communicate and passing data via a
@@ -45,4 +66,3 @@ def object_in_list(obj, l):
         if o is obj:
             return True
     return False
-

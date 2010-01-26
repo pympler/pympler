@@ -22,11 +22,39 @@ if sys.hexversion > 0x3020000:
     _not_supported('Pympler not yet supported on Python ' + sys.version.split()[0])
 
 import os
+from distutils.command.build_py import build_py
 from distutils.core   import Command
 from distutils.core   import setup
 from distutils.dist   import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
+
+from glob import glob
+
+
+# Hack to fix data install path: Data just points to $prefix by default.
+# TODO: test on different platforms and python versions
+from distutils.command.install import INSTALL_SCHEMES
+for scheme in INSTALL_SCHEMES.values():
+    scheme['data'] = os.path.join(scheme['data'], 'share', 'pympler')
+
+
+# Write installation paths into pympler/__init__.py. Otherwise it is hardly
+# possible to retrieve the installed data files reliably.
+# http://www.mail-archive.com/distutils-sig@python.org/msg08883.html
+class BuildPyModule(build_py):
+    def build_module(self, module, module_file, package):
+        cobj = self.distribution.command_obj.get('install')
+        if cobj and package == 'pympler' and module == '__init__':
+            f = open(module_file, 'w')
+            f.write("DATA_PATH = '%s'\n" % cobj.install_data)
+            f.close()
+        # TODO: Cannot build bottle2 at Python3 and vice versa.
+        if sys.hexversion >= 0x3000000 and module == 'bottle2':
+            return
+        elif sys.hexversion < 0x3000000 and module == 'bottle3':
+            return
+        build_py.build_module(self, module, module_file, package)
 
 
 class BaseTestCommand(Command):
@@ -78,6 +106,8 @@ def run_setup(include_tests=0):
                     'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
                     'pympler.muppy', 'pympler.util'] + tests,
 
+          data_files=[('templates', glob('templates/*.tpl') + ['templates/style.css'])],
+
           license=metadata.license,
           platforms = ['any'],
           classifiers=['Development Status :: 3 - Alpha',
@@ -89,7 +119,8 @@ def run_setup(include_tests=0):
                        'Topic :: Software Development :: Bug Tracking',
                        ],
           cmdclass={'try': PreinstallTestCommand,
-                    'test': PostinstallTestCommand}
+                    'test': PostinstallTestCommand,
+                    'build_py': BuildPyModule}
           )
 
 
@@ -101,7 +132,6 @@ Pympler commands
 """
 except AttributeError:
     pass
-
 
 # Only include tests if creating a distribution package
 # (i.e. do not install the tests).

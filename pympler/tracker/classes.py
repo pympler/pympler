@@ -13,7 +13,7 @@ import pympler.asizeof as asizeof
 import pympler.process
 
 from inspect import stack, isclass
-from pympler.util.stringutils import trunc
+from pympler.util.stringutils import safe_repr
 
 __all__ = ["ClassTracker"]
 
@@ -122,7 +122,7 @@ class TrackedObject(object):
             (ts, sizer.asized(obj, detail=self._resolution_level))
         )
         if obj is not None:
-            self.repr = trunc(str(obj), 128)
+            self.repr = safe_repr(obj, clip=128)
 
     def get_max_size(self):
         """

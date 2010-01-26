@@ -1,15 +1,44 @@
-def trunc(s, max, left=0):
+"""
+String utility functions.
+"""
+
+def safe_repr(obj, clip=None):
     """
-    Convert `s` to string, eliminate newlines and truncate the string to `max`
+    Convert object to string representation, yielding the same result a `repr`
+    but catches all exceptions and returns 'N/A' instead of raising the
+    exception. Strings may be truncated by providing `clip`.
+
+    >>> safe_repr(42)
+    '42'
+    >>> safe_repr('Clipped text', clip=8)
+    'Clip..xt'
+    >>> safe_repr([1,2,3,4], clip=8)
+    '[1,2..4]'
+    """
+    try:
+        s = repr(obj)
+        if not clip or len(s) <= clip:
+            return s
+        else:
+            return s[:clip-4]+'..'+s[-2:]
+    except:
+        return 'N/A'
+
+
+def trunc(obj, max, left=0):
+    """
+    Convert `obj` to string, eliminate newlines and truncate the string to `max`
     characters. If there are more characters in the string add ``...`` to the
     string. With `left=True`, the string can be truncated at the beginning.
+
+    @note: Does not catch exceptions when converting `obj` to string with `str`.
 
     >>> trunc('This is a long text.', 8)
     This ...
     >>> trunc('This is a long text.', 8, left)
     ...text.
     """
-    s = str(s)
+    s = str(obj)
     s = s.replace('\n', '|')
     if len(s) > max:
         if left:
@@ -36,7 +65,7 @@ def pp_timestamp(t):
     """
     Get a friendly timestamp represented as a string.
     """
-    if t is None: 
+    if t is None:
         return ''
     h, m, s = int(t / 3600), int(t / 60 % 60), t % 60
     return "%02d:%02d:%05.2f" % (h, m, s)
