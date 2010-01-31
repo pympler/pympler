@@ -5,7 +5,6 @@ and garbage graphs.
 
 import os
 
-from cgi import escape
 from tempfile import NamedTemporaryFile
 from shutil import rmtree
 
@@ -18,7 +17,21 @@ from pympler.process import ProcessMemoryInfo
 from pympler.tracker.stats import Stats
 
 
-_stats = None
+class Cache(object):
+    """
+    Cache internal structures (garbage graphs, tracker statistics).
+    """
+    def __init__(self):
+        self.stats = None
+        self.garbage_graphs = None
+
+    def clear(self):
+        self.garbage_graphs = None
+
+
+cache = None
+
+
 _tmpdir = '.pympler_temp'
 
 static_files = os.path.join(DATA_PATH, 'templates')
@@ -40,12 +53,22 @@ def process():
 
 @bottle.route('/tracker')
 def tracker_index():
-    if _stats:
-        for fp in _stats.footprint:
-            _stats.annotate_snapshot(fp)
-        return bottle.template("tracker", snapshots=_stats.footprint)
+    global cache
+
+    stats = cache.stats
+    if stats:
+        for fp in stats.footprint:
+            stats.annotate_snapshot(fp)
+        return bottle.template("tracker", snapshots=stats.footprint)
     else:
         return bottle.template("tracker", snapshots=[])
+
+
+@bottle.route('/refresh')
+def refresh():
+    global cache
+    cache.clear()
+    bottle.redirect('/')
 
 
 @bottle.route('/tracker/distribution')
@@ -65,29 +88,38 @@ def serve_img(filename):
     bottle.send_file(filename, root="templates/img")
 
 
+def _compute_garbage_graphs():
+    """
+    Retrieve garbage graph objects from cache, compute if cache is cold.
+    """
+    global cache
+    if cache.garbage_graphs is None:
+        cache.garbage_graphs = GarbageGraph().split_and_sort()
+    return cache.garbage_graphs
+
+
 @bottle.route('/garbage')
-def garbage():
-    # Get all collectable objects
-    gb = GarbageGraph()
-    garbage = gb.metadata
+def garbage_index():
+    garbage_graphs = _compute_garbage_graphs()
+    return bottle.template("garbage_index", graphs=garbage_graphs)
+
+
+@bottle.route('/garbage/:index')
+def garbage(index):
+    graph = _compute_garbage_graphs()[int(index)]
+    garbage = graph.metadata
     garbage.sort(key=lambda x: -x.size)
-    # Get only objects in reference cycles
-    gb = GarbageGraph(reduce=True)
-    cycles = 0
-    for cycle in gb.split():
-        try:
-            cycle.render(os.path.join(_tmpdir, '%d.png' % cycle.index), format='png')
-            cycles += 1
-        except OSError:
-            break
-    # Escape for display in HTML
-    for obj in garbage:
-        obj.str = escape(obj.str)
-    return bottle.template("garbage", objects=garbage, cycles=cycles)
+    return bottle.template("garbage", objects=garbage, index=index)
 
 
 @bottle.route('/garbage/graph/:index')
 def garbage_graph(index):
+    graph = _compute_garbage_graphs()[int(index)]
+    graph._reduce_to_cycles() # TODO : changes cached graph
+    try:
+        graph.render(os.path.join(_tmpdir, '%d.png' % graph.index), format='png')
+    except OSError:
+        pass
     bottle.send_file('%s.png' % index, root=_tmpdir)
 
 
@@ -103,17 +135,24 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
 
     TODO: how to stop the server
 
+    During the execution of the web server, profiling data is (lazily) cached
+    to improve performance. For example, garbage graphs are rendered when the
+    garbage profiling data is requested and are simply retransmitted upon later
+    requests.
+
     :param host: the host where the server shall run, default is localhost
     :param port: server listens on the specified port, default is 8090 to allow
         coexistance with common web applications
     :param tracker: TODO
     :param stats: TODO
     """
-    global _stats
+    global cache
+    cache = Cache()
+
     if tracker and not stats:
-        _stats = Stats(tracker=tracker)
+        cache.stats = Stats(tracker=tracker)
     else:
-        _stats = stats
+        cache.stats = stats
     try:
         os.mkdir(_tmpdir)
     except OSError:

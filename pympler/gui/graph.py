@@ -238,6 +238,18 @@ class ReferenceGraph(object):
                 yield subgraph
 
 
+    def split_and_sort(self):
+        """
+        Split the graphs into sub graphs and return a list of all graphs sorted
+        by the number of nodes. The graph with most nodes is returned first.
+        """
+        graphs = list(self.split())
+        graphs.sort(key=lambda x: -len(x.metadata))
+        for index, graph in enumerate(graphs):
+            graph.index = index
+        return graphs
+
+
     def _annotate_objects(self):
         """
         Extract meta-data describing the stored objects.

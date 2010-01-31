@@ -2,7 +2,7 @@
 
 <head>
     <title>Pympler - {{title}}</title>
-    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
 
 %navbar = [

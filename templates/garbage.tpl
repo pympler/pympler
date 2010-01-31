@@ -1,5 +1,7 @@
 %include header category='Garbage', title='Garbage' 
-<h1>Garbage</h1>
+%from cgi import escape
+
+<h1>Garbage - Cycle {{index}}</h1>
 <table class="tdata" width="100%">
     <thead>
         <tr>
@@ -15,21 +17,14 @@
             <td>{{'0x%08x' % o.id}}</td>
             <td class="num">{{o.size}}</td>
             <td>{{o.type}}</td>
-            <td>{{o.str}}</td>
+            <td>{{escape(o.str)}}</td>
         </tr>
     %end
     </tbody>
 </table>
 
-<h2>Reference cycles</h2>
-<ul>
-%for n in range(cycles):
-    <li><a href="#{{n}}">{{n}}</a></li>
-%end
-</ul>
-%for n in range(cycles):
-    <img src="/garbage/graph/{{n}}"/>
-    <a name="{{n}}"></a><br/>
-%end
+<h2>Reference graph</h2>
+
+<img src="/garbage/graph/{{index}}"/>
 
 %include footer
