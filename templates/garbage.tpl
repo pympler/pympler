@@ -27,4 +27,8 @@
 
 <img src="/garbage/graph/{{index}}"/>
 
+<h2>Reduced reference graph (cycles only)</h2>
+
+<img src="/garbage/graph/{{index}}?reduce=1"/>
+
 %include footer

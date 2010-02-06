@@ -49,7 +49,10 @@ class _MetaObject(object):
     The _MetaObject stores meta-information, like a string representation,
     corresponding to each object passed to a ReferenceGraph.
     """
-    __slots__ = ('size', 'id', 'type', 'str', 'group')
+    __slots__ = ('size', 'id', 'type', 'str', 'group', 'cycle')
+
+    def __init__(self):
+        self.cycle = False
 
 
 class _Edge(object):
@@ -93,10 +96,12 @@ class ReferenceGraph(object):
         """
         self.objects = list(objects)
         self.count = len(self.objects)
-        self.objects_in_cycles = None
 
         if reduce:
             self.count_in_cycles = self._reduce_to_cycles()
+            self._reduced = self # TODO: weakref?
+        else:
+            self._reduced = None
 
         self._get_edges()
         self._annotate_objects()
@@ -131,6 +136,28 @@ class ReferenceGraph(object):
             cycles = self._eliminate_leafs(cycles)
         self.objects = cycles
         return len(self.objects)
+
+
+    def reduce_to_cycles(self):
+        """
+        Iteratively eliminate leafs to reduce the set of objects to only those
+        that build cycles. Return the reduced graph. If there are no cycles,
+        None is returned.
+        """
+        if not self._reduced:
+            reduced = copy(self)
+            reduced.objects = self.objects[:]
+            reduced.metadata = []
+            reduced.edges = []
+            if reduced._reduce_to_cycles():
+                reduced._get_edges()
+                reduced._annotate_objects()
+            else:
+                reduced = None
+            for meta in reduced.metadata:
+                meta.cycle = True
+            self._reduced = reduced
+        return self._reduced
 
 
     def _get_edges(self):
@@ -190,11 +217,13 @@ class ReferenceGraph(object):
 
     def _filter_group(self, group):
         """
-        Eliminate all objects but those which belong to `group`. Only
-        ``self.metadata`` and ``self.edges`` are modified.
+        Eliminate all objects but those which belong to `group`.
+        ``self.objects``, ``self.metadata`` and ``self.edges`` are modified.
         Returns `True` if the group is non-empty. Otherwise returns `False`.
         """
         self.metadata = [x for x in self.metadata if x.group == group]
+        group_set = set([x.id for x in self.metadata])
+        self.objects = [obj for obj in self.objects if id(obj) in group_set]
         self.count = len(self.metadata)
         if self.metadata == []:
             return False
@@ -258,7 +287,7 @@ class ReferenceGraph(object):
         sizer = Asizer()
         sizes = sizer.asizesof(*self.objects)
         self.total_size = sizer.total
-        for obj, sz in map( lambda x, y: (x, y), self.objects, sizes ):
+        for obj, sz in zip(self.objects, sizes):
             md = _MetaObject()
             md.size = sz
             md.id = id(obj)

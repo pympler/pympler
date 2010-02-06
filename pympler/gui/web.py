@@ -107,6 +107,7 @@ def garbage_index():
 @bottle.route('/garbage/:index')
 def garbage(index):
     graph = _compute_garbage_graphs()[int(index)]
+    graph.reduce_to_cycles()
     garbage = graph.metadata
     garbage.sort(key=lambda x: -x.size)
     return bottle.template("garbage", objects=garbage, index=index)
@@ -115,12 +116,16 @@ def garbage(index):
 @bottle.route('/garbage/graph/:index')
 def garbage_graph(index):
     graph = _compute_garbage_graphs()[int(index)]
-    graph._reduce_to_cycles() # TODO : changes cached graph
+    reduce = bottle.request.GET.get('reduce', '')
+    fn = 'garbage%so%s' % (index, reduce)
+    if reduce:
+        graph = graph.reduce_to_cycles()
     try:
-        graph.render(os.path.join(_tmpdir, '%d.png' % graph.index), format='png')
+        # TODO: store file in temporary directory and store filename in graph
+        graph.render(os.path.join(_tmpdir, fn), format='png')
     except OSError:
         pass
-    bottle.send_file('%s.png' % index, root=_tmpdir)
+    bottle.send_file(fn, root=_tmpdir)
 
 
 @bottle.route('/help')
