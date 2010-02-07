@@ -5,7 +5,7 @@ and garbage graphs.
 
 import os
 
-from tempfile import NamedTemporaryFile
+from tempfile import mkdtemp
 from shutil import rmtree
 
 from pympler.util.compat import bottle
@@ -31,8 +31,6 @@ class Cache(object):
 
 cache = None
 
-
-_tmpdir = '.pympler_temp'
 
 static_files = os.path.join(DATA_PATH, 'templates')
 
@@ -113,19 +111,28 @@ def garbage(index):
     return bottle.template("garbage", objects=garbage, index=index)
 
 
+def _get_graph(graph, fn):
+    """Retrieve or render a graph."""
+    try:
+        rendered = graph.rendered_file
+    except AttributeError:
+        try:
+            graph.render(os.path.join(_tmpdir, fn), format='png')
+            rendered = fn
+        except OSError:
+            pass
+    graph.rendered_file = rendered
+    return rendered
+
+
 @bottle.route('/garbage/graph/:index')
 def garbage_graph(index):
     graph = _compute_garbage_graphs()[int(index)]
     reduce = bottle.request.GET.get('reduce', '')
-    fn = 'garbage%so%s' % (index, reduce)
     if reduce:
         graph = graph.reduce_to_cycles()
-    try:
-        # TODO: store file in temporary directory and store filename in graph
-        graph.render(os.path.join(_tmpdir, fn), format='png')
-    except OSError:
-        pass
-    bottle.send_file(fn, root=_tmpdir)
+    fn = 'garbage%so%s.png' % (index, reduce)
+    bottle.send_file(_get_graph(graph, fn), root=_tmpdir)
 
 
 @bottle.route('/help')
@@ -152,7 +159,10 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     :param stats: TODO
     """
     global cache
+    global _tmpdir
+
     cache = Cache()
+    _tmpdir = mkdtemp(prefix='pympler')
 
     if tracker and not stats:
         cache.stats = Stats(tracker=tracker)
@@ -162,5 +172,7 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
         os.mkdir(_tmpdir)
     except OSError:
         pass
-    bottle.run(host=host, port=port, **kwargs)
-    rmtree(_tmpdir)
+    try:
+        bottle.run(host=host, port=port, **kwargs)
+    except:
+        rmtree(_tmpdir)

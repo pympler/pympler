@@ -96,9 +96,10 @@ class ReferenceGraph(object):
         """
         self.objects = list(objects)
         self.count = len(self.objects)
+        self.num_in_cycles = 'N/A'
 
         if reduce:
-            self.count_in_cycles = self._reduce_to_cycles()
+            self.num_in_cycles = self._reduce_to_cycles()
             self._reduced = self # TODO: weakref?
         else:
             self._reduced = None
@@ -149,7 +150,8 @@ class ReferenceGraph(object):
             reduced.objects = self.objects[:]
             reduced.metadata = []
             reduced.edges = []
-            if reduced._reduce_to_cycles():
+            self.num_in_cycles = reduced._reduce_to_cycles()
+            if self.num_in_cycles:
                 reduced._get_edges()
                 reduced._annotate_objects()
             else:
@@ -262,6 +264,7 @@ class ReferenceGraph(object):
             subgraph.edges = self.edges.copy()
 
             if subgraph._filter_group(group):
+                subgraph.total_size = sum([x.size for x in subgraph.metadata])
                 subgraph.index = index
                 index += 1
                 yield subgraph
