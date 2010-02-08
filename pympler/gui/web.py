@@ -1,7 +1,28 @@
 """
-Web-based profiling interface. Exposes process information, tracker statistics,
-and garbage graphs.
+This module provides a web-based memory profiling interface. The Pympler web
+frontend exposes process information, tracker statistics, and garbage graphs.
+The web frontend uses `Bottle <http://bottle.paws.de>`_, a lightweight Python
+web framework. Bottle is packaged with Pympler.
+
+The web server can be invoked almost as easily as setting a breakpoint using
+*pdb*::
+
+    from pympler.gui.web import show
+    show()
+
+Calling ``show`` suspends the current thread and executes the Pympler web
+server, exposing profiling data and various facilities of the Pympler library
+via a graphic interface.
+
+.. note::
+
+    This module requires Python 2.5 or newer.
 """
+
+import sys
+
+if sys.hexversion < 0x02050000:
+    raise ImportError("Web frontend requires Python 2.5 or newer.")
 
 import os
 
@@ -30,6 +51,7 @@ class Cache(object):
 
 
 cache = None
+server = None
 
 
 static_files = os.path.join(DATA_PATH, 'templates')
@@ -135,6 +157,13 @@ def garbage_graph(index):
     bottle.send_file(_get_graph(graph, fn), root=_tmpdir)
 
 
+@bottle.route('/exit')
+def exit():
+    # TODO: Find a way to stop server. Raising an exception does not kill the
+    # server - only the request.
+    raise KeyboardInterrupt
+
+
 @bottle.route('/help')
 def help():
     bottle.redirect('http://packages.python.org/Pympler')
@@ -159,6 +188,7 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     :param stats: TODO
     """
     global cache
+    global server
     global _tmpdir
 
     cache = Cache()
@@ -172,7 +202,8 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
         os.mkdir(_tmpdir)
     except OSError:
         pass
+    server = bottle.WSGIRefServer(host=host, port=port, **kwargs)
     try:
-        bottle.run(host=host, port=port, **kwargs)
+        bottle.run(server=server)
     except:
         rmtree(_tmpdir)

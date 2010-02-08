@@ -42,7 +42,10 @@ except ImportError: # Python 3.0
 try:
     import pympler.util.bottle2 as bottle
 except (SyntaxError, ImportError):
-    import pympler.util.bottle3 as bottle
+    try:
+        import pympler.util.bottle3 as bottle
+    except (SyntaxError, ImportError): # Python 2.4
+        bottle = None
 
 # Helper functions
 
