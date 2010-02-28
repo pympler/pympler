@@ -142,7 +142,7 @@ def _get_graph(graph, fn):
             graph.render(os.path.join(_tmpdir, fn), format='png')
             rendered = fn
         except OSError:
-            pass
+            rendered = None
     graph.rendered_file = rendered
     return rendered
 
@@ -154,19 +154,35 @@ def garbage_graph(index):
     if reduce:
         graph = graph.reduce_to_cycles()
     fn = 'garbage%so%s.png' % (index, reduce)
-    bottle.send_file(_get_graph(graph, fn), root=_tmpdir)
+    rendered_file = _get_graph(graph, fn)
+    if rendered_file:
+        bottle.send_file(rendered_file, root=_tmpdir)
+    else:
+        return None
 
 
 @bottle.route('/exit')
 def exit():
     # TODO: Find a way to stop server. Raising an exception does not kill the
-    # server - only the request.
-    raise KeyboardInterrupt
+    # server - only the request. Calling shutdown results in a deadlock.
+    global server
+    return "Not yet implemented."
+    #try:
+    #    server.server.shutdown()
+    #except AttributeError:
+    #    return "ERROR: Stopping the server requires Python 2.6 or newer."
 
 
 @bottle.route('/help')
 def help():
     bottle.redirect('http://packages.python.org/Pympler')
+
+
+class PymplerServer(bottle.ServerAdapter):
+    def run(self, handler):
+        from wsgiref.simple_server import make_server
+        self.server = make_server(self.host, self.port, handler)
+        self.server.serve_forever()
 
 
 def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
@@ -202,7 +218,7 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
         os.mkdir(_tmpdir)
     except OSError:
         pass
-    server = bottle.WSGIRefServer(host=host, port=port, **kwargs)
+    server = PymplerServer(host=host, port=port, **kwargs)
     try:
         bottle.run(server=server)
     except:
