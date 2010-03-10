@@ -3,15 +3,20 @@ import unittest
 from pympler.util.compat import HTMLParser, HTTPConnection
 from pympler.util.compat import Request, urlopen, URLError
 from socket import error as socket_error
-from threading import Thread
 from time import sleep
 
 from pympler.gui.web import show
 
-# TODO Find a way to stop server (maybe start in another process).
+
+# Use separate process for server if available. Otherwise use a thread.
+try:
+    from multiprocessing import Process
+except ImportError:
+    from threading import Thread as Process
+
 _server = None
 
-class Server(Thread):
+class Server(Process):
     def __init__(self):
         super(Server, self).__init__()
         self.daemon = True
