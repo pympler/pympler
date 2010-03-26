@@ -26,8 +26,9 @@ if sys.hexversion < 0x02050000:
 
 import os
 
-from tempfile import mkdtemp
 from shutil import rmtree
+from tempfile import mkdtemp
+from wsgiref.simple_server import make_server
 
 from pympler.util.compat import bottle
 
@@ -52,6 +53,7 @@ class Cache(object):
 
 cache = None
 server = None
+tmpdir = None
 
 
 static_files = os.path.join(DATA_PATH, 'templates')
@@ -60,32 +62,39 @@ bottle.TEMPLATE_PATH.append(static_files)
 
 
 @bottle.route('/')
+@bottle.view('index')
 def index():
+    """Get overview."""
     pmi = ProcessMemoryInfo()
-    return bottle.template("index", processinfo=pmi)
+    return dict(processinfo=pmi)
 
 
 @bottle.route('/process')
+@bottle.view('process')
 def process():
+    """Get process overview."""
     pmi = ProcessMemoryInfo()
-    return bottle.template("process", info=pmi)
+    return dict(info=pmi)
 
 
 @bottle.route('/tracker')
+@bottle.view('tracker')
 def tracker_index():
+    """Get tracker overview."""
     global cache
 
     stats = cache.stats
     if stats:
         for fp in stats.footprint:
             stats.annotate_snapshot(fp)
-        return bottle.template("tracker", snapshots=stats.footprint)
+        return dict(snapshots=stats.footprint)
     else:
-        return bottle.template("tracker", snapshots=[])
+        return dict(snapshots=[])
 
 
 @bottle.route('/refresh')
 def refresh():
+    """Clear all cached information."""
     global cache
     cache.clear()
     bottle.redirect('/')
@@ -93,13 +102,15 @@ def refresh():
 
 @bottle.route('/tracker/distribution')
 def tracker_dist():
-    fn = os.path.join(_tmpdir, 'distribution.png')
+    """Render timespace chart for tracker data."""
+    fn = os.path.join(tmpdir, 'distribution.png')
     charts.tracker_timespace(fn, _stats)
-    bottle.send_file('distribution.png', root=_tmpdir)
+    bottle.send_file('distribution.png', root=tmpdir)
 
 
 @bottle.route('/static/:filename')
 def static_file(filename):
+    """Get static files (CSS-files)."""
     bottle.send_file(filename, root=static_files)
 
 
@@ -119,18 +130,22 @@ def _compute_garbage_graphs():
 
 
 @bottle.route('/garbage')
+@bottle.view('garbage_index')
 def garbage_index():
+    """Get garbage overview."""
     garbage_graphs = _compute_garbage_graphs()
-    return bottle.template("garbage_index", graphs=garbage_graphs)
+    return dict(graphs=garbage_graphs)
 
 
 @bottle.route('/garbage/:index')
+@bottle.view('garbage')
 def garbage(index):
+    """Get reference cycle details."""
     graph = _compute_garbage_graphs()[int(index)]
     graph.reduce_to_cycles()
     garbage = graph.metadata
     garbage.sort(key=lambda x: -x.size)
-    return bottle.template("garbage", objects=garbage, index=index)
+    return dict(objects=garbage, index=index)
 
 
 def _get_graph(graph, fn):
@@ -139,7 +154,7 @@ def _get_graph(graph, fn):
         rendered = graph.rendered_file
     except AttributeError:
         try:
-            graph.render(os.path.join(_tmpdir, fn), format='png')
+            graph.render(os.path.join(tmpdir, fn), format='png')
             rendered = fn
         except OSError:
             rendered = None
@@ -149,6 +164,7 @@ def _get_graph(graph, fn):
 
 @bottle.route('/garbage/graph/:index')
 def garbage_graph(index):
+    """Get graph representation of reference cycle."""
     graph = _compute_garbage_graphs()[int(index)]
     reduce = bottle.request.GET.get('reduce', '')
     if reduce:
@@ -156,13 +172,14 @@ def garbage_graph(index):
     fn = 'garbage%so%s.png' % (index, reduce)
     rendered_file = _get_graph(graph, fn)
     if rendered_file:
-        bottle.send_file(rendered_file, root=_tmpdir)
+        bottle.send_file(rendered_file, root=tmpdir)
     else:
         return None
 
 
 @bottle.route('/exit')
-def exit():
+def kill_server():
+    """Kill the server and give the application a chance to continue."""
     # TODO: Find a way to stop server. Raising an exception does not kill the
     # server - only the request. Calling shutdown results in a deadlock.
     global server
@@ -174,13 +191,14 @@ def exit():
 
 
 @bottle.route('/help')
-def help():
+def show_documentation():
+    """Redirect to online documentation."""
     bottle.redirect('http://packages.python.org/Pympler')
 
 
 class PymplerServer(bottle.ServerAdapter):
+    """Simple WSGI server."""
     def run(self, handler):
-        from wsgiref.simple_server import make_server
         self.server = make_server(self.host, self.port, handler)
         self.server.serve_forever()
 
@@ -205,21 +223,21 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     """
     global cache
     global server
-    global _tmpdir
+    global tmpdir
 
     cache = Cache()
-    _tmpdir = mkdtemp(prefix='pympler')
+    tmpdir = mkdtemp(prefix='pympler')
 
     if tracker and not stats:
         cache.stats = Stats(tracker=tracker)
     else:
         cache.stats = stats
     try:
-        os.mkdir(_tmpdir)
+        os.mkdir(tmpdir)
     except OSError:
         pass
     server = PymplerServer(host=host, port=port, **kwargs)
     try:
         bottle.run(server=server)
-    except:
-        rmtree(_tmpdir)
+    except Exception:
+        rmtree(tmpdir)
