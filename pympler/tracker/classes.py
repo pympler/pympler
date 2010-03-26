@@ -7,6 +7,7 @@ an overview of memory distribution between the different tracked objects.
 """
 import time
 
+from threading import Thread, Lock
 from weakref import ref as weakref_ref
 from pympler.util.compat import instancemethod
 import pympler.asizeof as asizeof
@@ -56,7 +57,7 @@ class TrackedObject(object):
     __slots__ = ("ref", "id", "repr", "name", "birth", "death", "trace",
         "footprint", "_resolution_level", "__dict__")
 
-    def __init__(self, instance, resolution_level=0, trace=0):
+    def __init__(self, instance, resolution_level=0, trace=False):
         """
         Create a weak reference for 'instance' to observe an object but which
         won't prevent its deletion (which is monitored by the finalize
@@ -166,30 +167,31 @@ class TrackedObject(object):
         except:
             pass
 
-try:
-    import threading
-except ImportError:
-    threading = 0
-else:
-    _snapshot_lock = threading.Lock()
 
-    class PeriodicThread(threading.Thread):
-        """
-        Thread object to take snapshots periodically.
-        """
-        def __init__(self, tracker, interval, *args, **kw):
-            self.interval = interval
-            self.tracker = tracker
-            threading.Thread.__init__(self, *args, **kw)
+class PeriodicThread(Thread):
+    """
+    Thread object to take snapshots periodically.
+    """
 
-        def run(self):
-            """
-            Loop until a stop signal is set.
-            """
-            self.stop = 0
-            while not self.stop:
-                self.tracker.create_snapshot()
-                time.sleep(self.interval)
+    def __init__(self, tracker, interval, *args, **kwargs):
+        """
+        Create thread with given interval and associated with the given
+        tracker.
+        """
+        self.interval = interval
+        self.tracker = tracker
+        self.stop = False
+        super(PeriodicThread, self).__init__(*args, **kwargs)
+
+    def run(self):
+        """
+        Loop until a stop signal is set.
+        """
+        self.stop = False
+        while not self.stop:
+            self.tracker.create_snapshot()
+            time.sleep(self.interval)
+
 
 class Footprint(object):
     def __init__(self):
@@ -224,6 +226,7 @@ class ClassTracker(object):
         # Thread object responsible for background monitoring
         self._periodic_thread = None
 
+
     def _tracker(self, _observer_, _self_, *args, **kwds):
         """
         Injected constructor for tracked classes.
@@ -231,48 +234,63 @@ class ClassTracker(object):
         Attach to the object before calling the constructor to track the object with
         the parameters of the most specialized class.
         """
-        self.track_object(_self_, name=_observer_.name, resolution_level=_observer_.detail,
-            keep=_observer_.keep, trace=_observer_.trace)
+        self.track_object(_self_,
+                          name=_observer_.name,
+                          resolution_level=_observer_.detail,
+                          keep=_observer_.keep,
+                          trace=_observer_.trace)
         _observer_.init(_self_, *args, **kwds)
 
 
-    def _inject_constructor(self, klass, f, name, resolution_level, keep, trace):
+    def _inject_constructor(self, cls, func, name, resolution_level, keep,
+                            trace):
         """
         Modifying Methods in Place - after the recipe 15.7 in the Python
-        Cookbook by Ken Seehof. The original constructors may be restored later.
+        Cookbook by Ken Seehof. The original constructors may be restored
+        later.
         """
         try:
-            ki = klass.__init__
+            constructor = cls.__init__
         except AttributeError:
-            def ki(self, *args, **kwds):
+            def constructor(self, *_args, **_kwargs):
                 pass
 
         # Possible name clash between keyword arguments of the tracked class'
         # constructor and the curried arguments of the injected constructor.
         # Therefore, the additional argument has a 'magic' name to make it less
         # likely that an argument name clash occurs.
-        self._observers[klass] = _ClassObserver(ki, name, resolution_level, keep, trace)
-        klass.__init__ = instancemethod(
-            lambda *args, **kwds: f(self._observers[klass], *args, **kwds), None, klass)
+        self._observers[cls] = _ClassObserver(constructor,
+                                              name,
+                                              resolution_level,
+                                              keep,
+                                              trace)
+        cls.__init__ = instancemethod(
+            lambda *args, **kwds: func(self._observers[cls], *args, **kwds),
+            None,
+            cls
+        )
 
-    def _is_tracked(self, klass):
+
+    def _is_tracked(self, cls):
         """
         Determine if the class is tracked.
         """
-        return klass in self._observers
+        return cls in self._observers
 
-    def _track_modify(self, klass, name, detail, keep, trace):
+
+    def _track_modify(self, cls, name, detail, keep, trace):
         """
         Modify settings of a tracked class
         """
-        self._observers[klass].modify(name, detail, keep, trace)
+        self._observers[cls].modify(name, detail, keep, trace)
 
-    def _restore_constructor(self, klass):
+
+    def _restore_constructor(self, cls):
         """
         Restore the original constructor, lose track of class.
         """
-        klass.__init__ = self._observers[klass].init
-        del self._observers[klass]
+        cls.__init__ = self._observers[cls].init
+        del self._observers[cls]
 
 
     def track_change(self, instance, resolution_level=0):
@@ -284,7 +302,7 @@ class ClassTracker(object):
         to.set_resolution_level(resolution_level)
 
 
-    def track_object(self, instance, name=None, resolution_level=0, keep=0, trace=0):
+    def track_object(self, instance, name=None, resolution_level=0, keep=False, trace=False):
         """
         Track object 'instance' and sample size and lifetime information.
         Not all objects can be tracked; trackable objects are class instances and
@@ -322,7 +340,7 @@ class ClassTracker(object):
             self._keepalive.append(instance)
 
 
-    def track_class(self, cls, name=None, resolution_level=0, keep=0, trace=0):
+    def track_class(self, cls, name=None, resolution_level=0, keep=False, trace=False):
         """
         Track all objects of the class `cls`. Objects of that type that already
         exist are *not* tracked. If `track_class` is called for a class already
@@ -341,12 +359,12 @@ class ClassTracker(object):
             self._inject_constructor(cls, self._tracker, name, resolution_level, keep, trace)
 
 
-    def detach_class(self, klass):
+    def detach_class(self, cls):
         """
-        Stop tracking class 'klass'. Any new objects of that type are not
+        Stop tracking class 'cls'. Any new objects of that type are not
         tracked anymore. Existing objects are still tracked.
         """
-        self._restore_constructor(klass)
+        self._restore_constructor(cls)
 
 
     def detach_all_classes(self):
@@ -354,8 +372,8 @@ class ClassTracker(object):
         Detach from all tracked classes.
         """
         classes = list(self._observers.keys())
-        for klass in classes:
-            self.detach_class(klass)
+        for cls in classes:
+            self.detach_class(cls)
 
 
     def detach_all(self):
@@ -386,9 +404,6 @@ class ClassTracker(object):
         started as a daemon allowing the program to exit. If periodic snapshots are
         already active, the interval is updated.
         """
-        if not threading:
-            raise NotImplementedError
-
         if not self._periodic_thread:
             self._periodic_thread = PeriodicThread(self, interval, name='BackgroundMonitor')
             self._periodic_thread.setDaemon(True)
@@ -402,11 +417,8 @@ class ClassTracker(object):
         function waits for the thread to terminate which can take some time
         depending on the configured interval.
         """
-        if not threading:
-            raise NotImplementedError
-
         if self._periodic_thread and self._periodic_thread.isAlive():
-            self._periodic_thread.stop = 1
+            self._periodic_thread.stop = True
             self._periodic_thread.join()
             self._periodic_thread = None
 
@@ -414,58 +426,58 @@ class ClassTracker(object):
 # Snapshots
 #
 
+    snapshot_lock = Lock()
+
     def create_snapshot(self, description=''):
         """
         Collect current per instance statistics.
         Save total amount of memory consumption reported by asizeof and by the
         operating system. The overhead of the ClassTracker structure is also
         computed.
+
+        Snapshots can be taken asynchronously. The function is protected with a
+        lock to prevent race conditions.
         """
 
-        ts = _get_time()
-
         try:
-            # Snapshots can be taken asynchronously. Prevent race conditions when
-            # two snapshots are taken at the same time. TODO: It is not clear what
-            # happens when memory is allocated/released while this function is
-            # executed but it will likely lead to inconsistencies. Either pause all
-            # other threads or don't size individual objects in asynchronous mode.
-            if _snapshot_lock is not None:
-                _snapshot_lock.acquire()
+            # TODO: It is not clear what happens when memory is allocated or
+            # released while this function is executed but it will likely lead
+            # to inconsistencies. Either pause all other threads or don't size
+            # individual objects in asynchronous mode.
+            self.snapshot_lock.acquire()
+
+            timestamp = _get_time()
 
             sizer = asizeof.Asizer()
-            objs = [to.ref() for to in list(self.objects.values())]
+            objs = [tobj.ref() for tobj in list(self.objects.values())]
             sizer.exclude_refs(*objs)
 
             # The objects need to be sized in a deterministic order. Sort the
             # objects by its creation date which should at least work for non-parallel
             # execution. The "proper" fix would be to handle shared data separately.
-            tos = list(self.objects.values())
-            #sorttime = lambda i, j: (i.birth < j.birth) and -1 or (i.birth > j.birth) and 1 or 0
-            #tos.sort(sorttime)
-            tos.sort(key=lambda x: x.birth)
-            for to in tos:
-                to.track_size(ts, sizer)
+            tracked_objects = list(self.objects.values())
+            tracked_objects.sort(key=lambda x: x.birth)
+            for tobj in tracked_objects:
+                tobj.track_size(timestamp, sizer)
 
-            fp = Footprint()
+            footprint = Footprint()
 
-            fp.timestamp = ts
-            fp.tracked_total = sizer.total
-            if fp.tracked_total:
-                fp.asizeof_total = asizeof.asizeof(all=True, code=True)
+            footprint.timestamp = timestamp
+            footprint.tracked_total = sizer.total
+            if footprint.tracked_total:
+                footprint.asizeof_total = asizeof.asizeof(all=True, code=True)
             else:
-                fp.asizeof_total = 0
-            fp.system_total = pympler.process.ProcessMemoryInfo()
-            fp.desc = str(description)
+                footprint.asizeof_total = 0
+            footprint.system_total = pympler.process.ProcessMemoryInfo()
+            footprint.desc = str(description)
 
             # Compute overhead of all structures, use sizer to exclude tracked objects(!)
-            fp.overhead = 0
-            if fp.tracked_total:
-                fp.overhead = sizer.asizeof(self)
-                fp.asizeof_total -= fp.overhead
+            footprint.overhead = 0
+            if footprint.tracked_total:
+                footprint.overhead = sizer.asizeof(self)
+                footprint.asizeof_total -= footprint.overhead
 
-            self.footprint.append(fp)
+            self.footprint.append(footprint)
 
         finally:
-            if _snapshot_lock is not None:
-                _snapshot_lock.release()
+            self.snapshot_lock.release()

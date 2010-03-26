@@ -47,7 +47,7 @@ class WebGuiTest(unittest.TestCase):
             response = conn.getresponse()
             response.read()
             conn.close()
-            if response.status not in [200, 307]:
+            if response.status not in [200, 302, 303, 307]:
                 print ('LINK-ERROR:', link, response.status, response.reason)
                 self.errors += 1
 
