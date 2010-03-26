@@ -2,17 +2,19 @@ Release 0.2
 ===========
 
 The second release is one of several steps to better integrate the different
-sub-systems of pympler. This release adds several modules replacing the
-*Heapmonitor* module.
+sub-systems of pympler. Pympler 0.2 introduces a web interface to facilitate
+memory profiling. Pympler now fully supports Python 3.x. This release also adds
+several modules replacing the *Heapmonitor* module with the new *class tracker*
+facility.
 
-  Ludwig Haehne:
-    
-    * Split Heapmonitor into several new modules
+  * Introduce web frontend
 
-    * New `process` module to obtain memory statistics of the Python process
+  * Split Heapmonitor into several new modules
 
-    * Improved garbage illustration which can directly render directed graphs
-      using graphviz
+  * New `process` module to obtain memory statistics of the Python process
+
+  * Improved garbage illustration which can directly render directed graphs
+    using graphviz
 
 
 Release 0.1

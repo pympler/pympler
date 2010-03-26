@@ -1,7 +1,18 @@
 %include header category='Garbage', title='Garbage' 
 <h1>Garbage - Overview</h1>
 
-<p>TODO: short garbage description, collectable/incollectable</p>
+<p>This page gives an overview of all objects that would have been
+deleted if those weren't holding circular references to each other
+(e.g. in a doubly linked list).</p>
+
+%if len(graphs):
+    <p>Click on the reference graph titles below to show the objects
+    contained in the respective cycle. If you have <a
+    href="http://www.graphviz.org">graphviz</a> installed, you will
+    also see a visualisation of the reference cycle.</p>
+%else:
+    <p>No reference cycles detected.</p>
+%end
 
 <p>{{len(graphs)}} reference cycles:</p>
 

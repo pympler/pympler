@@ -11,16 +11,37 @@ comprehensive profiling tool.  The :ref:`asizeof <asizeof>` module
 provides basic size information for one or several Python objects,
 module :ref:`muppy <muppy>` is used for on-line monitoring of a Python
 application and module :ref:`Class Tracker <classtracker>` provides
-off-line analysis of the lifetime of selected Python objects.
+off-line analysis of the lifetime of selected Python objects. 
+
+A web profiling frontend exposes process statistics, garbage
+visualisation and class tracker statistics.
+
+
+Requirements
+------------
 
 Pympler is written entirely in Python, with no dependencies to
-external libraries or projects. Both the :ref:`Class Tracker
-<classtracker>` and the :ref:`muppy <muppy>` module will work with
-Python 2.4, 2.5, and 2.6. The :ref:`asizeof <asizeof>` module has
-been tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
-3.0rc3 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel) and
-Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit Python
-and on RHEL 3u7 and Solaris 10 both 64-bit Python.
+external libraries or projects. Pympler has been tested with Python
+2.4, 2.5, 2.6, 3.0 and 3.1. However, the Pympler web frontend does not
+work with Python 2.4.
+
+Pympler is platform independent and has been tested on various Linux
+distributions (32bit and 64bit), Windows XP, Windows 7 and MacOS X.
+
+
+Download
+--------
+
+If you have *SetupTools* installed, the easiest way to get Pympler is
+to use *easy_install*::
+
+    easy_install pympler    
+
+Alternately, download Pympler releases from the `Python Package Index
+<http://pypi.python.org/pypi/Pympler>`_ or `check out the latest
+development revision
+<http://code.google.com/p/pympler/source/checkout>`_ with svn. Please
+see the README file for installation instructions.
 
 
 Target Audience
@@ -70,4 +91,5 @@ History
 Pympler was founded in August 2008 by Jean Brouwers, Ludwig Haehne,
 and Robert Schuppenies with the goal of providing a complete and
 stand-alone memory profiling solution for Python.
+
 
