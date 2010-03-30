@@ -1,8 +1,8 @@
 .. _lib_tracker_classes:
    
-============
-ClassTracker
-============
+=======================
+pympler.tracker.classes
+=======================
 
 .. automodule:: pympler.tracker.classes
 
@@ -13,3 +13,5 @@ Classes
     :members: track_object, track_class, detach_class, detach_all_classes,
         detach_all, clear, start_periodic_snapshots, stop_periodic_snapshots,
         create_snapshot
+
+

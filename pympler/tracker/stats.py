@@ -1,3 +1,7 @@
+"""
+Provide saving, loading and presenting gathered `ClassTracker` statistics.
+"""
+
 import sys
 from pympler.util.compat import pickle
 from copy import deepcopy
@@ -8,41 +12,43 @@ from pympler.asizeof import Asized
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
 
-def _merge_asized(a, b, level=0):
+def _merge_asized(base, other, level=0):
     """
-    Merge **Asized** instances `a` and `b` into `a`.
+    Merge **Asized** instances `base` and `other` into `base`.
     """
-    ref2key = lambda r: r.name.split(':')[0]
-    a.size += b.size
-    a.flat += b.flat
+    ref2key = lambda ref: ref.name.split(':')[0]
+    base.size += other.size
+    base.flat += other.flat
     if level > 0:
-        a.name = ref2key(a)
-    # Add refs from b to a. Any new refs are appended.
-    a.refs = list(a.refs) # we may need to append items
+        base.name = ref2key(base)
+    # Add refs from other to base. Any new refs are appended.
+    base.refs = list(base.refs) # we may need to append items
     refs = {}
-    for ref in a.refs:
+    for ref in base.refs:
         refs[ref2key(ref)] = ref
-    for ref in b.refs:
+    for ref in other.refs:
         key = ref2key(ref)
         if key in refs:
             _merge_asized(refs[key], ref, level=level+1)
         else:
             # Don't modify existing Asized instances => deepcopy
-            a.refs.append(deepcopy(ref))
-            a.refs[-1].name = key
+            base.refs.append(deepcopy(ref))
+            base.refs[-1].name = key
 
-def _merge_objects(ts, merged, obj):
+
+def _merge_objects(tref, merged, obj):
     """
-    Merge the snapshot size information of multiple tracked objects.
-    The tracked object `obj` is scanned for size information at time `ts`.
+    Merge the snapshot size information of multiple tracked objects.  The
+    tracked object `obj` is scanned for size information at time `tref`.
     The sizes are merged into **Asized** instance `merged`.
     """
-    sz = None
-    for (t, sized) in obj.footprint:
-        if t == ts:
-            sz = sized
-    if sz:
-        _merge_asized(merged, sized)
+    size = None
+    for (timestamp, tsize) in obj.footprint:
+        if timestamp == tref:
+            size = tsize
+    if size:
+        _merge_asized(merged, size)
+
 
 def _format_trace(trace):
     """
@@ -52,20 +58,16 @@ def _format_trace(trace):
     Returns a string.
     """
     lines = []
-    for fr in trace:
-        for line in fr[3]:
+    for frm in trace:
+        for line in frm[3]:
             lines.append('    '+line.strip()+'\n')
-        lines.append('  %s:%4d in %s\n' % (fr[0], fr[1], fr[2]))
+        lines.append('  %s:%4d in %s\n' % (frm[0], frm[1], frm[2]))
     return ''.join(lines)
 
 
-#
-# Off-line Analysis
-#
-
 class Stats(object):
     """
-    Presents the memory statisitics gathered by a `ClassTracker` based on user
+    Presents the memory statistics gathered by a `ClassTracker` based on user
     preferences.
     """
 
@@ -86,10 +88,11 @@ class Stats(object):
         if filename:
             self.load_stats(filename)
 
+
     def load_stats(self, fdump):
         """
         Load the data from a dump file.
-        The argument `fdump` can be either a filename or a an open file object
+        The argument `fdump` can be either a filename or an open file object
         that requires read access.
         """
         if isinstance(fdump, type('')):
@@ -97,6 +100,7 @@ class Stats(object):
         self.index = pickle.load(fdump)
         self.footprint = pickle.load(fdump)
         self.sorted = []
+
 
     def dump_stats(self, fdump, close=1):
         """
@@ -115,6 +119,7 @@ class Stats(object):
         if close:
             fdump.close()
 
+
     def _init_sort(self):
         """
         Prepare the data to be sorted.
@@ -126,15 +131,16 @@ class Stats(object):
             # Identify the snapshot that tracked the largest amount of memory.
             tmax = None
             maxsize = 0
-            for fp in self.footprint:
-                if fp.tracked_total > maxsize:
-                    tmax = fp.timestamp
+            for footprint in self.footprint:
+                if footprint.tracked_total > maxsize:
+                    tmax = footprint.timestamp
             for key in list(self.index.keys()):
-                for to in self.index[key]:
-                    to.classname = key
-                    to.size = to.get_max_size()
-                    to.tsize = to.get_size_at_time(tmax)
+                for tobj in self.index[key]:
+                    tobj.classname = key
+                    tobj.size = tobj.get_max_size()
+                    tobj.tsize = tobj.get_size_at_time(tmax)
                 self.sorted.extend(self.index[key])
+
 
     def sort_stats(self, *args):
         """
@@ -175,37 +181,33 @@ class Stats(object):
         if not args:
             args = criteria
 
-        def _sort(a, b, crit=args):
-            for c in crit:
-                res = 0
-                if getattr(a,c) < getattr(b,c):
-                    res = -1
-                elif getattr(a,c) > getattr(b,c):
-                    res = 1
-                if res:
-                    if c in ('tsize', 'size', 'death'):
+        def _sort(to1, to2, crit=args):
+            """Compare two objects using a list of attributes."""
+            for attr in crit:
+                res = cmp(getattr(to1, attr), getattr(to2, attr))
+                if res != 0:
+                    if attr in ('tsize', 'size', 'death'):
                         return -res
                     return res
             return 0
 
         def cmp2key(mycmp):
-            "Converts a cmp= function into a key= function"
-            class K:
+            """Converts a cmp= function into a key= function"""
+            class ObjectWrapper:
+                """Wraps an object exposing the given comparison logic."""
                 def __init__(self, obj, *args):
                     self.obj = obj
-                #def __cmp__(self, other):
-                #    return mycmp(self.obj, other.obj)
                 def __lt__(self, other):
                     return mycmp(self.obj, other.obj) < 0
-            return K
+            return ObjectWrapper
 
         if not self.sorted:
             self._init_sort()
 
-        #self.sorted.sort(_sort)
         self.sorted.sort(key=cmp2key(_sort))
 
         return self
+
 
     def reverse_order(self):
         """
@@ -216,8 +218,6 @@ class Stats(object):
         self.sorted.reverse()
         return self
 
-    def diff_stats(self, stats):
-        return None # TODO
 
     def annotate_snapshot(self, snapshot):
         """
@@ -231,12 +231,12 @@ class Stats(object):
         for classname in list(self.index.keys()):
             total = 0
             active = 0
-            merged = Asized(0,0)
-            for to in self.index[classname]:
-                _merge_objects(snapshot.timestamp, merged, to)
-                total += to.get_size_at_time(snapshot.timestamp)
-                if to.birth < snapshot.timestamp and (to.death is None or
-                   to.death > snapshot.timestamp):
+            merged = Asized(0, 0)
+            for tobj in self.index[classname]:
+                _merge_objects(snapshot.timestamp, merged, tobj)
+                total += tobj.get_size_at_time(snapshot.timestamp)
+                if tobj.birth < snapshot.timestamp and \
+                    (tobj.death is None or tobj.death > snapshot.timestamp):
                     active += 1
             try:
                 pct = total * 100.0 / snapshot.asizeof_total
@@ -247,60 +247,84 @@ class Stats(object):
             except ZeroDivisionError:
                 avg = 0
 
-            snapshot.classes[classname] = {'sum': total, 'avg': avg, 'pct': pct, \
-                'active': active}
+            snapshot.classes[classname] = dict(sum=total,
+                                               avg=avg,
+                                               pct=pct,
+                                               active=active)
             snapshot.classes[classname]['merged'] = merged
 
 
 class ConsoleStats(Stats):
+    """
+    Presentation layer for `Stats` to be used in text-based consoles.
+    """
 
-    def _print_refs(self, refs, total, prefix='    ', level=1, minsize=0, minpct=0.1):
+    def _print_refs(self, refs, total, prefix='    ',
+                    level=1, minsize=0, minpct=0.1):
         """
         Print individual referents recursively.
         """
         lrefs = list(refs)
         lrefs.sort(key=lambda x: x.size)
         lrefs.reverse()
-        for r in lrefs:
-            if r.size > minsize and (r.size*100.0/total) > minpct:
-                self.stream.write('%-50s %-14s %3d%% [%d]\n' % (trunc(prefix+str(r.name),50),
-                    pp(r.size),int(r.size*100.0/total), level))
-                self._print_refs(r.refs, total, prefix=prefix+'  ', level=level+1)
+        for ref in lrefs:
+            if ref.size > minsize and (ref.size*100.0/total) > minpct:
+                self.stream.write('%-50s %-14s %3d%% [%d]\n' % (
+                    trunc(prefix+str(ref.name), 50),
+                    pp(ref.size),
+                    int(ref.size*100.0/total),
+                    level
+                ))
+                self._print_refs(ref.refs, total, prefix=prefix+'  ',
+                                 level=level+1)
 
-    def print_object(self, to, full=0):
+
+    def print_object(self, tobj, full=0):
         """
-        Print the gathered information of object `to` in human-readable format.
+        Print the gathered information of object `tobj` in human-readable format.
         """
         if full:
-            if to.death:
+            if tobj.death:
                 self.stream.write('%-32s ( free )   %-35s\n' % (
-                    trunc(to.name, 32, left=1), trunc(to.repr, 35)))
+                    trunc(tobj.name, 32, left=1), trunc(tobj.repr, 35)))
             else:
                 self.stream.write('%-32s 0x%08x %-35s\n' % (
-                    trunc(to.name, 32, left=1), to.id, trunc(to.repr, 35)))
+                    trunc(tobj.name, 32, left=1),
+                    tobj.id,
+                    trunc(tobj.repr, 35)
+                ))
             try:
-                self.stream.write(_format_trace(to.trace))
+                self.stream.write(_format_trace(tobj.trace))
             except AttributeError:
                 pass
-            for (ts, size) in to.footprint:
-                self.stream.write('  %-30s %s\n' % (pp_timestamp(ts), pp(size.size)))
+            for (timestamp, size) in tobj.footprint:
+                self.stream.write('  %-30s %s\n' % (
+                    pp_timestamp(timestamp), pp(size.size)
+                ))
                 self._print_refs(size.refs, size.size)
-            if to.death is not None:
-                self.stream.write('  %-30s finalize\n' % pp_timestamp(ts))
+            if tobj.death is not None:
+                self.stream.write('  %-30s finalize\n' % (
+                    pp_timestamp(tobj.death),
+                ))
         else:
-            # TODO Print size for largest snapshot (get_size_at_time)
-            # Unused ATM: Maybe drop this type of reporting
-            size = to.get_max_size()
-            if to.repr:
-                self.stream.write('%-64s %-14s\n' % (trunc(to.repr, 64), pp(size)))
+            size = tobj.get_max_size()
+            if tobj.repr:
+                self.stream.write('%-64s %-14s\n' % (
+                    trunc(tobj.repr, 64),
+                    pp(size)
+                ))
             else:
-                self.stream.write('%-64s %-14s\n' % (trunc(to.name, 64), pp(size)))
+                self.stream.write('%-64s %-14s\n' % (
+                    trunc(tobj.name, 64),
+                    pp(size)
+                ))
 
-    def print_stats(self, filter=None, limit=1.0):
+
+    def print_stats(self, clsname=None, limit=1.0):
         """
         Write tracked objects to stdout.  The output can be filtered and pruned.
         Only objects are printed whose classname contain the substring supplied
-        by the `filter` argument.  The output can be pruned by passing a limit
+        by the `clsname` argument.  The output can be pruned by passing a limit
         value. If `limit` is a float smaller than one, only the supplied
         percentage of the total tracked data is printed. If `limit` is bigger
         than one, this number of tracked objects are printed. Tracked objects
@@ -314,8 +338,8 @@ class ConsoleStats(Stats):
 
         _sorted = self.sorted
 
-        if filter:
-            _sorted = [to for to in _sorted if filter in to.classname]
+        if clsname:
+            _sorted = [to for to in _sorted if clsname in to.classname]
 
         if limit < 1.0:
             _sorted = _sorted[:int(len(self.sorted)*limit)+1]
@@ -323,8 +347,9 @@ class ConsoleStats(Stats):
             _sorted = _sorted[:int(limit)]
 
         # Emit per-instance data
-        for to in _sorted:
-            self.print_object(to, full=1)
+        for tobj in _sorted:
+            self.print_object(tobj, full=1)
+
 
     def print_summary(self):
         """
@@ -337,24 +362,30 @@ class ConsoleStats(Stats):
         fobj = self.stream
 
         fobj.write('---- SUMMARY '+'-'*66+'\n')
-        for fp in self.footprint:
-            self.annotate_snapshot(fp)
-            fobj.write('%-35s %11s %12s %12s %5s\n' % \
-                (trunc(fp.desc, 35), 'active', pp(fp.asizeof_total),
-                 'average', 'pct'))
+        for footprint in self.footprint:
+            self.annotate_snapshot(footprint)
+            fobj.write('%-35s %11s %12s %12s %5s\n' % (
+                trunc(footprint.desc, 35),
+                'active',
+                pp(footprint.asizeof_total),
+                'average',
+                'pct'
+            ))
             for classname in classlist:
-                try:
-                    info = fp.classes[classname]
-                except KeyError:
-                    # No such class in this snapshot, if print_stats is called
-                    # multiple times there may exist older annotations in
-                    # earlier snapshots.
-                    pass
-                else:
-                    total, avg, pct, active = info['sum'], info['avg'], info['pct'], info['active']
-                    fobj.write('  %-33s %11d %12s %12s %4d%%\n' % \
-                        (trunc(classname, 33), active, pp(total), pp(avg), pct))
+                info = footprint.classes.get(classname)
+                # If 'info' is None there is no such class in this snapshot. If
+                # print_stats is called multiple times there may exist older
+                # annotations in earlier snapshots.
+                if info:
+                    fobj.write('  %-33s %11d %12s %12s %4d%%\n' % (
+                        trunc(classname, 33),
+                        info['active'],
+                        pp(info['sum']),
+                        pp(info['avg']),
+                        info['pct']
+                    ))
         fobj.write('-'*79+'\n')
+
 
 class HtmlStats(Stats):
     """
@@ -408,12 +439,14 @@ class HtmlStats(Stats):
         lrefs.reverse()
         if level == 1:
             fobj.write('<table>\n')
-        for r in lrefs:
-            if r.size > minsize and (r.size*100.0/total) > minpct:
-                data = {'level': level, 'name': trunc(str(r.name),128),
-                    'size': pp(r.size), 'pct': r.size*100.0/total }
+        for ref in lrefs:
+            if ref.size > minsize and (ref.size*100.0/total) > minpct:
+                data = dict(level=level,
+                            name=trunc(str(ref.name), 128),
+                            size=pp(ref.size),
+                            pct=ref.size*100.0/total)
                 fobj.write(self.refrow % data)
-                self._print_refs(fobj, r.refs, total, level=level+1)
+                self._print_refs(fobj, ref.refs, total, level=level+1)
         if level == 1:
             fobj.write("</table>\n")
 
@@ -433,7 +466,7 @@ class HtmlStats(Stats):
 
         fobj.write("<h1>%s</h1>\n" % (classname))
 
-        sizes = [to.get_max_size() for to in self.index[classname]]
+        sizes = [tobj.get_max_size() for tobj in self.index[classname]]
         total = 0
         for s in sizes:
             total += s
@@ -446,11 +479,11 @@ class HtmlStats(Stats):
         fobj.write(self.charts[classname])
 
         fobj.write("<h2>Coalesced Referents per Snapshot</h2>\n")
-        for fp in self.footprint:
-            if classname in fp.classes:
-                merged = fp.classes[classname]['merged']
+        for footprint in self.footprint:
+            if classname in footprint.classes:
+                merged = footprint.classes[classname]['merged']
                 fobj.write(self.class_snapshot % {
-                    'name': fp.desc, 'cls':classname, 'total': pp(merged.size)
+                    'name': footprint.desc, 'cls':classname, 'total': pp(merged.size)
                 })
                 if merged.refs:
                     self._print_refs(fobj, merged.refs, merged.size)
@@ -458,17 +491,17 @@ class HtmlStats(Stats):
                     fobj.write('<p>No per-referent sizes recorded.</p>\n')
 
         fobj.write("<h2>Instances</h2>\n")
-        for to in self.index[classname]:
+        for tobj in self.index[classname]:
             fobj.write('<table id="tl" width="100%" rules="rows">\n')
-            fobj.write('<tr><td id="hl" width="140px">Instance</td><td id="hl">%s at 0x%08x</td></tr>\n' % (to.name, to.id))
-            if to.repr:
-                fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % to.repr)
-            fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(to.birth), pp_timestamp(to.death)))
-            if hasattr(to, 'trace'):
-                trace = "<pre>%s</pre>" % (_format_trace(to.trace))
+            fobj.write('<tr><td id="hl" width="140px">Instance</td><td id="hl">%s at 0x%08x</td></tr>\n' % (tobj.name, tobj.id))
+            if tobj.repr:
+                fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % tobj.repr)
+            fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(tobj.birth), pp_timestamp(tobj.death)))
+            if hasattr(tobj, 'trace'):
+                trace = "<pre>%s</pre>" % (_format_trace(tobj.trace))
                 fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
-            for (ts, size) in to.footprint:
-                fobj.write("<tr><td>%s</td>" % pp_timestamp(ts))
+            for (timestamp, size) in tobj.footprint:
+                fobj.write("<tr><td>%s</td>" % pp_timestamp(timestamp))
                 if not size.refs:
                     fobj.write("<td>%s</td></tr>\n" % pp(size.size))
                 else:
@@ -517,32 +550,34 @@ class HtmlStats(Stats):
         classlist = list(self.index.keys())
         classlist.sort()
 
-        for fp in self.footprint:
+        for footprint in self.footprint:
             fobj.write('<tr><td>\n')
             fobj.write('<table id="tl" rules="rows">\n')
-            fobj.write("<h3>%s snapshot at %s</h3>\n" % (fp.desc or 'Untitled',\
-                pp_timestamp(fp.timestamp)))
+            fobj.write("<h3>%s snapshot at %s</h3>\n" % (
+                footprint.desc or 'Untitled',
+                pp_timestamp(footprint.timestamp)
+            ))
 
             data = {}
-            data['sys']      = pp(fp.system_total.vsz)
-            data['tracked']  = pp(fp.tracked_total)
-            data['asizeof']  = pp(fp.asizeof_total)
-            data['overhead'] = pp(getattr(fp, 'overhead', 0))
+            data['sys']      = pp(footprint.system_total.vsz)
+            data['tracked']  = pp(footprint.tracked_total)
+            data['asizeof']  = pp(footprint.asizeof_total)
+            data['overhead'] = pp(getattr(footprint, 'overhead', 0))
 
             fobj.write(self.snapshot_summary % data)
 
-            if fp.tracked_total:
+            if footprint.tracked_total:
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
-                    data = fp.classes[classname].copy()
+                    data = footprint.classes[classname].copy()
                     data['cls'] = "<a href='%s'>%s</a>" % (self.links[classname], classname)
                     data['sum'] = pp(data['sum'])
                     data['avg'] = pp(data['avg'])
                     fobj.write(self.snapshot_cls % data)
             fobj.write('</table>')
             fobj.write('</td><td>\n')
-            if fp.tracked_total:
-                fobj.write(self.charts[fp])
+            if footprint.tracked_total:
+                fobj.write(self.charts[footprint])
             fobj.write('</td></tr>\n')
 
         fobj.write("</table>\n")
@@ -560,10 +595,10 @@ class HtmlStats(Stats):
             return HtmlStats.nopylab_msg % (classname+" lifetime")
 
         cnt = []
-        for to in self.index[classname]:
-            cnt.append([to.birth, 1])
-            if to.death:
-                cnt.append([to.death, -1])
+        for tobj in self.index[classname]:
+            cnt.append([tobj.birth, 1])
+            if tobj.death:
+                cnt.append([tobj.death, -1])
         cnt.sort()
         for i in range(1, len(cnt)):
             cnt[i][1] += cnt[i-1][1]
@@ -596,15 +631,15 @@ class HtmlStats(Stats):
         classlist = list(self.index.keys())
         classlist.sort()
 
-        x = [fp.timestamp for fp in self.footprint]
+        x = [footprint.timestamp for footprint in self.footprint]
         base = [0] * len(self.footprint)
         poly_labels = []
         polys = []
         for cn in classlist:
-            pct = [fp.classes[cn]['pct'] for fp in self.footprint]
+            pct = [footprint.classes[cn]['pct'] for footprint in self.footprint]
             if max(pct) > 3.0:
                 sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.footprint]
-                sz = list(map( lambda x, y: x+y, base, sz ))
+                sz = [x+y for x, y in zip(base, sz)]
                 xp, yp = mlab.poly_between(x, base, sz)
                 polys.append( ((xp, yp), {'label': cn}) )
                 poly_labels.append(cn)
@@ -675,8 +710,8 @@ class HtmlStats(Stats):
         self.links = {}
 
         # Annotate all snapshots in advance
-        for fp in self.footprint:
-            self.annotate_snapshot(fp)
+        for footprint in self.footprint:
+            self.annotate_snapshot(footprint)
 
         # Create charts. The tags to show the images are returned and stored in
         # the self.charts dictionary. This allows to return alternative text if
