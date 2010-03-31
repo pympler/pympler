@@ -25,4 +25,24 @@
     %end
     </tbody>
 </table>
+
+<h2>Thread information</h2>
+
+<table class="tdata">
+    <tbody>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Daemon</th>
+    </tr>
+    %for tinfo in threads:
+        <tr>
+            <td>{{tinfo.ident}}</td>
+            <td>{{tinfo.name}}</td>
+            <td>{{tinfo.daemon}}</td>
+        </tr>
+    %end
+    </tbody>
+</table>
+
 %include footer

@@ -30,13 +30,13 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from wsgiref.simple_server import make_server
 
-from pympler.util.compat import bottle
-
 from pympler import DATA_PATH
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph
-from pympler.process import ProcessMemoryInfo
+from pympler.process import get_current_threads, ProcessMemoryInfo
 from pympler.tracker.stats import Stats
+
+from pympler.util.compat import bottle
 
 
 class Cache(object):
@@ -63,7 +63,7 @@ bottle.TEMPLATE_PATH.append(static_files)
 
 @bottle.route('/')
 @bottle.view('index')
-def index():
+def root():
     """Get overview."""
     pmi = ProcessMemoryInfo()
     return dict(processinfo=pmi)
@@ -74,28 +74,36 @@ def index():
 def process():
     """Get process overview."""
     pmi = ProcessMemoryInfo()
-    return dict(info=pmi)
+    threads = get_current_threads()
+    return dict(info=pmi, threads=threads)
 
 
 @bottle.route('/tracker')
 @bottle.view('tracker')
 def tracker_index():
     """Get tracker overview."""
-    global cache
-
     stats = cache.stats
     if stats:
-        for fp in stats.footprint:
-            stats.annotate_snapshot(fp)
+        for snapshot in stats.footprint:
+            stats.annotate_snapshot(snapshot)
         return dict(snapshots=stats.footprint)
     else:
         return dict(snapshots=[])
 
 
+@bottle.route('/tracker/class/:clsname')
+@bottle.view('tracker_class')
+def tracker_class(clsname):
+    """Get class instance details."""
+    stats = cache.stats
+    if not stats:
+        bottle.redirect('/tracker')
+    return dict(stats=stats, clsname=clsname)
+
+
 @bottle.route('/refresh')
 def refresh():
     """Clear all cached information."""
-    global cache
     cache.clear()
     bottle.redirect('/')
 
@@ -103,8 +111,8 @@ def refresh():
 @bottle.route('/tracker/distribution')
 def tracker_dist():
     """Render timespace chart for tracker data."""
-    fn = os.path.join(tmpdir, 'distribution.png')
-    charts.tracker_timespace(fn, _stats)
+    filename = os.path.join(tmpdir, 'distribution.png')
+    charts.tracker_timespace(filename, cache.stats)
     bottle.send_file('distribution.png', root=tmpdir)
 
 
@@ -116,6 +124,7 @@ def static_file(filename):
 
 @bottle.route('/static/img/:filename')
 def serve_img(filename):
+    """Expose static images."""
     bottle.send_file(filename, root="templates/img")
 
 
@@ -123,7 +132,6 @@ def _compute_garbage_graphs():
     """
     Retrieve garbage graph objects from cache, compute if cache is cold.
     """
-    global cache
     if cache.garbage_graphs is None:
         cache.garbage_graphs = GarbageGraph().split_and_sort()
     return cache.garbage_graphs
@@ -139,23 +147,23 @@ def garbage_index():
 
 @bottle.route('/garbage/:index')
 @bottle.view('garbage')
-def garbage(index):
+def garbage_cycle(index):
     """Get reference cycle details."""
     graph = _compute_garbage_graphs()[int(index)]
     graph.reduce_to_cycles()
-    garbage = graph.metadata
-    garbage.sort(key=lambda x: -x.size)
-    return dict(objects=garbage, index=index)
+    objects = graph.metadata
+    objects.sort(key=lambda x: -x.size)
+    return dict(objects=objects, index=index)
 
 
-def _get_graph(graph, fn):
+def _get_graph(graph, filename):
     """Retrieve or render a graph."""
     try:
         rendered = graph.rendered_file
     except AttributeError:
         try:
-            graph.render(os.path.join(tmpdir, fn), format='png')
-            rendered = fn
+            graph.render(os.path.join(tmpdir, filename), format='png')
+            rendered = filename
         except OSError:
             rendered = None
     graph.rendered_file = rendered
@@ -166,11 +174,11 @@ def _get_graph(graph, fn):
 def garbage_graph(index):
     """Get graph representation of reference cycle."""
     graph = _compute_garbage_graphs()[int(index)]
-    reduce = bottle.request.GET.get('reduce', '')
-    if reduce:
+    reduce_graph = bottle.request.GET.get('reduce', '')
+    if reduce_graph:
         graph = graph.reduce_to_cycles()
-    fn = 'garbage%so%s.png' % (index, reduce)
-    rendered_file = _get_graph(graph, fn)
+    filename = 'garbage%so%s.png' % (index, reduce_graph)
+    rendered_file = _get_graph(graph, filename)
     if rendered_file:
         bottle.send_file(rendered_file, root=tmpdir)
     else:
@@ -218,8 +226,10 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     :param host: the host where the server shall run, default is localhost
     :param port: server listens on the specified port, default is 8090 to allow
         coexistance with common web applications
-    :param tracker: TODO
-    :param stats: TODO
+    :param tracker: `ClassTracker` instance, browse profiling data (on-line
+        analysis)
+    :param stats: `Stats` instance, analyze `ClassTracker` profiling dumps
+        (useful for off-line analysis)
     """
     global cache
     global server

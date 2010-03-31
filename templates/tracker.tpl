@@ -14,7 +14,7 @@
 
     %for sn in snapshots:
         <h3>{{sn.desc or 'Untitled'}} snapshot at {{pp_timestamp(sn.timestamp)}}</h3>
-        <table id="tdata">
+        <table class="tdata">
             <thead>
                 <tr>
                     <th width="20%">Class</th>
@@ -30,7 +30,7 @@
                 %for cn in cnames:
                     %data = sn.classes[cn]
                     <tr>
-                        <td>{{cn}}</td>
+                        <td><a href="/tracker/class/{{cn}}">{{cn}}</a></td>
                         <td class="num">{{data['active']}}</td>
                         <td class="num">{{pp(data['sum'])}}</td>
                         <td class="num">{{pp(data['avg'])}}</td>

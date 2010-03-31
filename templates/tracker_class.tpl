@@ -1,0 +1,74 @@
+%include header category='Tracker', title=clsname 
+
+%from pympler.util.stringutils import pp, pp_timestamp
+
+<h1>{{clsname}}</h1>
+
+%sizes = [tobj.get_max_size() for tobj in stats.index[clsname]]
+
+<p>{{len(stats.index[clsname])}} instances of {{clsname}} were registered. The
+average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
+{{pp(min(sizes))}}, the maximum size is {{pp(max(sizes))}}.</p>
+
+<h2>Coalesced Referents per Snapshot</h2>
+
+%for snapshot in stats.footprint:
+    %if clsname in snapshot.classes:
+        %merged = snapshot.classes[clsname]['merged']
+        <h3>Snapshot: {{snapshot.desc}}</h3>
+        <p>{{pp(merged.size)}} occupied by instances of class {{clsname}}</p>
+        %if merged.refs:
+            <strong>TODO: print refs</strong>
+            % #self._print_refs(fobj, merged.refs, merged.size)
+        %else:
+            <p>No per-referent sizes recorded.</p>
+        %end
+    %end
+%end
+
+<h2>Instances</h2>
+
+%for tobj in stats.index[clsname]:
+    <table class="tdata" width="100%" rules="rows">
+        <tr>
+            <th width="140px">Instance</th>
+            <td>{{tobj.name}} at {{'0x%08x' % tobj.id}}</td>
+        </tr>
+        %if tobj.repr:
+            <tr>
+                <th>Representation</th>
+                <td>{{tobj.repr}}&nbsp;</td>
+            </tr>
+        %end
+        <tr>
+            <th>Lifetime</th>
+            <td>{{pp_timestamp(tobj.birth)}} - {{pp_timestamp(tobj.death)}}</td>
+        </tr>
+        %if hasattr(tobj, 'trace'):
+            <tr>
+                <th>Instantiation</th>
+                <td>
+                    <strong>TODO: print instantiation</strong>
+                    % #<pre>%s</pre>" % (_format_trace(tobj.trace))
+                </td>
+            </tr>
+        %end
+        %for (timestamp, size) in tobj.footprint:
+            <tr>
+            <td>{{pp_timestamp(timestamp)}}</td>
+            %if not size.refs:
+                <td>{{pp(size.size)}}</td>
+            %else:
+                <td>
+                    {{pp(size.size)}}
+                    <strong>TODO: print refs</strong>
+                    %# self._print_refs(fobj, size.refs, size.size)
+                </td>
+            %end
+            </tr>
+        %end
+    </table>
+%end
+
+%include footer
+

@@ -1,5 +1,7 @@
-import unittest
 import re
+import sys
+import unittest
+
 from pympler.util.compat import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
@@ -74,13 +76,12 @@ class LogTestCase(unittest.TestCase):
         stats.sort_stats('classname', 'birth')
         self.assertEqual(stats.sorted[0].classname, 'Bar')
         self.assertRaises(ValueError, stats.sort_stats, 'name', 42, 'classn')
-        self.assertEqual(stats.diff_stats(stats), None) # Not yet implemented
 
         # Test partial printing
         stats.stream = f3 = StringIO()
         stats.sort_stats()
         tolen = len(stats.sorted)
-        stats.print_stats(filter='Bar',limit=0.5)
+        stats.print_stats(clsname='Bar',limit=0.5)
         self.assertEqual(len(stats.sorted), tolen)
         stats.print_summary()
         clsname = f3.getvalue().split('\n')[0]

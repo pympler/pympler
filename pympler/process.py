@@ -17,8 +17,9 @@ Windows without the win32 module is not supported.
     Virtual size [Byte]: ...
 """
 
+from os import getpid
 from subprocess  import Popen, PIPE
-from os          import getpid
+from threading import enumerate
 
 try:
     from resource import getpagesize as _getpagesize
@@ -123,7 +124,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
         return False
 
 
-try:    
+try:
     from resource import getrusage, RUSAGE_SELF
 
     class _ProcessMemoryInfoResource(_ProcessMemoryInfo):
@@ -165,4 +166,21 @@ except ImportError:
                 return True
 
         ProcessMemoryInfo = _ProcessMemoryInfoWin32
+
+
+class ThreadInfo(object):
+    """Collect information about an active thread."""
+    pass
+
+
+def get_current_threads():
+    """Get a list of `ThreadInfo` objects."""
+    threads = []
+    for thread in enumerate():
+        tinfo = ThreadInfo()
+        tinfo.ident = thread.ident
+        tinfo.name = thread.name
+        tinfo.daemon = thread.daemon
+        threads.append(tinfo)
+    return threads
 
