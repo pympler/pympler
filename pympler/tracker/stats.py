@@ -293,10 +293,8 @@ class ConsoleStats(Stats):
                     tobj.id,
                     trunc(tobj.repr, 35)
                 ))
-            try:
+            if tobj.trace:
                 self.stream.write(_format_trace(tobj.trace))
-            except AttributeError:
-                pass
             for (timestamp, size) in tobj.footprint:
                 self.stream.write('  %-30s %s\n' % (
                     pp_timestamp(timestamp), pp(size.size)
@@ -497,7 +495,7 @@ class HtmlStats(Stats):
             if tobj.repr:
                 fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % tobj.repr)
             fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(tobj.birth), pp_timestamp(tobj.death)))
-            if hasattr(tobj, 'trace'):
+            if tobj.trace:
                 trace = "<pre>%s</pre>" % (_format_trace(tobj.trace))
                 fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
             for (timestamp, size) in tobj.footprint:

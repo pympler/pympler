@@ -72,13 +72,15 @@ class TrackedObject(object):
         self.birth = _get_time()
         self.death = None
         self._resolution_level = resolution_level
+        self.trace = None
 
         if trace:
             self._save_trace()
 
         initial_size = asizeof.basicsize(instance) or 0
-        so = asizeof.Asized(initial_size, initial_size)
-        self.footprint = [(self.birth, so)]
+        size = asizeof.Asized(initial_size, initial_size)
+        self.footprint = [(self.birth, size)]
+
 
     def __getstate__(self):
         """
@@ -93,6 +95,7 @@ class TrackedObject(object):
                 state[name] = getattr(self, name)
         return state
 
+
     def __setstate__(self, state):
         """
         Restore the state from pickled data. Needed because a slotted class is
@@ -101,17 +104,18 @@ class TrackedObject(object):
         for key, value in list(state.items()):
             setattr(self, key, value)
 
+
     def _save_trace(self):
         """
         Save current stack trace as formatted string.
         """
-        st = stack()
+        stack_trace = stack()
         try:
             self.trace = []
-            for f in st[5:]: # eliminate our own overhead
-                self.trace.insert(0, f[1:])
+            for frm in stack_trace[5:]: # eliminate our own overhead
+                self.trace.insert(0, frm[1:])
         finally:
-            del st
+            del stack_trace
 
     def track_size(self, ts, sizer):
         """
@@ -194,11 +198,17 @@ class PeriodicThread(Thread):
             time.sleep(self.interval)
 
 
-class Footprint(object):
+class Snapshot(object):
+    """Sample sizes of objects at an instant."""
+
     def __init__(self):
+        """Initialize process-wide size information."""
         self.tracked_total = 0
         self.asizeof_total = 0
         self.overhead = 0
+        self.timestamp = None
+        self.system_total = None
+        self.desc = None
 
 
 class ClassTracker(object):
@@ -318,25 +328,24 @@ class ClassTracker(object):
             reference to the object.
         """
 
-        # Check if object is already tracked. This happens if track_object is called
-        # multiple times for the same object or if an object inherits from multiple
-        # tracked classes. In the latter case, the most specialized class wins.
-        # To detect id recycling, the weak reference is checked. If it is 'None' a
-        # tracked object is dead and another one takes the same 'id'.
+        # Check if object is already tracked. This happens if track_object is
+        # called multiple times for the same object or if an object inherits
+        # from multiple tracked classes. In the latter case, the most
+        # specialized class wins.  To detect id recycling, the weak reference
+        # is checked. If it is 'None' a tracked object is dead and another one
+        # takes the same 'id'.
         if id(instance) in self.objects and \
             self.objects[id(instance)].ref() is not None:
             return
 
-        to = TrackedObject(instance, resolution_level=resolution_level, trace=trace)
+        tobj = TrackedObject(instance, resolution_level=resolution_level, trace=trace)
 
         if name is None:
             name = instance.__class__.__name__
         if not name in self.index:
             self.index[name] = []
-        self.index[name].append(to)
-        self.objects[id(instance)] = to
-
-        #print "DEBUG: Track %s (Keep=%d, Resolution=%d)" % (name, keep, resolution_level)
+        self.index[name].append(tobj)
+        self.objects[id(instance)] = tobj
 
         if keep:
             self._keepalive.append(instance)
@@ -398,6 +407,7 @@ class ClassTracker(object):
         self.objects.clear()
         self.index.clear()
         self._keepalive[:] = []
+
 
     def clear(self):
         """
@@ -473,24 +483,24 @@ class ClassTracker(object):
             for tobj in tracked_objects:
                 tobj.track_size(timestamp, sizer)
 
-            footprint = Footprint()
+            snapshot = Snapshot()
 
-            footprint.timestamp = timestamp
-            footprint.tracked_total = sizer.total
-            if footprint.tracked_total:
-                footprint.asizeof_total = asizeof.asizeof(all=True, code=True)
+            snapshot.timestamp = timestamp
+            snapshot.tracked_total = sizer.total
+            if snapshot.tracked_total:
+                snapshot.asizeof_total = asizeof.asizeof(all=True, code=True)
             else:
-                footprint.asizeof_total = 0
-            footprint.system_total = pympler.process.ProcessMemoryInfo()
-            footprint.desc = str(description)
+                snapshot.asizeof_total = 0
+            snapshot.system_total = pympler.process.ProcessMemoryInfo()
+            snapshot.desc = str(description)
 
             # Compute overhead of all structures, use sizer to exclude tracked objects(!)
-            footprint.overhead = 0
-            if footprint.tracked_total:
-                footprint.overhead = sizer.asizeof(self)
-                footprint.asizeof_total -= footprint.overhead
+            snapshot.overhead = 0
+            if snapshot.tracked_total:
+                snapshot.overhead = sizer.asizeof(self)
+                snapshot.asizeof_total -= snapshot.overhead
 
-            self.footprint.append(footprint)
+            self.footprint.append(snapshot)
 
         finally:
             self.snapshot_lock.release()

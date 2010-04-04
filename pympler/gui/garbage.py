@@ -13,8 +13,8 @@ class GarbageGraph(ReferenceGraph):
     invoked. The collected objects are then illustrated in a directed graph.
 
     Large graphs can be reduced to the actual cycles by passing ``reduce=True`` to
-    the constructor. 
-    
+    the constructor.
+
     It is recommended to disable the garbage collector when using the
     ``GarbageGraph``.
 
@@ -49,7 +49,7 @@ class GarbageGraph(ReferenceGraph):
         self.metadata.reverse()
         fobj.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
         for g in self.metadata:
-            fobj.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, trunc(g.type, 12), 
+            fobj.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, trunc(g.type, 12),
                 trunc(g.str, 46)))
         fobj.write('Garbage: %8d collected objects (%6d in cycles): %12s\n' % \
             (self.count, self.count_in_cycles, pp(self.total_size)))

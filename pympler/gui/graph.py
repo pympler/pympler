@@ -8,7 +8,6 @@ from pympler.asizeof import Asizer, _typedefof, _callable
 from pympler.util.stringutils import safe_repr, trunc
 from pympler.util.compat import encode4pipe
 from gc import get_referents
-from inspect import getmembers
 from subprocess import Popen, PIPE
 from copy import copy
 from sys import platform

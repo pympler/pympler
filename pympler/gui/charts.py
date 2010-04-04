@@ -16,40 +16,45 @@ try:
         classlist = list(stats.index.keys())
         classlist.sort()
 
-        x = [fp.timestamp for fp in stats.footprint]
-        base = [0] * len(stats.footprint)
+        for snapshot in stats.footprint:
+            stats.annotate_snapshot(snapshot)
+
+        timestamps = [fp.timestamp for fp in stats.footprint]
+        offsets = [0] * len(stats.footprint)
         poly_labels = []
         polys = []
-        for cn in classlist:
-            stats.annotate_snapshot(fp)
-            pct = [fp.classes[cn]['pct'] for fp in stats.footprint]
+        for clsname in classlist:
+            pct = [fp.classes[clsname]['pct'] for fp in stats.footprint]
             if max(pct) > 3.0:
-                sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in stats.footprint]
-                sz = list(map( lambda x, y: x+y, base, sz ))
-                xp, yp = matplotlib.mlab.poly_between(x, base, sz)
-                polys.append( ((xp, yp), {'label': cn}) )
-                poly_labels.append(cn)
-                base = sz
+                sizes = [fp.classes[clsname]['sum'] for fp in stats.footprint]
+                sizes = [float(x)/(1024*1024) for x in sizes]
+                sizes = [offset+size for offset, size in zip(offsets, sizes)]
+                poly = matplotlib.mlab.poly_between(timestamps, offsets, sizes)
+                polys.append( (poly, {'label': clsname}) )
+                poly_labels.append(clsname)
+                offsets = sizes
 
-        fig = plt.figure(figsize=(10,4))
-        ax = fig.add_subplot(111)
+        fig = plt.figure(figsize=(10, 4))
+        axis = fig.add_subplot(111)
 
-        ax.set_title("Snapshot Memory")
-        ax.set_xlabel("Execution Time [s]")
-        ax.set_ylabel("Virtual Memory [MiB]")
+        axis.set_title("Snapshot Memory")
+        axis.set_xlabel("Execution Time [s]")
+        axis.set_ylabel("Virtual Memory [MiB]")
 
-        y = [float(fp.asizeof_total)/(1024*1024) for fp in stats.footprint]
-        p1 = ax.plot(x, y, 'r--', label='Total')
-        y = [float(fp.tracked_total)/(1024*1024) for fp in stats.footprint]
-        p2 = ax.plot(x, y, 'b--', label='Tracked total')
+        totals = [x.asizeof_total for x in stats.footprint]
+        totals = [float(x)/(1024*1024) for x in totals]
+        axis.plot(timestamps, totals, 'r--', label='Total')
+        tracked = [x.tracked_total for x in stats.footprint]
+        tracked = [float(x)/(1024*1024) for x in tracked]
+        axis.plot(timestamps, tracked, 'b--', label='Tracked total')
 
         for (args, kwds) in polys:
-            ax.fill(*args, **kwds)
-        ax.legend(loc=2) # TODO fill legend
+            axis.fill(*args, **kwds)
+        axis.legend(loc=2) # TODO fill legend
         fig.savefig(filename)
 
 except ImportError:
-    def tracker_timespace(filename, stats):
+    def tracker_timespace(*_args):
         pass
 
 
