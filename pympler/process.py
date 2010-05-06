@@ -19,7 +19,7 @@ Windows without the win32 module is not supported.
 
 from os import getpid
 from subprocess  import Popen, PIPE
-from threading import enumerate
+from threading import enumerate as enumerate_threads
 
 try:
     from resource import getpagesize as _getpagesize
@@ -136,7 +136,7 @@ try:
             usage = getrusage(RUSAGE_SELF)
             self.rss = usage.ru_maxrss * self.pagesize
             self.vsz = usage.ru_maxrss * self.pagesize # XXX rss is not vsz
-            self.pagefault = usage.ru_majflt
+            self.pagefaults = usage.ru_majflt
             return self.rss != 0
 
     if _ProcessMemoryInfoResource().update():
@@ -160,9 +160,9 @@ except ImportError:
             def update(self):
                 process_handle = GetCurrentProcess()
                 memory_info = GetProcessMemoryInfo( process_handle )
-                self.vsz       = memory_info['PagefileUsage']
-                self.rss       = memory_info['WorkingSetSize']
-                self.pagefault = memory_info['PageFaultCount']
+                self.vsz        = memory_info['PagefileUsage']
+                self.rss        = memory_info['WorkingSetSize']
+                self.pagefaults = memory_info['PageFaultCount']
                 return True
 
         ProcessMemoryInfo = _ProcessMemoryInfoWin32
@@ -176,11 +176,20 @@ class ThreadInfo(object):
 def get_current_threads():
     """Get a list of `ThreadInfo` objects."""
     threads = []
-    for thread in enumerate():
+    for thread in enumerate_threads():
         tinfo = ThreadInfo()
-        tinfo.ident = thread.ident
-        tinfo.name = thread.name
-        tinfo.daemon = thread.daemon
+        try:
+            tinfo.ident = thread.ident
+        except AttributeError:
+            tinfo.ident = None # TODO
+        try:
+            tinfo.name = thread.name
+        except AttributeError:
+            tinfo.name = thread.getName()
+        try:
+            tinfo.daemon = thread.daemon
+        except AttributeError:
+            tinfo.daemon = thread.isDaemon()
         threads.append(tinfo)
     return threads
 
