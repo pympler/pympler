@@ -38,25 +38,25 @@ Example
 This is an example::
 
     from bottle import route, run, request, response, send_file, abort
-    
+
     @route('/')
     def hello_world():
         return 'Hello World!'
-    
+
     @route('/hello/:name')
     def hello_name(name):
         return 'Hello %s!' % name
-    
+
     @route('/hello', method='POST')
     def hello_post():
         name = request.POST['name']
         return 'Hello %s!' % name
-    
+
     @route('/static/:filename#.*#')
 
     def static(filename):
         return static_file(filename, root='/path/to/static/files/')
-    
+
     run(host='localhost', port=8080)
 """
 
@@ -162,7 +162,7 @@ class HTTPError(HTTPResponse):
         self.traceback = traceback
 
     def __repr__(self):
-        return ''.join(ERROR_PAGE_TEMPLATE.render(e=self))
+        return ''.join(ERROR_PAGE_TEMPLATE.render(e=self, DEBUG=DEBUG, HTTP_CODES=HTTP_CODES, request=request))
 
 
 
@@ -404,13 +404,13 @@ class Bottle(object):
             for details.
 
             The method parameter (default: GET) specifies the HTTP request
-            method to listen to. You can specify a list of methods. 
+            method to listen to. You can specify a list of methods.
         """
         if isinstance(method, str): #TODO: Test this
             method = method.split(';')
         def wrapper(callback):
             paths = [] if path is None else [path.strip().lstrip('/')]
-            if not paths: # Lets generate the path automatically 
+            if not paths: # Lets generate the path automatically
                 paths = yieldroutes(callback)
             for p in paths:
                 for m in method:
@@ -544,7 +544,7 @@ class Request(threading.local, DictMixin):
     """
     def __init__(self, environ=None, app=None):
         """ Create a new Request instance.
-        
+
             You usually don't do this but use the global `bottle.request`
             instance instead.
          """
@@ -553,7 +553,7 @@ class Request(threading.local, DictMixin):
     def bind(self, environ, app=None):
         """ Bind a new WSGI enviroment and clear out all previously computed
             attributes.
-            
+
             This is done automatically for the global `bottle.request`
             instance on every request.
         """
@@ -573,7 +573,7 @@ class Request(threading.local, DictMixin):
     def copy(self):
         ''' Returns a copy of self '''
         return Request(self.environ.copy(), self.app)
-        
+
     def path_shift(self, count=1):
         ''' Shift some levels of PATH_INFO into SCRIPT_NAME and return the
             moved part. count defaults to 1'''
@@ -626,7 +626,7 @@ class Request(threading.local, DictMixin):
         """ Full URL as requested by the client (computed).
 
             This value is constructed out of different environment variables
-            and includes scheme, host, port, scriptname, path and query string. 
+            and includes scheme, host, port, scriptname, path and query string.
         """
         scheme = self.environ.get('wsgi.url_scheme', 'http')
         host   = self.environ.get('HTTP_X_FORWARDED_HOST', self.environ.get('HTTP_HOST', None))
@@ -647,7 +647,7 @@ class Request(threading.local, DictMixin):
     def header(self):
         ''' :class:`HeaderDict` filled with request headers.
 
-            HeaderDict keys are case insensitive str.title()d 
+            HeaderDict keys are case insensitive str.title()d
         '''
         if self._header is None:
             self._header = HeaderDict()
@@ -709,7 +709,7 @@ class Request(threading.local, DictMixin):
     @property
     def body(self):
         """ The HTTP request body as a seekable buffer object.
-        
+
             This property returns a copy of the `wsgi.input` stream and should
             be used instead of `environ['wsgi.input']`.
          """
@@ -730,7 +730,7 @@ class Request(threading.local, DictMixin):
     @property
     def auth(self): #TODO: Tests and docs. Add support for digest. namedtuple?
         """ HTTP authorisation data as a (user, passwd) tuple. (experimental)
-        
+
             This implementation currently only supports basic auth and returns
             None on errors.
         """
@@ -739,7 +739,7 @@ class Request(threading.local, DictMixin):
     @property
     def COOKIES(self):
         """ Cookie information parsed into a dictionary.
-        
+
             Secure cookies are NOT decoded automatically. See
             Request.get_cookie() for details.
         """
@@ -792,7 +792,7 @@ class Response(threading.local):
     @property
     def charset(self):
         """ Return the charset specified in the content-type header.
-        
+
             This defaults to `UTF-8`.
         """
         if 'charset=' in self.content_type:
@@ -808,9 +808,9 @@ class Response(threading.local):
 
     def set_cookie(self, key, value, **kargs):
         """ Add a new cookie with various options.
-        
+
         If the cookie value is not a string, a secure cookie is created.
-        
+
         Possible options are:
             expires, path, comment, domain, max_age, secure, version, httponly
             See http://de.wikipedia.org/wiki/HTTP-Cookie#Aufbau for details
@@ -1033,7 +1033,7 @@ def tonativefunc(enc='utf-8'):
 
 
 def yieldroutes(func):
-    """ Return a generator for routes that match the signature (name, args) 
+    """ Return a generator for routes that match the signature (name, args)
     of the func parameter. This may yield more than one route if the function
     takes optional keyword arguments. The output is best described by example:
       a()         -> '/a'
@@ -1119,7 +1119,7 @@ class ServerAdapter(object):
 
     def run(self, handler): # pragma: no cover
         pass
-        
+
     def __repr__(self):
         args = ', '.join(['%s=%s'%(k,repr(v)) for k, v in self.options.items()])
         return "%s(%s)" % (self.__class__.__name__, args)
@@ -1332,7 +1332,7 @@ class BaseTemplate(object):
         self.lookup = map(os.path.abspath, lookup)
         self.encoding = encoding
         self.settings = self.settings.copy() # Copy from class variable
-        self.settings.update(settings) # Apply 
+        self.settings.update(settings) # Apply
         if not self.source and self.name:
             self.filename = self.search(self.name, self.lookup)
             if not self.filename:
@@ -1669,7 +1669,6 @@ HTTP_CODES = {
 
 ERROR_PAGE_TEMPLATE = SimpleTemplate("""
 %import cgi
-%from bottle import DEBUG, HTTP_CODES, request
 %status_name = HTTP_CODES.get(e.status, 'Unknown').title()
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>

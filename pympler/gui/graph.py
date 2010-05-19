@@ -96,6 +96,7 @@ class ReferenceGraph(object):
         self.objects = list(objects)
         self.count = len(self.objects)
         self.num_in_cycles = 'N/A'
+        self.edges = None
 
         if reduce:
             self.num_in_cycles = self._reduce_to_cycles()
@@ -153,10 +154,10 @@ class ReferenceGraph(object):
             if self.num_in_cycles:
                 reduced._get_edges()
                 reduced._annotate_objects()
+                for meta in reduced.metadata:
+                    meta.cycle = True
             else:
                 reduced = None
-            for meta in reduced.metadata:
-                meta.cycle = True
             self._reduced = reduced
         return self._reduced
 

@@ -211,7 +211,8 @@ class PymplerServer(bottle.ServerAdapter):
         self.server.serve_forever()
 
 
-def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
+def show(host='localhost', port=8090, tracker=None, stats=None, debug=False,
+         **kwargs):
     """
     Start the web server to show profiling data. The function suspends the
     Python application (the current thread) until the web server is stopped.
@@ -247,6 +248,7 @@ def show(host='localhost', port=8090, tracker=None, stats=None, **kwargs):
     except OSError:
         pass
     server = PymplerServer(host=host, port=port, **kwargs)
+    bottle.debug(debug)
     try:
         bottle.run(server=server)
     except Exception:
