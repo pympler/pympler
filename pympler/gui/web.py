@@ -7,12 +7,12 @@ web framework. Bottle is packaged with Pympler.
 The web server can be invoked almost as easily as setting a breakpoint using
 *pdb*::
 
-    from pympler.gui.web import show
-    show()
+    from pympler.gui.web import start_profiler
+    start_profiler()
 
-Calling ``show`` suspends the current thread and executes the Pympler web
-server, exposing profiling data and various facilities of the Pympler library
-via a graphic interface.
+Calling ``start_profiler`` suspends the current thread and executes the Pympler
+web server, exposing profiling data and various facilities of the Pympler
+library via a graphic interface.
 
 .. note::
 
@@ -28,6 +28,7 @@ import os
 
 from shutil import rmtree
 from tempfile import mkdtemp
+from threading import Thread
 from wsgiref.simple_server import make_server
 
 from pympler import DATA_PATH
@@ -185,19 +186,6 @@ def garbage_graph(index):
         return None
 
 
-@bottle.route('/exit')
-def kill_server():
-    """Kill the server and give the application a chance to continue."""
-    # TODO: Find a way to stop server. Raising an exception does not kill the
-    # server - only the request. Calling shutdown results in a deadlock.
-    global server
-    return "Not yet implemented."
-    #try:
-    #    server.server.shutdown()
-    #except AttributeError:
-    #    return "ERROR: Stopping the server requires Python 2.6 or newer."
-
-
 @bottle.route('/help')
 def show_documentation():
     """Redirect to online documentation."""
@@ -211,13 +199,15 @@ class PymplerServer(bottle.ServerAdapter):
         self.server.serve_forever()
 
 
-def show(host='localhost', port=8090, tracker=None, stats=None, debug=False,
-         **kwargs):
+def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
+                   debug=False, **kwargs):
     """
     Start the web server to show profiling data. The function suspends the
     Python application (the current thread) until the web server is stopped.
 
-    TODO: how to stop the server
+    The only way to stop the server is to signal the running thread, e.g. press
+    Ctrl+C in the console. If this isn't feasible for your application use
+    `start_in_background` instead.
 
     During the execution of the web server, profiling data is (lazily) cached
     to improve performance. For example, garbage graphs are rendered when the
@@ -253,3 +243,27 @@ def show(host='localhost', port=8090, tracker=None, stats=None, debug=False,
         bottle.run(server=server)
     except Exception:
         rmtree(tmpdir)
+
+
+class ProfilerThread(Thread):
+    """Encapsulates a thread to run the web server."""
+    def __init__(self, group=None, target=None, name='Pympler web frontend', **kwargs):
+        super(ProfilerThread, self).__init__(group=group, target=target, name=name)
+        self.kwargs = kwargs
+        self.daemon = True
+
+    def run(self):
+        start_profiler(**self.kwargs)
+
+
+def start_in_background(**kwargs):
+    """
+    Start the web server in the background. A new daemon thread is created
+    which serves the profiling interface without suspending the current
+    application.
+
+    For the documentation of the parameters see `start_profiler`.
+    """
+    thread = ProfilerThread(**kwargs)
+    thread.start()
+

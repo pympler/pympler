@@ -5,7 +5,7 @@ from pympler.util.compat import Request, urlopen, URLError
 from socket import error as socket_error
 from time import sleep
 
-from pympler.gui.web import show
+from pympler.gui.web import start_profiler
 
 
 # Use separate process for server if available. Otherwise use a thread.
@@ -22,7 +22,7 @@ class Server(Process):
         self.daemon = True
 
     def run(self):
-        show(quiet=True)
+        start_profiler(quiet=True)
 
 
 class WebGuiTest(unittest.TestCase):

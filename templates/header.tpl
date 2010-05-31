@@ -13,9 +13,7 @@
 %    ("tracked objects", "/tracker", ""),
 %    ("|", "", ""),
 %    ("garbage", "/garbage", ""),
-%    ("help", "/help", "right"),
-%    ("|", "", "right"),
-%    ("exit", "/exit", "right"),]
+%    ("help", "/help", "right"),]
 
 <body>
 <div class="related">
