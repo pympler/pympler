@@ -3,8 +3,8 @@
  */
 
 body {
-    font-family: serif;
-    font-size: 100%;
+    font-family: "Verdana", "Tahoma", Sans-Serif;
+    font-size: 90%;
     background-color: #11303d;
     color: #000;
     margin: 0;
@@ -98,7 +98,6 @@ div.related a {
 
 /* ::: TOC :::: */
 div.sphinxsidebar h3 {
-    font-family: 'Trebuchet MS', sans-serif;
     color: white;
     font-size: 1.4em;
     font-weight: normal;
@@ -107,7 +106,6 @@ div.sphinxsidebar h3 {
 }
 
 div.sphinxsidebar h4 {
-    font-family: 'Trebuchet MS', sans-serif;
     color: white;
     font-size: 1.3em;
     font-weight: normal;
@@ -151,7 +149,6 @@ div.sphinxsidebar form {
 
 div.sphinxsidebar input {
     border: 1px solid #A4FF98;
-    font-family: sans-serif;
     font-size: 1em;
 }
 
@@ -517,7 +514,6 @@ div.body h3,
 div.body h4,
 div.body h5,
 div.body h6 {
-    font-family: 'Trebuchet MS', sans-serif;
     font-weight: bold;
     margin: 20px -20px 10px -20px;
     padding: 3px 0 3px 10px;
@@ -525,16 +521,19 @@ div.body h6 {
 
 div.body h1 {
     margin-top: 0;
-    font-size: 200%;
-    background-color: #0D6200;
-    color: #fff;
-    border-top: 1px solid #fff;
-    border-bottom: 1px solid #fff;
+    font-size: 140%;
+    background-color: #CCE2CC;
+    color: #360;
+    border-top: 0.1em solid #fff;
+    border-bottom: 0.1em solid #0d6200;
+    background-image: -moz-linear-gradient(top center, #AAC0AA, #CCE2CC);
 }
 div.body h2 {
-    text-align: right;
-    font-size: 160%;
-    border-bottom: 0.2em solid #0d6200;
+    font-size: 120%;
+    background-color: #CCE2CC;
+    color: #360;
+    border-top: 0.1em solid #0d6200;
+    border-bottom: 0.1em solid #0d6200;
 }
 div.body h3 {
     text-align: right;
@@ -569,8 +568,7 @@ a.headerlink:hover {
 }
 
 div.body p, div.body dd, div.body li {
-    text-align: justify;
-    line-height: 130%;
+    line-height: 100%;
 }
 
 div.body p.caption {
@@ -811,7 +809,6 @@ form.comment input,
 form.comment textarea {
     border: 1px solid #ccc;
     padding: 2px;
-    font-family: sans-serif;
     font-size: 100%;
 }
 
@@ -859,7 +856,6 @@ form.comment textarea {
 
 table.tdata
 {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     font-size: 12px;
     background: #fff;
     border-collapse: collapse;
@@ -885,7 +881,6 @@ table.tdata tbody tr:hover td
 }
 #one-column-emphasis
 {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     font-size: 12px;
     /* margin: 45px; */
     /* width: 480px; */
