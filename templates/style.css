@@ -916,3 +916,36 @@ table td.num
     text-align: right;
 }
 
+div.stacktrace
+{
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #999;
+    padding: 6px;
+}
+
+div.stacktrace div.stackframe
+{
+    margin: 8px;
+}
+
+div.stackframe div.context
+{
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    padding: 4px;
+    margin-left: 1em;
+    margin-top: 4px;
+    background: #f2f2f2;
+}
+
+div.stackframe span.filename,
+div.stackframe span.lineno,
+div.stackframe span.function,
+div.stackframe div.context
+{
+    font-family: monospace;
+}
+

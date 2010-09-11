@@ -26,9 +26,11 @@ if sys.hexversion < 0x02050000:
 
 import os
 
+from inspect import getouterframes
 from shutil import rmtree
 from tempfile import mkdtemp
 from threading import Thread
+from weakref import WeakValueDictionary
 from wsgiref.simple_server import make_server
 
 from pympler import DATA_PATH
@@ -50,6 +52,24 @@ class Cache(object):
 
     def clear(self):
         self.garbage_graphs = None
+
+
+id2obj = WeakValueDictionary()
+
+
+def get_ref(obj):
+    """
+    Get string reference to object. Stores a weak reference in a dictionary
+    using the object's id as the key.
+    """
+    oid = id(obj)
+    id2obj[oid] = obj
+    return str(oid)
+
+
+def get_obj(ref):
+    """Get object from string reference."""
+    return id2obj[int(ref)]
 
 
 cache = None
@@ -115,6 +135,20 @@ def tracker_dist():
     filename = os.path.join(tmpdir, 'distribution.png')
     charts.tracker_timespace(filename, cache.stats)
     bottle.send_file('distribution.png', root=tmpdir)
+
+
+@bottle.route('/traceback/:threadid')
+@bottle.view('stacktrace')
+def get_traceback(threadid):
+    threadid = int(threadid)
+    frames = sys._current_frames()
+    if threadid in frames:
+        frame = frames[threadid]
+        stack = getouterframes(frame, 5)
+        stack.reverse()
+    else:
+        stack = []
+    return dict(stack=stack, threadid=threadid, get_ref=get_ref)
 
 
 @bottle.route('/static/:filename')

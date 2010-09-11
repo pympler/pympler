@@ -45,4 +45,22 @@
     </tbody>
 </table>
 
+<h2>Thread stacks</h2>
+
+%for tinfo in threads:
+    <div class="traceback" id="{{tinfo.ident}}">
+        <a class="show_traceback" href="#">Traceback for thread {{tinfo.name}}</a>
+    </div>
+%end
+
+<script type="text/javascript">
+    $(".show_traceback").click(function() {
+        tid = $(this).parent().attr("id");
+        $.get("/traceback/"+tid, function(data) {
+            $("#"+tid).html(data);
+        });
+        return false;
+    });
+</script>
+
 %include footer
