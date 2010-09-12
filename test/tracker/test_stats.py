@@ -156,9 +156,9 @@ class LogTestCase(unittest.TestCase):
         self.tracker.track_class(Foo, name='Foo', resolution_level=2)
 
         f1 = Foo()
-        f1.a = list(range(1000))
+        f1.a = list(range(100000))
         f2 = Foo()
-        f2.a = list(range(100))
+        f2.a = list(range(1000))
         f2.b = 'This is some stupid spam.'
 
         self.tracker.create_snapshot('Merge test')

@@ -629,7 +629,7 @@ class HtmlStats(Stats):
         classlist = list(self.index.keys())
         classlist.sort()
 
-        x = [footprint.timestamp for footprint in self.footprint]
+        times = [footprint.timestamp for footprint in self.footprint]
         base = [0] * len(self.footprint)
         poly_labels = []
         polys = []
@@ -637,8 +637,8 @@ class HtmlStats(Stats):
             pct = [footprint.classes[cn]['pct'] for footprint in self.footprint]
             if max(pct) > 3.0:
                 sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.footprint]
-                sz = [x+y for x, y in zip(base, sz)]
-                xp, yp = mlab.poly_between(x, base, sz)
+                sz = [sx+sy for sx, sy in zip(base, sz)]
+                xp, yp = mlab.poly_between(times, base, sz)
                 polys.append( ((xp, yp), {'label': cn}) )
                 poly_labels.append(cn)
                 base = sz
@@ -648,10 +648,10 @@ class HtmlStats(Stats):
         xlabel("Execution Time [s]")
         ylabel("Virtual Memory [MiB]")
 
-        y = [float(fp.asizeof_total)/(1024*1024) for fp in self.footprint]
-        plot(x, y, 'r--', label='Total')
-        y = [float(fp.tracked_total)/(1024*1024) for fp in self.footprint]
-        plot(x, y, 'b--', label='Tracked total')
+        sizes = [float(fp.asizeof_total)/(1024*1024) for fp in self.footprint]
+        plot(times, sizes, 'r--', label='Total')
+        sizes = [float(fp.tracked_total)/(1024*1024) for fp in self.footprint]
+        plot(times, sizes, 'b--', label='Tracked total')
 
         for (args, kwds) in polys:
             fill(*args, **kwds)
