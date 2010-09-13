@@ -923,6 +923,7 @@ div.stacktrace
     border-radius: 6px;
     border: 1px solid #999;
     padding: 6px;
+    margin-bottom: 1em;
 }
 
 div.stacktrace div.stackframe
@@ -941,8 +942,22 @@ div.stackframe div.context
     background: #f2f2f2;
 }
 
-div.stackframe span.filename,
+div.stackframe div.context div.highlighted
+{
+    background: #ffffa0;
+}
+
 div.stackframe span.lineno,
+div.stackframe span.filename 
+{
+    
+}
+
+div.stackframe span.function
+{
+    font-weight: bold;
+}
+
 div.stackframe span.function,
 div.stackframe div.context
 {

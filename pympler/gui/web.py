@@ -60,11 +60,15 @@ id2obj = WeakValueDictionary()
 def get_ref(obj):
     """
     Get string reference to object. Stores a weak reference in a dictionary
-    using the object's id as the key.
+    using the object's id as the key. If the object cannot be weakly referenced
+    (e.g. frame objects), return `None`.
     """
     oid = id(obj)
-    id2obj[oid] = obj
-    return str(oid)
+    try:
+        id2obj[oid] = obj
+        return str(oid)
+    except TypeError:
+        return None
 
 
 def get_obj(ref):
@@ -292,9 +296,8 @@ class ProfilerThread(Thread):
 
 def start_in_background(**kwargs):
     """
-    Start the web server in the background. A new daemon thread is created
-    which serves the profiling interface without suspending the current
-    application.
+    Start the web server in the background. A new thread is created which
+    serves the profiling interface without suspending the current application.
 
     For the documentation of the parameters see `start_profiler`.
     """

@@ -6,13 +6,15 @@
             <span class="lineno">{{frame[2]}}</span>
             <span class="function">{{frame[3]}}</span>
             %if frame[4]:
+                %context = frame[4]
                 <div class="context">
-                    %for line in frame[4]:
+                    %highlight = len(context) / 2
+                    %for idx, line in enumerate(frame[4]):
+                        %hl = (idx == highlight) and "highlighted" or ""
                         %if line.strip():
-                            <span style="padding-left:{{len(line)-len(line.lstrip())}}em">
+                            <div class="{{hl}}" style="padding-left:{{len(line)-len(line.lstrip())}}em" width="100%">
                                 {{line.strip()}}
-                            </span>
-                            <br/>
+                            </div>
                         %end
                     %end
                 </div>
