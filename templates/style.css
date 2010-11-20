@@ -964,3 +964,28 @@ div.stackframe div.context
     font-family: monospace;
 }
 
+div.local,
+div.referents
+{
+    margin-top: 4px;
+    margin-bottom: 4px;
+    margin-left: 1em;
+}
+
+div.local
+{
+    font-size: 80%;
+}
+
+div.local span.local_name,
+div.local span.local_size
+{
+    font-weight: bold;
+}
+
+div.local span.local_value,
+div.local span.local_size,
+div.local span.local_type
+{
+    margin-left: 1em;
+}

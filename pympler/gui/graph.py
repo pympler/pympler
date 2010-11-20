@@ -4,7 +4,7 @@ This module exposes utilities to illustrate objects and their references as
 installed.
 """
 
-from pympler.asizeof import Asizer, _typedefof, _callable
+from pympler.asizeof import Asizer, named_refs
 from pympler.util.stringutils import safe_repr, trunc
 from pympler.util.compat import encode4pipe
 from gc import get_referents
@@ -22,25 +22,6 @@ __all__ = ['ReferenceGraph']
 popen_flags = {}
 if platform not in ['win32']:
     popen_flags['close_fds'] = True
-
-
-def get_named_refs(obj):
-    """
-    Return all named referents of `obj`. Reuse functionality from asizeof.
-    Does not return referents without a name, e.g. objects in a list.
-    TODO: Move this to a different module, probably asizeof.
-    """
-    refs = []
-    v = _typedefof(obj)
-    if v:
-        v = v.refs
-        if v and _callable(v):
-            for ref in v(obj, True):
-                try:
-                    refs.append((ref.name, ref.ref))
-                except AttributeError:
-                    pass
-    return refs
 
 
 class _MetaObject(object):
@@ -178,7 +159,7 @@ class ReferenceGraph(object):
                 if isinstance(n, dict):
                     members = n.items()
                 if not members:
-                    members = get_named_refs(n)
+                    members = named_refs(n)
                 for (k, v) in members:
                     if id(v) == ref:
                         label = k

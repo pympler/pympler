@@ -34,6 +34,7 @@ from weakref import WeakValueDictionary
 from wsgiref.simple_server import make_server
 
 from pympler import DATA_PATH
+from pympler import asizeof
 from pympler.gui import charts
 from pympler.gui.garbage import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
@@ -54,26 +55,31 @@ class Cache(object):
         self.garbage_graphs = None
 
 
-id2obj = WeakValueDictionary()
+id2ref = WeakValueDictionary()
+id2obj = dict()
 
 
 def get_ref(obj):
     """
     Get string reference to object. Stores a weak reference in a dictionary
-    using the object's id as the key. If the object cannot be weakly referenced
-    (e.g. frame objects), return `None`.
+    using the object's id as the key. If the object cannot be weakly
+    referenced (e.g. dictionaries, frame objects), store a strong references
+    in a classic dictionary.
+
+    Returns the object's id as a string.
     """
     oid = id(obj)
     try:
-        id2obj[oid] = obj
-        return str(oid)
+        id2ref[oid] = obj
     except TypeError:
-        return None
+        id2obj[oid] = obj
+    return str(oid)
 
 
 def get_obj(ref):
     """Get object from string reference."""
-    return id2obj[int(ref)]
+    oid = int(ref)
+    return id2ref.get(oid) or id2obj[oid]
 
 
 cache = None
@@ -150,9 +156,25 @@ def get_traceback(threadid):
         frame = frames[threadid]
         stack = getouterframes(frame, 5)
         stack.reverse()
+        stack = [(get_ref(f[0].f_locals),)+f[1:] for f in stack]
     else:
         stack = []
-    return dict(stack=stack, threadid=threadid, get_ref=get_ref)
+    return dict(stack=stack, threadid=threadid)
+
+
+@bottle.route('/objects/:oid')
+@bottle.view('referents')
+def get_obj_referents(oid):
+    referents = {}
+    root = get_obj(oid)
+    if type(root) is dict:
+        named_objects = asizeof.named_refs(root)
+    else:
+        refs = asizeof._getreferents(root)
+        named_objects = [(repr(type(x)), x) for x in refs]
+    for name, obj in named_objects:
+        referents[name] = (get_ref(obj), obj, asizeof.asizeof(obj))
+    return dict(referents=referents)
 
 
 @bottle.route('/static/:filename')

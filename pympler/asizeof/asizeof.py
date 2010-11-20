@@ -2170,6 +2170,22 @@ def refs(obj, **opts):
             v = v(obj, False)
     return v
 
+def named_refs(obj):
+    """
+    Return all named referents of `obj`. Reuse functionality from asizeof.
+    Does not return referents without a name, e.g. objects in a list.
+    """
+    refs = []
+    v = _typedefof(obj)
+    if v:
+        v = v.refs
+        if v and _callable(v):
+            for ref in v(obj, True):
+                try:
+                    refs.append((ref.name, ref.ref))
+                except AttributeError:
+                    pass
+    return refs
 
 def test_flatsize(failf=None, stdf=None):
     '''Compare the results of **flatsize()** without using ``sys.getsizeof()``
@@ -2201,6 +2217,8 @@ def test_flatsize(failf=None, stdf=None):
                   complex(0, 1), True, False))
         _getsizeof = None  # zap _getsizeof for flatsize()
         for o in t:
+            #if o.__class__.__name__ == 'AuthenticationString':
+            #    import ipdb; ipdb.set_trace();
             a = flatsize(o)
             s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
             if a != s:

@@ -19,9 +19,23 @@
                     %end
                 </div>
             %end
+            <div class="local">
+                <a class="expand_local" id="{{frame[0]}}"  href="#">Show locals</a>
+            </div>
         </div>
     %end
     %if not stack:
         Cannot retrieve stacktrace for thread {{threadid}}.
     %end
 </div>
+
+<script type="text/javascript">
+    $(".expand_local").click(function() {
+        oid = $(this).attr("id");
+        $.get("/objects/"+oid, function(data) {
+            $("#"+oid).replaceWith(data);
+        });
+        return false;
+    });
+</script>
+
