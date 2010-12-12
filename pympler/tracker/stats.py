@@ -184,7 +184,9 @@ class Stats(object):
         def _sort(to1, to2, crit=args):
             """Compare two objects using a list of attributes."""
             for attr in crit:
-                res = cmp(getattr(to1, attr), getattr(to2, attr))
+                toa = getattr(to1, attr)
+                tob = getattr(to2, attr)
+                res = (toa > tob) - (toa < tob)
                 if res != 0:
                     if attr in ('tsize', 'size', 'death'):
                         return -res
@@ -193,7 +195,7 @@ class Stats(object):
 
         def cmp2key(mycmp):
             """Converts a cmp= function into a key= function"""
-            class ObjectWrapper:
+            class ObjectWrapper(object):
                 """Wraps an object exposing the given comparison logic."""
                 def __init__(self, obj, *args):
                     self.obj = obj
