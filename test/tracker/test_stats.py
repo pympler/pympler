@@ -1,3 +1,5 @@
+
+import os
 import re
 import sys
 import unittest
@@ -164,7 +166,14 @@ class LogTestCase(unittest.TestCase):
         self.tracker.create_snapshot('Merge test')
 
         stats = HtmlStats(tracker=self.tracker)
-        stats.create_html('tmp/data/footest.html')
+        output = 'tmp/data/footest.html'
+        stats.create_html(output)
+
+        source = open(output).read()
+        # Ensure relative links are used
+        fname = os.path.join('footest_files', 'Foo.html')
+        self.assert_('<a href="%s">' % fname in source, (fname, source))
+
 
     def test_charts(self):
         """Test emitting graphic charts."""

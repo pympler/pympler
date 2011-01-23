@@ -2,6 +2,7 @@
 Provide saving, loading and presenting gathered `ClassTracker` statistics.
 """
 
+import os
 import sys
 from pympler.util.compat import pickle
 from copy import deepcopy
@@ -533,6 +534,21 @@ class HtmlStats(Stats):
         including code objects but excluding overhead have a total size of
         %(asizeof)s.</p>\n"""
 
+    def relative_path(self, filepath, basepath=None):
+        """
+        Convert the filepath path to a relative path against basepath. By
+        default basepath is self.basedir.
+        """
+        if basepath is None:
+            basepath = self.basedir
+        if not basepath:
+            return filepath
+        if filepath.startswith(basepath):
+            rel = filepath[len(basepath):]
+        if rel and rel[0] == os.sep:
+            rel = rel[1:]
+        return rel
+
     def create_title_page(self, filename, title=''):
         """
         Output the title page.
@@ -570,7 +586,7 @@ class HtmlStats(Stats):
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
                     data = footprint.classes[classname].copy()
-                    data['cls'] = "<a href='%s'>%s</a>" % (self.links[classname], classname)
+                    data['cls'] = '<a href="%s">%s</a>' % (self.relative_path(self.links[classname]), classname)
                     data['sum'] = pp(data['sum'])
                     data['avg'] = pp(data['avg'])
                     fobj.write(self.snapshot_cls % data)
@@ -615,7 +631,7 @@ class HtmlStats(Stats):
         plot(x, y, 'o')
         savefig(filename)
 
-        return HtmlStats.chart_tag % (filename)
+        return self.chart_tag % (os.path.basename(filename))
 
     def create_snapshot_chart(self, filename=''):
         """
@@ -660,7 +676,7 @@ class HtmlStats(Stats):
         legend(loc=2)
         savefig(filename)
 
-        return self.chart_tag % (filename)
+        return self.chart_tag % (self.relative_path(filename))
 
     def create_pie_chart(self, snapshot, filename=''):
         """
@@ -693,20 +709,19 @@ class HtmlStats(Stats):
         pie(sizelist, labels=classlist)
         savefig(filename, dpi=50)
 
-        return self.chart_tag % (filename)
+        return self.chart_tag % (self.relative_path(filename))
 
     def create_html(self, fname, title="ClassTracker Statistics"):
         """
         Create HTML page `fname` and additional files in a directory derived
         from `fname`.
         """
-        from os import path, mkdir
-
         # Create a folder to store the charts and additional HTML files.
-        self.filesdir = path.splitext(fname)[0] + '_files'
-        if not path.isdir(self.filesdir):
-            mkdir(self.filesdir)
-        self.filesdir = path.abspath(self.filesdir)
+        self.basedir = os.path.dirname(os.path.abspath(fname))
+        self.filesdir = os.path.splitext(fname)[0] + '_files'
+        if not os.path.isdir(self.filesdir):
+            os.mkdir(self.filesdir)
+        self.filesdir = os.path.abspath(self.filesdir)
         self.links = {}
 
         # Annotate all snapshots in advance
@@ -717,20 +732,20 @@ class HtmlStats(Stats):
         # the self.charts dictionary. This allows to return alternative text if
         # the chart creation framework is not available.
         self.charts = {}
-        fn = path.join(self.filesdir, 'timespace.png')
+        fn = os.path.join(self.filesdir, 'timespace.png')
         self.charts['snapshots'] = self.create_snapshot_chart(fn)
 
         for fp, idx in zip(self.footprint, list(range(len(self.footprint)))):
-            fn = path.join(self.filesdir, 'fp%d.png' % (idx))
+            fn = os.path.join(self.filesdir, 'fp%d.png' % (idx))
             self.charts[fp] = self.create_pie_chart(fp, fn)
 
         for cn in list(self.index.keys()):
-            fn = path.join(self.filesdir, cn.replace('.', '_')+'-lt.png')
+            fn = os.path.join(self.filesdir, cn.replace('.', '_')+'-lt.png')
             self.charts[cn] = self.create_lifetime_chart(cn, fn)
 
         # Create HTML pages first for each class and then the index page.
         for cn in list(self.index.keys()):
-            fn = path.join(self.filesdir, cn.replace('.', '_')+'.html')
+            fn = os.path.join(self.filesdir, cn.replace('.', '_')+'.html')
             self.links[cn]  = fn
             self.print_class_details(fn, cn)
 
