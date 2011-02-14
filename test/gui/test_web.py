@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from pympler.util.compat import HTMLParser, HTTPConnection

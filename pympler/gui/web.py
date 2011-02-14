@@ -322,7 +322,10 @@ def start_in_background(**kwargs):
     serves the profiling interface without suspending the current application.
 
     For the documentation of the parameters see `start_profiler`.
+
+    Returns the created thread object.
     """
     thread = ProfilerThread(**kwargs)
     thread.start()
+    return thread
 

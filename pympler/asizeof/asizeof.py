@@ -2227,7 +2227,6 @@ def test_flatsize(failf=None, stdf=None):
                     # (sys.getsizeof(bool) on 3.0b3 is not correct)
                     x = ', expected failure'
                 else:
-                    import ipdb; ipdb.set_trace();
                     x = ', %r' % _typedefof(o)
                     e += 1
                     if failf:  # report failure
