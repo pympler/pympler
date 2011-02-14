@@ -88,7 +88,7 @@ class TrackObjectTestCase(unittest.TestCase):
 
         self.tracker.track_object(foo, keep=1)
         self.tracker.track_object(bar)
-       
+
         idfoo = id(foo)
         idbar = id(bar)
 
@@ -173,12 +173,17 @@ class SnapshotTestCase(unittest.TestCase):
         foo = Foo()
         self.tracker.track_object(foo)
         self.tracker.create_snapshot()
+        self.tracker.create_snapshot(compute_total=True)
 
         fp = self.tracker.footprint[0]
+        fp_with_total = self.tracker.footprint[1]
+
         self.assert_(fp.overhead > 0, fp.overhead)
         self.assert_(fp.tracked_total > 0, fp.tracked_total)
-        self.assert_(fp.asizeof_total > 0, fp.asizeof_total)
-        self.assert_(fp.asizeof_total >= fp.tracked_total)
+        self.assertEqual(fp.asizeof_total, 0)
+
+        self.assert_(fp_with_total.asizeof_total > 0, fp_with_total.asizeof_total)
+        self.assert_(fp_with_total.asizeof_total >= fp_with_total.tracked_total)
 
         if pympler.process.is_available():
             self.assert_(fp.system_total.vsz > 0)
@@ -186,7 +191,7 @@ class SnapshotTestCase(unittest.TestCase):
             self.assert_(fp.system_total.vsz >= fp.system_total.rss)
             self.assert_(fp.system_total.vsz > fp.overhead)
             self.assert_(fp.system_total.vsz > fp.tracked_total)
-            self.assert_(fp.system_total.vsz > fp.asizeof_total)
+            self.assert_(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
 
     def test_desc(self):
         """Test footprint description.
@@ -297,7 +302,7 @@ class TrackClassTestCase(unittest.TestCase):
 
         foo = Foo()
         bar = Bar()
-       
+
         idfoo = id(foo)
         idbar = id(bar)
 
@@ -317,7 +322,7 @@ class TrackClassTestCase(unittest.TestCase):
 
         foo = Foo()
         bar = BarNew()
-       
+
         idfoo = id(foo)
         idbar = id(bar)
 
@@ -350,7 +355,7 @@ class TrackClassTestCase(unittest.TestCase):
 
         foo2 = Foo()
         bar2 = Bar()
-    
+
         self.assert_(id(foo2) not in self.tracker.objects)
         self.assert_(id(bar2) not in self.tracker.objects)
 

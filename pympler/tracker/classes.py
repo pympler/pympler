@@ -451,12 +451,17 @@ class ClassTracker(object):
 
     snapshot_lock = Lock()
 
-    def create_snapshot(self, description=''):
+    def create_snapshot(self, description='', compute_total=False):
         """
-        Collect current per instance statistics.
-        Save total amount of memory consumption reported by asizeof and by the
-        operating system. The overhead of the ClassTracker structure is also
-        computed.
+        Collect current per instance statistics and saves total amount of
+        memory associated with the Python process.
+
+        If `compute_total` is `True`, the total consumption of all objects
+        known to *asizeof* is computed. The latter might be very slow if many
+        objects are mapped into memory at the time the snapshot is taken.
+        Therefore, `compute_total` is set to `False` by default.
+
+        The overhead of the `ClassTracker` structure is also computed.
 
         Snapshots can be taken asynchronously. The function is protected with a
         lock to prevent race conditions.
@@ -487,10 +492,8 @@ class ClassTracker(object):
 
             snapshot.timestamp = timestamp
             snapshot.tracked_total = sizer.total
-            if snapshot.tracked_total:
+            if compute_total:
                 snapshot.asizeof_total = asizeof.asizeof(all=True, code=True)
-            else:
-                snapshot.asizeof_total = 0
             snapshot.system_total = pympler.process.ProcessMemoryInfo()
             snapshot.desc = str(description)
 
@@ -498,7 +501,8 @@ class ClassTracker(object):
             snapshot.overhead = 0
             if snapshot.tracked_total:
                 snapshot.overhead = sizer.asizeof(self)
-                snapshot.asizeof_total -= snapshot.overhead
+                if snapshot.asizeof_total:
+                    snapshot.asizeof_total -= snapshot.overhead
 
             self.footprint.append(snapshot)
 
