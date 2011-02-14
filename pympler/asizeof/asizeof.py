@@ -2217,17 +2217,17 @@ def test_flatsize(failf=None, stdf=None):
                   complex(0, 1), True, False))
         _getsizeof = None  # zap _getsizeof for flatsize()
         for o in t:
-            #if o.__class__.__name__ == 'AuthenticationString':
-            #    import ipdb; ipdb.set_trace();
             a = flatsize(o)
             s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
             if a != s:
-                 # flatsize() approximates length of sequences
-                 # (sys.getsizeof(bool) on 3.0b3 is not correct)
-                if type(o) in (dict, list, set, frozenset, tuple) or (
-                   type(o) in (bool,) and sys.version_info[0] == 3):
+                if set(type(o).mro()).intersection((dict, list, set, frozenset, tuple, bytes)):
+                    # flatsize() approximates length of sequences
+                    x = ', expected failure'
+                elif type(o) in (bool,) and sys.version_info[0] == 3:
+                    # (sys.getsizeof(bool) on 3.0b3 is not correct)
                     x = ', expected failure'
                 else:
+                    import ipdb; ipdb.set_trace();
                     x = ', %r' % _typedefof(o)
                     e += 1
                     if failf:  # report failure
