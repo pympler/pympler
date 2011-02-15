@@ -1,4 +1,6 @@
+
 import doctest
+import gc
 import unittest
 
 from pympler.muppy import refbrowser
@@ -7,7 +9,7 @@ class TreeTest(unittest.TestCase):
 
     # sample tree used in output tests
     sample_tree = None
-    
+
     def setUp(self):
         # set up a sample tree with three children, each having
         # five string leaves and some have references to other children
@@ -24,7 +26,14 @@ class TreeTest(unittest.TestCase):
             branch1.children.append(i)
             branch2.children.append(i)
             branch3.children.append(i)
-        
+
+
+    def tearDown(self):
+        """Need to delete reference cycles, otherwise test data will affect
+        garbage graph tests."""
+        gc.collect()
+
+
     def test_node(self):
         """Test node functionality.
 
@@ -43,7 +52,7 @@ class TreeTest(unittest.TestCase):
         self.assert_(str(n) == expected)
         # attach child
         n.children.append(2)
-        
+
     def test_get_tree(self):
         """Test reference browser tree representation."""
         #root <- ref1 <- ref11
@@ -72,21 +81,21 @@ class TreeTest(unittest.TestCase):
             self.assert_(r in children)
         # test if maxdepth is working
         res = refbrowser.RefBrowser(root, maxdepth=0).get_tree()
-        self.assert_(len(res.children) == 0)
+        self.assertEqual(len(res.children), 0)
         res = refbrowser.RefBrowser(root, maxdepth=1).get_tree()
         for c in res.children:
             if c == ref1:
-                self.assert_(len(c.children) == 0)
+                self.assertEqual(len(c.children), 0)
         # test if the str_func is applied correctly
         expected = 'the quick brown fox'
         def foo(o): return expected
         res = refbrowser.RefBrowser(root, str_func=foo, maxdepth=2).get_tree()
-        self.assert_(str(res) == expected)
+        self.assertEqual(str(res), expected)
         res = refbrowser.RefBrowser(root, str_func=foo, repeat=True,\
                                     maxdepth=2).get_tree()
-        self.assert_(str(res) == expected)
+        self.assertEqual(str(res), expected)
 
-        
+
 test_print_tree = """
 
 let's start with a small tree first
@@ -163,7 +172,7 @@ root-+-branch1-+-a
 __test__ = {"test_print_tree": test_print_tree}
 
 def suite():
-    suite = unittest.makeSuite(TreeTest,'test') 
+    suite = unittest.makeSuite(TreeTest,'test')
     suite.addTest(doctest.DocTestSuite())
     return suite
 

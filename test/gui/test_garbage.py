@@ -1,6 +1,8 @@
-import unittest
+
 import gc
 import os
+import sys
+import unittest
 from pympler.gui.garbage import *
 from pympler.gui.graph import _Edge
 
@@ -55,7 +57,7 @@ class GarbageTestCase(unittest.TestCase):
 
         self.assertEqual(gb.count, len(gc.garbage))
         self.assert_(gb.count >= 2, gb.count)
-        
+
         gfoo = [x for x in gb.metadata if x.id == idfoo]
         self.assertEqual(len(gfoo), 1)
         gfoo = gfoo[0]
@@ -131,7 +133,7 @@ class GarbageTestCase(unittest.TestCase):
 
         self.assertEqual(gb1.count, gb2.count)
         self.assert_(len(gb1.metadata) > len(gb2.metadata))
-        
+
         gbar = [x for x in gb1.metadata if x.id == idb]
         self.assertEqual(len(gbar), 1)
         gbar = [x for x in gb2.metadata if x.id == idb]
@@ -236,7 +238,7 @@ class GarbageTestCase(unittest.TestCase):
             pass
         else:
             os.unlink('garbage.eps')
-            
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()

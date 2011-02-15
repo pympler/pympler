@@ -18,11 +18,26 @@ except ImportError:
 _server = None
 
 class Server(Process):
+
+    class ServerLog(object):
+        def __init__(self):
+            self.logs = []
+
+        def write(self, message):
+            self.logs.append(message)
+
+
     def __init__(self):
         super(Server, self).__init__()
         self.daemon = True
 
     def run(self):
+        """
+        Redirect bottle logging messages so it doesn't clutter the test output
+        and start the web GUI.
+        """
+        sys.stdout = self.ServerLog()
+        sys.stderr = self.ServerLog()
         start_profiler(quiet=True)
 
 

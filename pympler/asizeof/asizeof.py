@@ -1544,7 +1544,6 @@ class Asizer(object):
         '''
         return _repr(obj, clip=self._clip_)
 
-    #@profile
     def _sizer(self, obj, deep, sized):
         '''Size an object, recursively.
         '''
