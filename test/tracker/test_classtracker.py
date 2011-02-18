@@ -197,7 +197,7 @@ class SnapshotTestCase(unittest.TestCase):
             self.assert_(fp.system_total.vsz > fp.tracked_total)
             self.assert_(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
         else:
-            self.assertEqual(fp_with_total.total, fp.asizeof_total)
+            self.assertEqual(fp_with_total.total, fp_with_total.asizeof_total)
             self.assertEqual(fp.total, fp.tracked_total)
 
 
