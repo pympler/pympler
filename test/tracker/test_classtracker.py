@@ -1,9 +1,11 @@
+
+import sys
+import time
 import unittest
-import gc
-import re
 
 from pympler.tracker import ClassTracker
 import pympler.process
+
 
 class Empty:
     pass
@@ -140,6 +142,7 @@ class TrackObjectTestCase(unittest.TestCase):
         self.assert_('[K] foo' in namerefs, namerefs)
         self.assert_("[V] foo: 'foo'" in namerefs, namerefs)
 
+
 class SnapshotTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -186,15 +189,20 @@ class SnapshotTestCase(unittest.TestCase):
         self.assert_(fp_with_total.asizeof_total >= fp_with_total.tracked_total)
 
         if pympler.process.is_available():
+            self.assertEqual(fp.total, fp.system_total.vsz)
             self.assert_(fp.system_total.vsz > 0)
             self.assert_(fp.system_total.rss > 0)
             self.assert_(fp.system_total.vsz >= fp.system_total.rss)
             self.assert_(fp.system_total.vsz > fp.overhead)
             self.assert_(fp.system_total.vsz > fp.tracked_total)
             self.assert_(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
+        else:
+            self.assertEqual(fp_with_total.total, fp.asizeof_total)
+            self.assertEqual(fp.total, fp.tracked_total)
+
 
     def test_desc(self):
-        """Test footprint description.
+        """Test snapshot label.
         """
         self.tracker.create_snapshot()
         self.tracker.create_snapshot('alpha')
@@ -207,11 +215,17 @@ class SnapshotTestCase(unittest.TestCase):
         self.assertEqual(self.tracker.footprint[2].desc, 'beta')
         self.assertEqual(self.tracker.footprint[3].desc, '42')
 
+        snapshot = self.tracker.footprint[0]
+        self.assertEqual(snapshot.label, '%.3fs' % snapshot.timestamp)
+        snapshot = self.tracker.footprint[1]
+        self.assertEqual(snapshot.label, 'alpha (%.3fs)' % snapshot.timestamp)
+        snapshot = self.tracker.footprint[3]
+        self.assertEqual(snapshot.label, '42 (%.3fs)' % snapshot.timestamp)
+
+
     def test_background_monitoring(self):
         """Test background monitoring.
         """
-        import time
-
         self.tracker.start_periodic_snapshots(0.1)
         self.assertEqual(self.tracker._periodic_thread.interval, 0.1)
         self.assertEqual(self.tracker._periodic_thread.getName(), 'BackgroundMonitor')

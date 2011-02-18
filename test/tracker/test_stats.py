@@ -94,6 +94,25 @@ class LogTestCase(unittest.TestCase):
         f2.close()
         f3.close()
 
+
+    def test_tracked_classes(self):
+        """Test listing tracked classes.
+        """
+        self.tracker.track_class(Foo, name='Foo')
+        self.tracker.track_class(Bar, name='Bar')
+
+        foo = Foo()
+        self.tracker.create_snapshot()
+        bar = Bar()
+        self.tracker.create_snapshot()
+        foo = FooNew()
+        self.tracker.track_object(foo)
+        self.tracker.create_snapshot()
+
+        stats = Stats(tracker=self.tracker)
+        self.assertEqual(stats.tracked_classes, ['Bar', 'Foo', 'FooNew'])
+
+
     def test_snapshots(self):
         """Test multiple snapshots.
         """

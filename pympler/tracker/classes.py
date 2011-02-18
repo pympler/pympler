@@ -199,7 +199,7 @@ class PeriodicThread(Thread):
 
 
 class Snapshot(object):
-    """Sample sizes of objects at an instant."""
+    """Sample sizes of objects and the process at an instant."""
 
     def __init__(self):
         """Initialize process-wide size information."""
@@ -209,6 +209,29 @@ class Snapshot(object):
         self.timestamp = None
         self.system_total = None
         self.desc = None
+
+
+    @property
+    def total(self):
+        """
+        Return the total (virtual) size of the process in bytes. If process
+        information is not available, get the best number available, even if it
+        is a poor approximation of reality.
+        """
+        if self.system_total:
+            return self.system_total.vsz
+        elif self.asizeof_total:
+            return self.asizeof_total
+        else:
+            return self.tracked_total
+
+
+    @property
+    def label(self):
+        """Return timestamped label for this snapshot, or a raw timestamp."""
+        if not self.desc:
+            return "%.3fs" % self.timestamp
+        return "%s (%.3fs)" % (self.desc, self.timestamp)
 
 
 class ClassTracker(object):

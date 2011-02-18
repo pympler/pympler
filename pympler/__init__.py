@@ -1,1 +1,1 @@
-DATA_PATH = ''
+DATA_PATH = '/usr/local/share/pympler'

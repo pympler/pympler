@@ -117,7 +117,15 @@ def tracker_index():
     if stats:
         for snapshot in stats.footprint:
             stats.annotate_snapshot(snapshot)
-        return dict(snapshots=stats.footprint)
+        timeseries = []
+        for cls in stats.tracked_classes:
+            series = []
+            for snapshot in stats.footprint:
+                series.append(snapshot.classes.get(cls, {}).get('sum', 0))
+            timeseries.append((cls, series))
+        series = [s.total - s.tracked_total for s in stats.footprint]
+        timeseries.append(("Other", series))
+        return dict(snapshots=stats.footprint, timeseries=timeseries)
     else:
         return dict(snapshots=[])
 

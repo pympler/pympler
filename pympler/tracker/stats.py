@@ -10,6 +10,7 @@ from pympler.util.stringutils import trunc, pp, pp_timestamp
 
 from pympler.asizeof import Asized
 
+
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
 
@@ -241,8 +242,9 @@ class Stats(object):
                 if tobj.birth < snapshot.timestamp and \
                     (tobj.death is None or tobj.death > snapshot.timestamp):
                     active += 1
+
             try:
-                pct = total * 100.0 / snapshot.asizeof_total
+                pct = total * 100.0 / snapshot.total
             except ZeroDivisionError:
                 pct = 0
             try:
@@ -255,6 +257,12 @@ class Stats(object):
                                                pct=pct,
                                                active=active)
             snapshot.classes[classname]['merged'] = merged
+
+
+    @property
+    def tracked_classes(self):
+        """Return a list of all tracked classes occurring in any snapshot."""
+        return sorted(list(self.index.keys()))
 
 
 class ConsoleStats(Stats):
