@@ -106,7 +106,9 @@ def run_setup(include_tests=0):
                     'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
                     'pympler.muppy', 'pympler.util'] + tests,
 
-          data_files=[('templates', glob('templates/*.tpl') + ['templates/style.css'])],
+          data_files=[('templates', glob('templates/*.tpl') + \
+                                    glob('templates/*.js') + \
+                                    glob('templates/*.css'))],
 
           license=metadata.license,
           platforms = ['any'],

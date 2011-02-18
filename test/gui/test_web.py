@@ -113,6 +113,17 @@ class WebGuiTest(unittest.TestCase):
         self.assertEqual(parser.errors, 0)
 
 
+    def test_static_files(self):
+        """Test if static files are served."""
+        for filename in ['style.css', 'highcharts.js']:
+            conn = HTTPConnection(WebGuiTest.defaulthost)
+            conn.request("GET", '/static/%s' % filename)
+            response = conn.getresponse()
+            response.read()
+            conn.close()
+            self.assertEqual(response.status, 200)
+
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     tclasses = [WebGuiTest,]
