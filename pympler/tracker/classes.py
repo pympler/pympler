@@ -56,13 +56,13 @@ class TrackedObject(object):
     attached to monitor the object without preventing its deletion.
     """
     __slots__ = ("ref", "id", "repr", "name", "birth", "death", "trace",
-        "footprint", "_resolution_level", "__dict__")
+        "snapshots", "_resolution_level", "__dict__")
 
     def __init__(self, instance, resolution_level=0, trace=False):
         """
         Create a weak reference for 'instance' to observe an object but which
         won't prevent its deletion (which is monitored by the finalize
-        callback). The size of the object is recorded in 'footprint' as
+        callback). The size of the object is recorded in 'snapshots' as
         (timestamp, size) tuples.
         """
         self.ref = weakref_ref(instance, self.finalize)
@@ -79,7 +79,7 @@ class TrackedObject(object):
 
         initial_size = asizeof.basicsize(instance) or 0
         size = asizeof.Asized(initial_size, initial_size)
-        self.footprint = [(self.birth, size)]
+        self.snapshots = [(self.birth, size)]
 
 
     def __getstate__(self):
@@ -124,7 +124,7 @@ class TrackedObject(object):
         objects.
         """
         obj = self.ref()
-        self.footprint.append(
+        self.snapshots.append(
             (ts, sizer.asized(obj, detail=self._resolution_level))
         )
         if obj is not None:
@@ -134,7 +134,7 @@ class TrackedObject(object):
         """
         Get the maximum of all sampled sizes.
         """
-        return max([s.size for (_, s) in self.footprint])
+        return max([s.size for (_, s) in self.snapshots])
 
     def get_size_at_time(self, timestamp):
         """
@@ -142,7 +142,7 @@ class TrackedObject(object):
         If the object was not alive/sized at that instant, return 0.
         """
         size = 0
-        for (t, s) in self.footprint:
+        for (t, s) in self.snapshots:
             if t == timestamp:
                 size = s.size
         return size
@@ -249,7 +249,7 @@ class ClassTracker(object):
         self.objects = {}
 
         # List of (timestamp, size_of_self.objects) tuples for each snapshot.
-        self.footprint = []
+        self.snapshots = []
 
         # Keep objects alive by holding a strong reference.
         self._keepalive = []
@@ -437,7 +437,7 @@ class ClassTracker(object):
         Clear all gathered data and detach from all tracked objects/classes.
         """
         self.detach_all()
-        self.footprint[:] = []
+        self.snapshots[:] = []
 
 #
 # Background Monitoring
@@ -527,7 +527,7 @@ class ClassTracker(object):
                 if snapshot.asizeof_total:
                     snapshot.asizeof_total -= snapshot.overhead
 
-            self.footprint.append(snapshot)
+            self.snapshots.append(snapshot)
 
         finally:
             self.snapshot_lock.release()

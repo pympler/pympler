@@ -16,17 +16,17 @@ try:
         classlist = list(stats.index.keys())
         classlist.sort()
 
-        for snapshot in stats.footprint:
+        for snapshot in stats.snapshots:
             stats.annotate_snapshot(snapshot)
 
-        timestamps = [fp.timestamp for fp in stats.footprint]
-        offsets = [0] * len(stats.footprint)
+        timestamps = [fp.timestamp for fp in stats.snapshots]
+        offsets = [0] * len(stats.snapshots)
         poly_labels = []
         polys = []
         for clsname in classlist:
-            pct = [fp.classes[clsname]['pct'] for fp in stats.footprint]
+            pct = [fp.classes[clsname]['pct'] for fp in stats.snapshots]
             if max(pct) > 3.0:
-                sizes = [fp.classes[clsname]['sum'] for fp in stats.footprint]
+                sizes = [fp.classes[clsname]['sum'] for fp in stats.snapshots]
                 sizes = [float(x)/(1024*1024) for x in sizes]
                 sizes = [offset+size for offset, size in zip(offsets, sizes)]
                 poly = matplotlib.mlab.poly_between(timestamps, offsets, sizes)
@@ -41,10 +41,10 @@ try:
         axis.set_xlabel("Execution Time [s]")
         axis.set_ylabel("Virtual Memory [MiB]")
 
-        totals = [x.asizeof_total for x in stats.footprint]
+        totals = [x.asizeof_total for x in stats.snapshots]
         totals = [float(x)/(1024*1024) for x in totals]
         axis.plot(timestamps, totals, 'r--', label='Total')
-        tracked = [x.tracked_total for x in stats.footprint]
+        tracked = [x.tracked_total for x in stats.snapshots]
         tracked = [float(x)/(1024*1024) for x in tracked]
         axis.plot(timestamps, tracked, 'b--', label='Tracked total')
 

@@ -115,17 +115,17 @@ def tracker_index():
     """Get tracker overview."""
     stats = cache.stats
     if stats:
-        for snapshot in stats.footprint:
+        for snapshot in stats.snapshots:
             stats.annotate_snapshot(snapshot)
         timeseries = []
         for cls in stats.tracked_classes:
             series = []
-            for snapshot in stats.footprint:
+            for snapshot in stats.snapshots:
                 series.append(snapshot.classes.get(cls, {}).get('sum', 0))
             timeseries.append((cls, series))
-        series = [s.total - s.tracked_total for s in stats.footprint]
+        series = [s.total - s.tracked_total for s in stats.snapshots]
         timeseries.append(("Other", series))
-        return dict(snapshots=stats.footprint, timeseries=timeseries)
+        return dict(snapshots=stats.snapshots, timeseries=timeseries)
     else:
         return dict(snapshots=[])
 

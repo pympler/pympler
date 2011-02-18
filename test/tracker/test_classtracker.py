@@ -120,7 +120,7 @@ class TrackObjectTestCase(unittest.TestCase):
         self.tracker.track_object(foo, resolution_level=1)
         self.tracker.create_snapshot()
 
-        fp = self.tracker.objects[id(foo)].footprint[-1]
+        fp = self.tracker.objects[id(foo)].snapshots[-1]
         refs = fp[1].refs
         dref = [r for r in refs if r.name == '__dict__']
         self.assertEqual(len(dref),1)
@@ -133,7 +133,7 @@ class TrackObjectTestCase(unittest.TestCase):
         self.tracker.track_change(foo, resolution_level=2)
         self.tracker.create_snapshot()
 
-        fp = self.tracker.objects[id(foo)].footprint[-1]
+        fp = self.tracker.objects[id(foo)].snapshots[-1]
         refs = fp[1].refs
         dref = [r for r in refs if r.name == '__dict__']
         self.assertEqual(len(dref),1)
@@ -165,9 +165,9 @@ class SnapshotTestCase(unittest.TestCase):
         self.tracker.create_snapshot()
         self.tracker.create_snapshot()
 
-        refts = [fp.timestamp for fp in self.tracker.footprint]
+        refts = [fp.timestamp for fp in self.tracker.snapshots]
         for to in self.tracker.objects.values():
-            ts = [t for (t,sz) in to.footprint[1:]]
+            ts = [t for (t,sz) in to.snapshots[1:]]
             self.assertEqual(ts,refts)
 
     def test_snapshot_members(self):
@@ -178,8 +178,8 @@ class SnapshotTestCase(unittest.TestCase):
         self.tracker.create_snapshot()
         self.tracker.create_snapshot(compute_total=True)
 
-        fp = self.tracker.footprint[0]
-        fp_with_total = self.tracker.footprint[1]
+        fp = self.tracker.snapshots[0]
+        fp_with_total = self.tracker.snapshots[1]
 
         self.assert_(fp.overhead > 0, fp.overhead)
         self.assert_(fp.tracked_total > 0, fp.tracked_total)
@@ -209,17 +209,17 @@ class SnapshotTestCase(unittest.TestCase):
         self.tracker.create_snapshot(description='beta')
         self.tracker.create_snapshot(42)
 
-        self.assertEqual(len(self.tracker.footprint), 4)
-        self.assertEqual(self.tracker.footprint[0].desc, '')
-        self.assertEqual(self.tracker.footprint[1].desc, 'alpha')
-        self.assertEqual(self.tracker.footprint[2].desc, 'beta')
-        self.assertEqual(self.tracker.footprint[3].desc, '42')
+        self.assertEqual(len(self.tracker.snapshots), 4)
+        self.assertEqual(self.tracker.snapshots[0].desc, '')
+        self.assertEqual(self.tracker.snapshots[1].desc, 'alpha')
+        self.assertEqual(self.tracker.snapshots[2].desc, 'beta')
+        self.assertEqual(self.tracker.snapshots[3].desc, '42')
 
-        snapshot = self.tracker.footprint[0]
+        snapshot = self.tracker.snapshots[0]
         self.assertEqual(snapshot.label, '%.3fs' % snapshot.timestamp)
-        snapshot = self.tracker.footprint[1]
+        snapshot = self.tracker.snapshots[1]
         self.assertEqual(snapshot.label, 'alpha (%.3fs)' % snapshot.timestamp)
-        snapshot = self.tracker.footprint[3]
+        snapshot = self.tracker.snapshots[3]
         self.assertEqual(snapshot.label, '42 (%.3fs)' % snapshot.timestamp)
 
 
@@ -236,7 +236,7 @@ class SnapshotTestCase(unittest.TestCase):
         self.assertEqual(self.tracker._periodic_thread.interval, 0.2)
         self.tracker.stop_periodic_snapshots()
         self.assert_(self.tracker._periodic_thread is None)
-        self.assert_(len(self.tracker.footprint) > 10)
+        self.assert_(len(self.tracker.snapshots) > 10)
 
 
 class TrackClassTestCase(unittest.TestCase):

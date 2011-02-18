@@ -59,8 +59,8 @@ class LogTestCase(unittest.TestCase):
         self.tracker.clear()
 
         stats = ConsoleStats(stream=f2)
-        self.assert_(stats.index is None)
-        self.assert_(stats.footprint is None)
+        self.assertEqual(stats.index, None)
+        self.assertEqual(stats.snapshots, None)
         tmp.seek(0)
         stats.load_stats(tmp)
         tmp.close()
@@ -153,7 +153,7 @@ class LogTestCase(unittest.TestCase):
         sz2 = sizer.asized(f2)
 
         stats = Stats(tracker=self.tracker)
-        for fp in stats.footprint:
+        for fp in stats.snapshots:
             if fp.desc == 'Merge test':
                 stats.annotate_snapshot(fp)
                 self.assert_(hasattr(fp, 'classes'))

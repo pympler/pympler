@@ -45,7 +45,7 @@ def _merge_objects(tref, merged, obj):
     The sizes are merged into **Asized** instance `merged`.
     """
     size = None
-    for (timestamp, tsize) in obj.footprint:
+    for (timestamp, tsize) in obj.snapshots:
         if timestamp == tref:
             size = tsize
     if size:
@@ -82,10 +82,10 @@ class Stats(object):
         self.tracker = tracker
         if tracker:
             self.index = tracker.index
-            self.footprint = tracker.footprint
+            self.snapshots = tracker.snapshots
         else:
             self.index = None
-            self.footprint = None
+            self.snapshots = None
         self.sorted = []
         if filename:
             self.load_stats(filename)
@@ -100,7 +100,7 @@ class Stats(object):
         if isinstance(fdump, type('')):
             fdump = open(fdump, 'rb')
         self.index = pickle.load(fdump)
-        self.footprint = pickle.load(fdump)
+        self.snapshots = pickle.load(fdump)
         self.sorted = []
 
 
@@ -117,7 +117,7 @@ class Stats(object):
         if isinstance(fdump, type('')):
             fdump = open(fdump, 'wb')
         pickle.dump(self.index, fdump, protocol=pickle.HIGHEST_PROTOCOL)
-        pickle.dump(self.footprint, fdump, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(self.snapshots, fdump, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
             fdump.close()
 
@@ -133,9 +133,9 @@ class Stats(object):
             # Identify the snapshot that tracked the largest amount of memory.
             tmax = None
             maxsize = 0
-            for footprint in self.footprint:
-                if footprint.tracked_total > maxsize:
-                    tmax = footprint.timestamp
+            for snapshot in self.snapshots:
+                if snapshot.tracked_total > maxsize:
+                    tmax = snapshot.timestamp
             for key in list(self.index.keys()):
                 for tobj in self.index[key]:
                     tobj.classname = key
@@ -306,7 +306,7 @@ class ConsoleStats(Stats):
                 ))
             if tobj.trace:
                 self.stream.write(_format_trace(tobj.trace))
-            for (timestamp, size) in tobj.footprint:
+            for (timestamp, size) in tobj.snapshots:
                 self.stream.write('  %-30s %s\n' % (
                     pp_timestamp(timestamp), pp(size.size)
                 ))
@@ -371,17 +371,17 @@ class ConsoleStats(Stats):
         fobj = self.stream
 
         fobj.write('---- SUMMARY '+'-'*66+'\n')
-        for footprint in self.footprint:
-            self.annotate_snapshot(footprint)
+        for snapshot in self.snapshots:
+            self.annotate_snapshot(snapshot)
             fobj.write('%-35s %11s %12s %12s %5s\n' % (
-                trunc(footprint.desc, 35),
+                trunc(snapshot.desc, 35),
                 'active',
-                pp(footprint.asizeof_total),
+                pp(snapshot.asizeof_total),
                 'average',
                 'pct'
             ))
             for classname in classlist:
-                info = footprint.classes.get(classname)
+                info = snapshot.classes.get(classname)
                 # If 'info' is None there is no such class in this snapshot. If
                 # print_stats is called multiple times there may exist older
                 # annotations in earlier snapshots.
@@ -488,11 +488,11 @@ class HtmlStats(Stats):
         fobj.write(self.charts[classname])
 
         fobj.write("<h2>Coalesced Referents per Snapshot</h2>\n")
-        for footprint in self.footprint:
-            if classname in footprint.classes:
-                merged = footprint.classes[classname]['merged']
+        for snapshot in self.snapshots:
+            if classname in snapshot.classes:
+                merged = snapshot.classes[classname]['merged']
                 fobj.write(self.class_snapshot % {
-                    'name': footprint.desc, 'cls':classname, 'total': pp(merged.size)
+                    'name': snapshot.desc, 'cls':classname, 'total': pp(merged.size)
                 })
                 if merged.refs:
                     self._print_refs(fobj, merged.refs, merged.size)
@@ -509,7 +509,7 @@ class HtmlStats(Stats):
             if tobj.trace:
                 trace = "<pre>%s</pre>" % (_format_trace(tobj.trace))
                 fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
-            for (timestamp, size) in tobj.footprint:
+            for (timestamp, size) in tobj.snapshots:
                 fobj.write("<tr><td>%s</td>" % pp_timestamp(timestamp))
                 if not size.refs:
                     fobj.write("<td>%s</td></tr>\n" % pp(size.size))
@@ -574,34 +574,34 @@ class HtmlStats(Stats):
         classlist = list(self.index.keys())
         classlist.sort()
 
-        for footprint in self.footprint:
+        for snapshot in self.snapshots:
             fobj.write('<tr><td>\n')
             fobj.write('<table id="tl" rules="rows">\n')
             fobj.write("<h3>%s snapshot at %s</h3>\n" % (
-                footprint.desc or 'Untitled',
-                pp_timestamp(footprint.timestamp)
+                snapshot.desc or 'Untitled',
+                pp_timestamp(snapshot.timestamp)
             ))
 
             data = {}
-            data['sys']      = pp(footprint.system_total.vsz)
-            data['tracked']  = pp(footprint.tracked_total)
-            data['asizeof']  = pp(footprint.asizeof_total)
-            data['overhead'] = pp(getattr(footprint, 'overhead', 0))
+            data['sys']      = pp(snapshot.system_total.vsz)
+            data['tracked']  = pp(snapshot.tracked_total)
+            data['asizeof']  = pp(snapshot.asizeof_total)
+            data['overhead'] = pp(getattr(snapshot, 'overhead', 0))
 
             fobj.write(self.snapshot_summary % data)
 
-            if footprint.tracked_total:
+            if snapshot.tracked_total:
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
-                    data = footprint.classes[classname].copy()
+                    data = snapshot.classes[classname].copy()
                     data['cls'] = '<a href="%s">%s</a>' % (self.relative_path(self.links[classname]), classname)
                     data['sum'] = pp(data['sum'])
                     data['avg'] = pp(data['avg'])
                     fobj.write(self.snapshot_cls % data)
             fobj.write('</table>')
             fobj.write('</td><td>\n')
-            if footprint.tracked_total:
-                fobj.write(self.charts[footprint])
+            if snapshot.tracked_total:
+                fobj.write(self.charts[snapshot])
             fobj.write('</td></tr>\n')
 
         fobj.write("</table>\n")
@@ -655,14 +655,14 @@ class HtmlStats(Stats):
         classlist = list(self.index.keys())
         classlist.sort()
 
-        times = [footprint.timestamp for footprint in self.footprint]
-        base = [0] * len(self.footprint)
+        times = [snapshot.timestamp for snapshot in self.snapshots]
+        base = [0] * len(self.snapshots)
         poly_labels = []
         polys = []
         for cn in classlist:
-            pct = [footprint.classes[cn]['pct'] for footprint in self.footprint]
+            pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots]
             if max(pct) > 3.0:
-                sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.footprint]
+                sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.snapshots]
                 sz = [sx+sy for sx, sy in zip(base, sz)]
                 xp, yp = mlab.poly_between(times, base, sz)
                 polys.append( ((xp, yp), {'label': cn}) )
@@ -674,9 +674,9 @@ class HtmlStats(Stats):
         xlabel("Execution Time [s]")
         ylabel("Virtual Memory [MiB]")
 
-        sizes = [float(fp.asizeof_total)/(1024*1024) for fp in self.footprint]
+        sizes = [float(fp.asizeof_total)/(1024*1024) for fp in self.snapshots]
         plot(times, sizes, 'r--', label='Total')
-        sizes = [float(fp.tracked_total)/(1024*1024) for fp in self.footprint]
+        sizes = [float(fp.tracked_total)/(1024*1024) for fp in self.snapshots]
         plot(times, sizes, 'b--', label='Tracked total')
 
         for (args, kwds) in polys:
@@ -733,8 +733,8 @@ class HtmlStats(Stats):
         self.links = {}
 
         # Annotate all snapshots in advance
-        for footprint in self.footprint:
-            self.annotate_snapshot(footprint)
+        for snapshot in self.snapshots:
+            self.annotate_snapshot(snapshot)
 
         # Create charts. The tags to show the images are returned and stored in
         # the self.charts dictionary. This allows to return alternative text if
@@ -743,7 +743,7 @@ class HtmlStats(Stats):
         fn = os.path.join(self.filesdir, 'timespace.png')
         self.charts['snapshots'] = self.create_snapshot_chart(fn)
 
-        for fp, idx in zip(self.footprint, list(range(len(self.footprint)))):
+        for fp, idx in zip(self.snapshots, list(range(len(self.snapshots)))):
             fn = os.path.join(self.filesdir, 'fp%d.png' % (idx))
             self.charts[fp] = self.create_pie_chart(fp, fn)
 
