@@ -3,11 +3,10 @@ This module queries process memory allocation metrics from the operating
 system. It provides a platform independent layer to get the amount of virtual
 and physical memory allocated to the Python process.
 
-Different mechanisms are implemented: The resource module is tried first.  If
-the resource module does not report the required information (Linux/Solaris),
-try to read the stat file and then to execute the ps command. If the resource
-module does not exist, try a fallback for Windows using the win32 module. If all
-fails, return 0 for each attribute.
+Different mechanisms are implemented: Either the process stat file is read
+(Linux), the `ps` command is executed (BSD/OSX/Solaris) or the resource module
+is queried (Unix fallback). On Windows try to use the win32 module if
+available. If all fails, return 0 for each attribute.
 
 Windows without the win32 module is not supported.
 
@@ -30,8 +29,11 @@ class _ProcessMemoryInfo(object):
     """Stores information about various process-level memory metrics. The
     virtual size is stored in attribute `vsz`, the physical memory allocated to
     the process in `rss`, and the number of (major) pagefaults in `pagefaults`.
-    This is an abstract base class which needs to be overridden by operating
-    system specific implementations. This is done when importing the module.
+    On Linux, `data_segment`, `code_segment`, `shared_segment` and
+    `stack_segment` contain the number of Bytes allocated for the respective
+    segments.  This is an abstract base class which needs to be overridden by
+    operating system specific implementations. This is done when importing the
+    module.
     """
 
     pagesize = _getpagesize()
@@ -42,7 +44,13 @@ class _ProcessMemoryInfo(object):
         self.vsz = 0
         self.pagefaults = 0
         self.os_specific = []
-        self.update()
+
+        self.data_segment = 0
+        self.code_segment = 0
+        self.shared_segment = 0
+        self.stack_segment = 0
+
+        self.available = self.update()
 
     def update(self):
         """
@@ -114,9 +122,19 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
 
             for entry in status.readlines():
                 key, value = entry.split(':')
+                size_in_bytes = lambda x: int(x.split()[0]) * 1024
+                if key == 'VmData':
+                    self.data_segment = size_in_bytes(value)
+                elif key == 'VmExe':
+                    self.code_segment = size_in_bytes(value)
+                elif key == 'VmLib':
+                    self.shared_segment = size_in_bytes(value)
+                elif key == 'VmStk':
+                    self.stack_segment = size_in_bytes(value)
                 key = self.key_map.get(key)
                 if key:
                     self.os_specific.append((key, value.strip()))
+
 
             stat.close()
             status.close()
@@ -130,21 +148,26 @@ try:
     class _ProcessMemoryInfoResource(_ProcessMemoryInfo):
         def update(self):
             """
-            Get resident set size of current process through resource module. Only
-            available on Unix. Does not work with any platform tested on.
+            Get memory metrics of current process through `getrusage`.  Only
+            available on Unix, though on Linux most of the fields are not set.
+            Hopefully this will still be useful for BSD.
             """
             usage = getrusage(RUSAGE_SELF)
-            self.rss = usage.ru_maxrss * self.pagesize
-            self.vsz = usage.ru_maxrss * self.pagesize # XXX rss is not vsz
+            self.rss = usage.ru_maxrss * 1024
+            self.vsz = usage.ru_maxrss * 1024 # XXX rss is not vsz
+            self.data_segment = usage.ru_idrss * 1024
+            self.shared_segment = usage.ru_ixrss * 1024
+            self.stack_segment = usage.ru_isrss * 1024
+
             self.pagefaults = usage.ru_majflt
             return self.rss != 0
 
-    if _ProcessMemoryInfoResource().update():
-        ProcessMemoryInfo = _ProcessMemoryInfoResource
-    elif _ProcessMemoryInfoProc().update():
+    if _ProcessMemoryInfoProc().update():
         ProcessMemoryInfo = _ProcessMemoryInfoProc
     elif _ProcessMemoryInfoPS().update():
         ProcessMemoryInfo = _ProcessMemoryInfoPS
+    elif _ProcessMemoryInfoResource().update():
+        ProcessMemoryInfo = _ProcessMemoryInfoResource
 
 except ImportError:
     try:

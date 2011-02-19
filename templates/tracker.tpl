@@ -105,6 +105,39 @@
                 %end            
             </tbody>
         </table>
+
+        %if sn.system_total.available:
+            <h4>Process memory</h4>
+
+            <table class="tdata">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th class="num">Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Virtual memory size</td>
+                        <td class="num">{{pp(sn.system_total.vsz)}}</td>
+                    </tr>
+                    <tr>
+                        <td>Resident set size</td>
+                        <td class="num">{{pp(sn.system_total.rss)}}</td>
+                    </tr>
+                    <tr>
+                        <td>Pagefaults</td>
+                        <td class="num">{{sn.system_total.pagefaults}}</td>
+                    </tr>
+                    %for key, value in sn.system_total.os_specific:
+                        <tr>
+                            <td>{{key}}</td>
+                            <td class="num">{{value}}</td>
+                        </tr>
+                    %end            
+                </tbody>
+            </table>
+        %end
     %end
 
 %else:
