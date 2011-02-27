@@ -149,15 +149,21 @@ try:
         def update(self):
             """
             Get memory metrics of current process through `getrusage`.  Only
-            available on Unix, though on Linux most of the fields are not set.
-            Hopefully this will still be useful for BSD.
+            available on Unix, on Linux most of the fields are not set,
+            and on BSD units are used that are not very helpful, see:
+
+            http://www.perlmonks.org/?node_id=626693
+
+            Furthermore, getrusage only provides accumulated statistics (e.g.
+            max rss vs current rss).
             """
             usage = getrusage(RUSAGE_SELF)
             self.rss = usage.ru_maxrss * 1024
-            self.vsz = usage.ru_maxrss * 1024 # XXX rss is not vsz
-            self.data_segment = usage.ru_idrss * 1024
-            self.shared_segment = usage.ru_ixrss * 1024
-            self.stack_segment = usage.ru_isrss * 1024
+            self.data_segment = usage.ru_idrss * 1024 # TODO: ticks?
+            self.shared_segment = usage.ru_ixrss * 1024 # TODO: ticks?
+            self.stack_segment = usage.ru_isrss * 1024 # TODO: ticks?
+            self.vsz = self.data_segment + self.shared_segment + \
+                       self.stack_segment
 
             self.pagefaults = usage.ru_majflt
             return self.rss != 0

@@ -218,7 +218,7 @@ class Snapshot(object):
         information is not available, get the best number available, even if it
         is a poor approximation of reality.
         """
-        if self.system_total.vsz:
+        if self.system_total.available:
             return self.system_total.vsz
         elif self.asizeof_total:
             return self.asizeof_total

@@ -124,9 +124,13 @@ def tracker_index():
                 series.append(snapshot.classes.get(cls, {}).get('sum', 0))
             timeseries.append((cls, series))
 
+        series = [s.overhead for s in stats.snapshots]
+        timeseries.append(("Profiling overhead", series))
+
         if stats.snapshots[0].system_total.data_segment:
             # Assume tracked data resides in the data segment
-            series = [s.system_total.data_segment - s.tracked_total for s in stats.snapshots]
+            series = [s.system_total.data_segment - s.tracked_total - s.overhead
+                      for s in stats.snapshots]
             timeseries.append(("Data segment", series))
             series = [s.system_total.code_segment for s in stats.snapshots]
             timeseries.append(("Code segment", series))
@@ -135,7 +139,8 @@ def tracker_index():
             series = [s.system_total.shared_segment for s in stats.snapshots]
             timeseries.append(("Shared memory", series))
         else:
-            series = [s.total - s.tracked_total for s in stats.snapshots]
+            series = [s.total - s.tracked_total - s.overhead
+                      for s in stats.snapshots]
             timeseries.append(("Other", series))
         return dict(snapshots=stats.snapshots, timeseries=timeseries)
     else:
