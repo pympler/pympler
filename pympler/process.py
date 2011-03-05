@@ -16,9 +16,10 @@ Windows without the win32 module is not supported.
     Virtual size [Byte]: ...
 """
 
+import threading
+
 from os import getpid
 from subprocess  import Popen, PIPE
-from threading import enumerate as enumerate_threads
 
 try:
     from resource import getpagesize as _getpagesize
@@ -199,26 +200,30 @@ except ImportError:
 
 class ThreadInfo(object):
     """Collect information about an active thread."""
-    pass
+
+    def __init__(self, thread):
+        self.ident = 0
+        try:
+            self.ident = thread.ident
+        except AttributeError:
+            # Thread.ident was introduced in Python 2.6. On Python 2.5 use the
+            # undocumented `_active` dictionary to map thread objects to thread
+            # IDs.
+            for tid, athread in threading._active.items():
+                if athread is thread:
+                    self.ident = tid
+                    break
+        try:
+            self.name = thread.name
+        except AttributeError:
+            self.name = thread.getName()
+        try:
+            self.daemon = thread.daemon
+        except AttributeError:
+            self.daemon = thread.isDaemon()
 
 
 def get_current_threads():
     """Get a list of `ThreadInfo` objects."""
-    threads = []
-    for thread in enumerate_threads():
-        tinfo = ThreadInfo()
-        try:
-            tinfo.ident = thread.ident
-        except AttributeError:
-            tinfo.ident = None # TODO
-        try:
-            tinfo.name = thread.name
-        except AttributeError:
-            tinfo.name = thread.getName()
-        try:
-            tinfo.daemon = thread.daemon
-        except AttributeError:
-            tinfo.daemon = thread.isDaemon()
-        threads.append(tinfo)
-    return threads
+    return [ThreadInfo(thread) for thread in threading.enumerate()]
 

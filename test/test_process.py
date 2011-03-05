@@ -75,6 +75,15 @@ class ProcessMemoryTests(unittest.TestCase):
                 self.assert_(resinfo.rss >= procinfo.rss)
 
 
+    def test_get_current_threads(self):
+        '''Test thread info is extracted.'''
+        tinfos = process.get_current_threads()
+        for tinfo in tinfos:
+            self.assertEqual(type(tinfo.ident), int)
+            self.assertEqual(type(tinfo.name), type(''))
+            self.assertEqual(type(tinfo.daemon), type(True))
+
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     tclasses = [ ProcessMemoryTests, ]
