@@ -9,4 +9,6 @@ pympler.gui.web
 Functions
 ---------
 
-.. autofunction:: show
+.. autofunction:: start_profiler
+
+.. autofunction:: start_in_background

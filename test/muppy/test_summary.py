@@ -1,8 +1,9 @@
 import doctest
+import sys
 import unittest
 
 import pympler.muppy
-from pympler.muppy import summary
+from pympler.muppy import summary, muppy
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:
@@ -12,6 +13,10 @@ except ImportError:
     _getsizeof = flatsize
 
 class SummaryTest(unittest.TestCase):
+
+    class DevNull(object):
+        def write(self, text):
+            pass
 
     def test_repr(self):
         """Test that the right representation is returned. """
@@ -51,7 +56,20 @@ class SummaryTest(unittest.TestCase):
         res = summary.get_diff(left, right)
         for row_e in res:
             self.assertTrue(row_e in expected)
-        
+
+
+    def test_print_diff(self):
+        """Test summary can be printed."""
+        try:
+            self._stdout = sys.stdout
+            sys.stdout = self.DevNull()
+            sum1 = summary.summarize(muppy.get_objects())
+            sum2 = summary.summarize(muppy.get_objects())
+            sumdiff = summary.get_diff(sum1, sum2)
+            summary.print_(sumdiff)
+        finally:
+            sys.stdout = self._stdout
+
 
     def test_subtract(self):
         """Test that a single object's data is correctly subtracted from a summary.
@@ -144,9 +162,9 @@ class SummaryTest(unittest.TestCase):
             self.assert_(row in touched)
             for item in row:
                 self.assert_(item in touched)
-                
-            
-        
+
+
+
 test_print_ = """
 >>> objects = [1,2,3,4,5L, 33000L, "a", "ab", "abc", [], {}, {10: "t"}, ]
 
@@ -197,7 +215,7 @@ Finally, sorted by size with descending order
   <type 'long'> |           2 |           66
   <type 'list'> |           1 |           40
 """
-      
+
 test_print_table = """
 
 The _print_table function should print a nice, clean table.
@@ -213,12 +231,12 @@ The _print_table function should print a nice, clean table.
   <type 'dict'> |          4 |         9126
   <type 'list'> |         11 |       781235
 """
-  
+
 #__test__ = {"test_print_table": test_print_table,\
 #            "test_print_": test_print_}
 
 def suite():
-    suite = unittest.makeSuite(SummaryTest,'test') 
+    suite = unittest.makeSuite(SummaryTest,'test')
     suite.addTest(doctest.DocTestSuite())
     return suite
 

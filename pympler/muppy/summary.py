@@ -186,14 +186,14 @@ def print_(rows, limit=15, sort='size', order='descending'):
     # sort rows
     if sortby.index(sort) == 0:
         if order == "ascending":
-            localrows.sort(lambda r1, r2: cmp(_repr(r1[0]),_repr(r2[0])))
+            localrows.sort(key=lambda x: _repr(x[0]))
         elif order == "descending":
-            localrows.sort(lambda r1, r2: -cmp(_repr(r1[0]),_repr(r2[0])))
-    else: 
+            localrows.sort(key=lambda x: _repr(x[0]), reverse=True)
+    else:
         if order == "ascending":
-            localrows.sort(lambda r1, r2: r1[sortby.index(sort)] - r2[sortby.index(sort)])
+            localrows.sort(key=lambda x: x[sortby.index(sort)])
         elif order == "descending":
-            localrows.sort(lambda r1, r2: r2[sortby.index(sort)] - r1[sortby.index(sort)])
+            localrows.sort(key=lambda x: x[sortby.index(sort)], reverse=True)
     # limit rows
     localrows = localrows[0:limit]
     for row in localrows:
@@ -204,34 +204,35 @@ def print_(rows, limit=15, sort='size', order='descending'):
 
 def _print_table(rows, header=True):
     """Print a list of lists as a pretty table.
-    
+
     Keyword arguments:
     header -- if True the first row is treated as a table header
-    
+
     inspired by http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/267662
     """
-    border="="
+    border = "="
     # vertical delimiter
     vdelim = " | "
     # padding nr. of spaces are left around the longest element in the
     # column
-    padding=1
+    padding = 1
     # may be left,center,right
-    justify='right'
-    justify = {'left':string.ljust,'center':string.center,\
-                   'right':string.rjust}[justify.lower()]
+    justify = 'right'
+    justify = {'left'   : str.ljust,
+               'center' : str.center,
+               'right'  : str.rjust}[justify.lower()]
     # calculate column widths (longest item in each col
     # plus "padding" nr of spaces on both sides)
     cols = zip(*rows)
     colWidths = [max([len(str(item))+2*padding for item in col]) for col in cols]
     borderline = vdelim.join([w*border for w in colWidths])
-    for row in rows: 
+    for row in rows:
         print(vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)]))
         if header:
             print(borderline)
             header=False
 
-        
+
 # regular expressions used by _repr to replace default type representations
 type_prefix = re.compile(r"^<type '")
 address = re.compile(r' at 0x[0-9a-f]+')
@@ -249,7 +250,7 @@ def _repr(o, verbosity=1):
 
     """
     res = ""
-    
+
     t = type(o)
     if (verbosity == 0) or (t not in representations):
         res = str(t)
@@ -262,9 +263,9 @@ def _repr(o, verbosity=1):
     res = address.sub('', res)
     res = type_prefix.sub('', res)
     res = type_suffix.sub('', res)
-        
+
     return res
-            
+
 def _traverse(summary, function, *args):
     """Traverse all objects of a summary and call function with each as a
     parameter.
@@ -295,7 +296,7 @@ def _subtract(summary, o):
 def _sweep(summary):
     """Remove all rows in which the total size and the total number of
     objects is zero.
-    
+
     """
     return [row for row in summary if ((row[2] != 0) or (row[1] != 0))]
 

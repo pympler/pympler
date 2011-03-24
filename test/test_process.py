@@ -82,6 +82,7 @@ class ProcessMemoryTests(unittest.TestCase):
             self.assertEqual(type(tinfo.ident), int)
             self.assertEqual(type(tinfo.name), type(''))
             self.assertEqual(type(tinfo.daemon), type(True))
+            self.failIfEqual(tinfo.ident, 0)
 
 
 if __name__ == "__main__":
