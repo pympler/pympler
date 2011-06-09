@@ -29,7 +29,7 @@ class _Node(object):
     Each node contains the object it represents and a list of children.
     Children can be other nodes or arbitrary other objects. Any object
     in a tree which is not of the type _Node is considered a leaf.
-    
+
     """
     def __init__(self, o, str_func=None):
         """You have to define the object this node represents. Also you can
@@ -57,23 +57,25 @@ class RefBrowser(object):
     This base class provides means to extract a tree from a given root object
     and holds information on already known objects (to avoid repetition
     if requested).
-    
+
     """
 
-    def __init__(self, rootobject, maxdepth=3, str_func=summary._repr, repeat=True):
-        """You have to provide the root object used in the refbrowser. 
-        
+    def __init__(self, rootobject, maxdepth=3, str_func=summary._repr, repeat=True, stream=None):
+        """You have to provide the root object used in the refbrowser.
+
         keyword arguments
         maxdepth -- maximum depth of the initial tree
         str_func -- function used when calling str(node)
         repeat -- should nodes appear repeatedly in the tree, or should be
                   referred to existing nodes
+        stream -- output stream (used in derived classes)
 
-        """        
+        """
         self.root = rootobject
         self.maxdepth = maxdepth
         self.str_func = str_func
         self.repeat = repeat
+        self.stream = stream
         # objects which should be ignored while building the tree
         # e.g. the current frame
         self.ignore = []
@@ -85,7 +87,7 @@ class RefBrowser(object):
         """Get a tree of referrers of the root object."""
         self.ignore.append(inspect.currentframe())
         return self._get_tree(self.root, self.maxdepth)
-    
+
     def _get_tree(self, root, maxdepth):
         """Workhorse of the get_tree implementation.
 
@@ -111,8 +113,7 @@ class RefBrowser(object):
                     continue
             _id = id(o)
             if not self.repeat and (_id in self.already_included):
-                if self.str_func is not None: s = self.str_func(o)
-                else: s = str(o)
+                s = self.str_func(o)
                 res.children.append("%s (already included, id %s)" %\
                                     (s, _id))
                 continue
@@ -120,7 +121,8 @@ class RefBrowser(object):
                 res.children.append(self._get_tree(o, maxdepth-1))
         return res
 
-class ConsoleBrowser(RefBrowser):
+
+class StreamBrowser(RefBrowser):
     """RefBrowser implementation which prints the tree to the console.
 
     If you don't like the looks, you can change it a little bit.
@@ -135,27 +137,27 @@ class ConsoleBrowser(RefBrowser):
 
     def print_tree(self, tree=None):
         """ Print referrers tree to console.
-        
+
         keyword arguments
         tree -- if not None, the passed tree will be printed. Otherwise it is
         based on the rootobject.
-                   
+
         """
-        if tree == None:
-            self._print(self.get_tree(), '', '')
+        if tree is None:
+            self._print(self.root, '', '')
         else:
             self._print(tree, '', '')
-        
+
     def _print(self, tree, prefix, carryon):
         """Compute and print a new line of the tree.
 
         This is a recursive function.
-        
+
         arguments
         tree -- tree to print
         prefix -- prefix to the current line to print
         carryon -- prefix which is used to carry on the vertical lines
-        
+
         """
         level = prefix.count(self.cross) + prefix.count(self.vline)
         len_children = 0
@@ -168,7 +170,7 @@ class ConsoleBrowser(RefBrowser):
         carryon += self.space * len(str(tree))
         if (level == self.maxdepth) or (not isinstance(tree, _Node)) or\
            (len_children == 0):
-            print(prefix)
+            self.stream.write(prefix+'\n')
             return
         else:
             # add in between connections
@@ -187,7 +189,7 @@ class ConsoleBrowser(RefBrowser):
                 for b in range(1, len_children):
                     # the caryon becomes the prefix for all following children
                     prefix = carryon[:-2] + self.cross + self.hline
-                    # remove the vlines for any children of last branch 
+                    # remove the vlines for any children of last branch
                     if b == (len_children-1):
                         carryon = carryon[:-2] + 2*self.space
                     self._print(tree.children[b], prefix, carryon)
@@ -195,37 +197,40 @@ class ConsoleBrowser(RefBrowser):
                     if b == (len_children-1):
                         if len(carryon.strip(' ')) == 0:
                             return
-                        print(carryon[:-2].rstrip())
+                        self.stream.write(carryon[:-2].rstrip()+'\n')
 
-class FileBrowser(ConsoleBrowser):
+
+class ConsoleBrowser(StreamBrowser):
+    """RefBrowser that prints to the console (stdout)."""
+
+    def __init__(self, *args, **kwargs):
+        super(ConsoleBrowser, self).__init__(*args, **kwargs)
+        if not self.stream:
+            self.stream = sys.stdout
+
+
+class FileBrowser(StreamBrowser):
     """RefBrowser implementation which prints the tree to a file."""
-    
-    def print_tree(self, filename):
+
+    def print_tree(self, filename, tree=None):
         """ Print referrers tree to file (in text format).
-        
+
         keyword arguments
         tree -- if not None, the passed tree will be printed.
-                   
+
         """
-        old_stdout = sys.stdout
-        fsock = open(filename, 'w')
-        sys.stdout = fsock
-        # no try-except-finally in Python 2.4
+        old_stream = self.stream
+        self.stream = open(filename, 'w')
         try:
-            try:
-                self._print(self.get_tree(), '', '') 
-                sys.stdout = old_stdout
-                fsock.close()
-            except Exception:
-                print("Unexpected error:", sys.exc_info()[0])
+            super(FileBrowser, self).print_tree(tree=tree)
         finally:
-            sys.stdout = old_stdout
-            fsock.close()
+            self.stream.close()
+            self.stream = old_stream
 
 
 # Code for interactive browser (GUI)
 # ==================================
-            
+
 # The interactive browser requires Tkinter which is not always available. To
 # avoid an import error when loading the module, we encapsulate most of the
 # code in the following try-except-block. The InteractiveBrowser itself
@@ -236,13 +241,13 @@ try:
     from idlelib import TreeWidget as _TreeWidget
 
     from pympler.muppy import muppy
-    
+
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
-        
+
         Not to be confused with _Node. This one is used in the GUI
-        context. 
-        
+        context.
+
         """
         def reload_referrers(self):
             """Reload all referrers for this _TreeNode."""
@@ -257,9 +262,9 @@ try:
 
         def drawtext(self):
             """Override drawtext from _TreeWidget.TreeNode.
-            
+
             This seems to be a good place to add the popup menu.
-            
+
             """
             _TreeWidget.TreeNode.drawtext(self)
             # create a menu
@@ -288,7 +293,7 @@ try:
             """You need to provide the parent window, the node this TreeItem
             represents, as well as the tree (_Node) which the node
             belongs to.
-            
+
             """
             _TreeWidget.TreeItem.__init__(self)
             _Tkinter.Label.__init__(self, parentwindow)
@@ -298,10 +303,10 @@ try:
 
         def _clear_children(self):
             """Clear children list from any TreeNode instances.
-            
+
             Normally these objects are not required for memory profiling, as they
             are part of the profiler.
-            
+
             """
             new_children = []
             for child in self.node.children:
@@ -315,15 +320,15 @@ try:
         def GetIconName(self):
             """Different icon when object cannot be expanded, i.e. has no
             referrers.
-            
+
             """
             if not self.IsExpandable():
                 return "python"
 
         def IsExpandable(self):
             """An object is expandable when it is a node which has children and
-            is a container object. 
-            
+            is a container object.
+
             """
             if not isinstance(self.node, _Node):
                 return False
@@ -335,12 +340,12 @@ try:
 
         def GetSubList(self):
             """This method is the point where further referrers are computed.
-            
+
             Thus, the computation is done on-demand and only when needed.
-            
+
             """
             sublist = []
-            
+
             children = self.node.children
             if (len(children) == 0) and\
                     (muppy._is_containerobject(self.node.o)):
@@ -359,7 +364,7 @@ except ImportError:
 def gui_default_str_function(o):
     """Default str function for InteractiveBrowser."""
     return summary._repr(o) + '(id=%s)' % id(o)
-    
+
 class InteractiveBrowser(RefBrowser):
     """Interactive referrers browser.
 
@@ -372,7 +377,7 @@ class InteractiveBrowser(RefBrowser):
     def __init__(self, rootobject, maxdepth=3,\
                      str_func=gui_default_str_function, repeat=True):
         """You have to provide the root object used in the refbrowser.
-        
+
         keyword arguments
         maxdepth -- maximum depth of the initial tree
         str_func -- function used when calling str(node)
@@ -383,14 +388,14 @@ class InteractiveBrowser(RefBrowser):
         if _Tkinter is None:
             raise ImportError("InteractiveBrowser requires Tkinter to be installed.")
         RefBrowser.__init__(self, rootobject, maxdepth, str_func, repeat)
-        
+
     def main(self, standalone=False):
         """Create interactive browser window.
 
         keyword arguments
         standalone -- Set to true, if the browser is not attached to other
         windows
-        
+
         """
         window = _Tkinter.Tk()
         sc = _TreeWidget.ScrolledCanvas(window, bg="white",\
@@ -402,7 +407,7 @@ class InteractiveBrowser(RefBrowser):
         if standalone:
             window.mainloop()
 
-            
+
 # list to hold to referrers
 superlist = []
 root = "root"
@@ -420,7 +425,7 @@ def print_sample():
 def write_sample():
     fb = FileBrowser(root, str_func=foo)
     fb.print_tree('sample.txt')
-    
+
 if __name__ == "__main__":
 #    print_sample()
     write_sample()

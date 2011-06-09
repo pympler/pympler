@@ -1,14 +1,87 @@
 
 import doctest
 import gc
+import os
+import sys
 import unittest
 
+from tempfile import mkstemp
+
 from pympler.muppy import refbrowser
+from pympler.util.compat import StringIO
+
 
 class TreeTest(unittest.TestCase):
 
     # sample tree used in output tests
     sample_tree = None
+
+    TREE_DEP_1 = """
+root-+-branch1
+     +-branch2
+     +-branch3
+    """.strip()
+
+    TREE_DEP_2 = """
+root-+-branch1-+-a
+     |         +-b
+     |         +-c
+     |         +-d
+     |         +-e
+     |
+     +-branch2-+-branch3
+     |         +-a
+     |         +-b
+     |         +-c
+     |         +-d
+     |         +-e
+     |
+     +-branch3-+-branch1
+               +-a
+               +-b
+               +-c
+               +-d
+               +-e
+    """.strip()
+
+    TREE_DEP_4 = """
+root-+-branch1-+-a
+     |         +-b
+     |         +-c
+     |         +-d
+     |         +-e
+     |
+     +-branch2-+-branch3-+-branch1-+-a
+     |         |         |         +-b
+     |         |         |         +-c
+     |         |         |         +-d
+     |         |         |         +-e
+     |         |         |
+     |         |         +-a
+     |         |         +-b
+     |         |         +-c
+     |         |         +-d
+     |         |         +-e
+     |         |
+     |         +-a
+     |         +-b
+     |         +-c
+     |         +-d
+     |         +-e
+     |
+     +-branch3-+-branch1-+-a
+               |         +-b
+               |         +-c
+               |         +-d
+               |         +-e
+               |
+               +-a
+               +-b
+               +-c
+               +-d
+               +-e
+    """.strip()
+
 
     def setUp(self):
         # set up a sample tree with three children, each having
@@ -94,6 +167,55 @@ class TreeTest(unittest.TestCase):
         res = refbrowser.RefBrowser(root, str_func=foo, repeat=True,\
                                     maxdepth=2).get_tree()
         self.assertEqual(str(res), expected)
+
+
+    def test_console_browser(self):
+        """Test ConsoleBrowser uses stdout by default."""
+        crb = refbrowser.ConsoleBrowser(None, maxdepth=2)
+        self.assertEqual(crb.stream, sys.stdout)
+
+
+    def test_file_browser(self):
+        crb = refbrowser.FileBrowser(None, maxdepth=1)
+        _, fname = mkstemp(prefix='test_file_browser', text=True)
+        try:
+            crb.print_tree(fname, tree=self.sample_tree)
+            output = open(fname).read()
+            self.assertEqual(output.strip(), self.TREE_DEP_1)
+        finally:
+            os.unlink(fname)
+
+
+    def test_print_tree(self):
+        """Test reference browser prints root object by default."""
+        out1 = StringIO()
+        crb = refbrowser.StreamBrowser(None, maxdepth=1, stream=out1)
+        crb.print_tree(self.sample_tree)
+
+        out2 = StringIO()
+        crb = refbrowser.StreamBrowser(self.sample_tree, maxdepth=1, stream=out2)
+        crb.print_tree()
+
+        self.assertEqual(out1.getvalue(), out2.getvalue())
+
+
+    def test_reference_browser_max_depth(self):
+        """Test different reference tree depth settings."""
+        stream = StringIO()
+        crb = refbrowser.StreamBrowser(None, maxdepth=1, stream=stream)
+        crb.print_tree(self.sample_tree)
+        self.assertEqual(stream.getvalue().strip(), self.TREE_DEP_1)
+
+        stream = StringIO()
+        crb = refbrowser.StreamBrowser(None, maxdepth=2, stream=stream)
+        crb.print_tree(self.sample_tree)
+        self.assertEqual(stream.getvalue().strip(), self.TREE_DEP_2)
+
+        stream = StringIO()
+        crb = refbrowser.StreamBrowser(None, maxdepth=4, stream=stream)
+        crb.print_tree(self.sample_tree)
+        self.assertEqual(stream.getvalue().strip(), self.TREE_DEP_4)
+
 
 
 test_print_tree = """

@@ -1501,11 +1501,21 @@ class Asizer(object):
     _seen      = None  # {}
     _total     = 0   # total size
 
+    _stream    = None # IO stream for printing
+
     def __init__(self, **opts):
         '''See method **reset** for the available options.
         '''
         self._excl_d = {}
         self.reset(**opts)
+
+    def _printf(self, *args, **kwargs):
+        '''Print to configured stream if any is specified and the file argument
+        is not already set for this specific call.
+        '''
+        if self._stream and not kwargs.get('file'):
+            kwargs['file'] = self._stream
+        _printf(*args, **kwargs)
 
     def _clear(self):
         '''Clear state.
@@ -1697,20 +1707,20 @@ class Asizer(object):
                 c = int(c * 0.01 * self._total)
             else:
                 c = 0
-            _printf('%s%*d profile%s:  total%s, average, and largest flat size%s:  largest object',
-                     linesep, w, len(t), _plural(len(t)), s, self._incl, **print3opts)
+            self._printf('%s%*d profile%s:  total%s, average, and largest flat size%s:  largest object',
+                         linesep, w, len(t), _plural(len(t)), s, self._incl, **print3opts)
             r = len(t)
             for v, k in _sorted(t, reverse=True):
                 s = 'object%(plural)s:  %(total)s, %(avg)s, %(high)s:  %(obj)s%(lengstr)s' % v.format(self._clip_, self._total)
-                _printf('%*d %s %s', w, v.number, self._prepr(k), s, **print3opts)
+                self._printf('%*d %s %s', w, v.number, self._prepr(k), s, **print3opts)
                 r -= 1
                 if r > 1 and v.total < c:
                     c = max(cutoff, self._cutoff)
-                    _printf('%+*d profiles below cutoff (%.0f%%)', w, r, c)
+                    self._printf('%+*d profiles below cutoff (%.0f%%)', w, r, c)
                     break
             z = len(self._profs) - len(t)
             if z > 0:
-                _printf('%+*d %r object%s', w, z, 'zero', _plural(z), **print3opts)
+                self._printf('%+*d %r object%s', w, z, 'zero', _plural(z), **print3opts)
 
     def print_stats(self, objs=(), opts={}, sized=(), sizes=(), stats=3.0, **print3opts):
         '''Print the statistics.
@@ -1741,19 +1751,19 @@ class Asizer(object):
             if sized and objs:
                 n = len(objs)
                 if n > 1:
-                    _printf('%sasized(...%s%s) ...', linesep, c, o, **print3opts)
+                    self._printf('%sasized(...%s%s) ...', linesep, c, o, **print3opts)
                     for i in range(n):  # no enumerate in Python 2.2.3
-                        _printf('%*d: %s', w-1, i, sized[i], **print3opts)
+                        self._printf('%*d: %s', w-1, i, sized[i], **print3opts)
                 else:
-                    _printf('%sasized(%s): %s', linesep, o, sized, **print3opts)
+                    self._printf('%sasized(%s): %s', linesep, o, sized, **print3opts)
             elif sizes and objs:
-                _printf('%sasizesof(...%s%s) ...', linesep, c, o, **print3opts)
+                self._printf('%sasizesof(...%s%s) ...', linesep, c, o, **print3opts)
                 for z, o in zip(sizes, objs):
-                    _printf('%*d bytes%s%s:  %s', w, z, _SI(z), self._incl, self._repr(o), **print3opts)
+                    self._printf('%*d bytes%s%s:  %s', w, z, _SI(z), self._incl, self._repr(o), **print3opts)
             else:
                 if objs:
                     t = self._repr(objs)
-                _printf('%sasizeof(%s%s%s) ...', linesep, t, c, o, **print3opts)
+                self._printf('%sasizeof(%s%s%s) ...', linesep, t, c, o, **print3opts)
              # print summary
             self.print_summary(w=w, objs=objs, **print3opts)
             if s > 1:  # print profile
@@ -1771,27 +1781,27 @@ class Asizer(object):
 
                *print3options*  -- print options, as in Python 3.0
         '''
-        _printf('%*d bytes%s%s', w, self._total, _SI(self._total), self._incl, **print3opts)
+        self._printf('%*d bytes%s%s', w, self._total, _SI(self._total), self._incl, **print3opts)
         if self._mask:
-            _printf('%*d byte aligned', w, self._mask + 1, **print3opts)
-        _printf('%*d byte sizeof(void*)', w, _sizeof_Cvoidp, **print3opts)
+            self._printf('%*d byte aligned', w, self._mask + 1, **print3opts)
+        self._printf('%*d byte sizeof(void*)', w, _sizeof_Cvoidp, **print3opts)
         n = len(objs or ())
         if n > 0:
             d = self._duplicate or ''
             if d:
                 d = ', %d duplicate' % self._duplicate
-            _printf('%*d object%s given%s', w, n, _plural(n), d, **print3opts)
+            self._printf('%*d object%s given%s', w, n, _plural(n), d, **print3opts)
         t = _sum([1 for t in _values(self._seen) if t != 0])  # [] for Python 2.2
-        _printf('%*d object%s sized', w, t, _plural(t), **print3opts)
+        self._printf('%*d object%s sized', w, t, _plural(t), **print3opts)
         if self._excl_d:
             t = _sum(_values(self._excl_d))
-            _printf('%*d object%s excluded', w, t, _plural(t), **print3opts)
+            self._printf('%*d object%s excluded', w, t, _plural(t), **print3opts)
         t = _sum(_values(self._seen))
-        _printf('%*d object%s seen', w, t, _plural(t), **print3opts)
+        self._printf('%*d object%s seen', w, t, _plural(t), **print3opts)
         if self._missed > 0:
-            _printf('%*d object%s missed', w, self._missed, _plural(self._missed), **print3opts)
+            self._printf('%*d object%s missed', w, self._missed, _plural(self._missed), **print3opts)
         if self._depth > 0:
-            _printf('%*d recursion depth', w, self._depth, **print3opts)
+            self._printf('%*d recursion depth', w, self._depth, **print3opts)
 
     def print_typedefs(self, w=0, **print3opts):
         '''Print the types and dict tables.
@@ -1804,16 +1814,16 @@ class Asizer(object):
              # XXX Python 3.0 doesn't sort type objects
             t = [(self._prepr(a), v) for a, v in _items(_typedefs) if v.kind == k and (v.both or self._code_)]
             if t:
-                _printf('%s%*d %s type%s:  basicsize, itemsize, _len_(), _refs()',
-                         linesep, w, len(t), k, _plural(len(t)), **print3opts)
+                self._printf('%s%*d %s type%s:  basicsize, itemsize, _len_(), _refs()',
+                             linesep, w, len(t), k, _plural(len(t)), **print3opts)
                 for a, v in _sorted(t):
-                    _printf('%*s %s:  %s', w, '', a, v, **print3opts)
+                    self._printf('%*s %s:  %s', w, '', a, v, **print3opts)
          # dict and dict-like classes
         t = _sum([len(v) for v in _values(_dict_classes)])  # [] for Python 2.2
         if t:
-            _printf('%s%*d dict/-like classes:', linesep, w, t, **print3opts)
+            self._printf('%s%*d dict/-like classes:', linesep, w, t, **print3opts)
             for m, v in _items(_dict_classes):
-                _printf('%*s %s:  %s', w, '', m, self._prepr(v), **print3opts)
+                self._printf('%*s %s:  %s', w, '', m, self._prepr(v), **print3opts)
 
     def set(self, align=None, code=None, detail=None, limit=None, stats=None):
         '''Set some options.  See also **reset**.
@@ -1874,7 +1884,8 @@ class Asizer(object):
     total = property(_get_total, doc=_get_total.__doc__)
 
     def reset(self, align=8,  clip=80,      code=False,  derive=False,
-                    detail=0, ignored=True, infer=False, limit=100,  stats=0):
+                    detail=0, ignored=True, infer=False, limit=100,  stats=0,
+                    stream=None):
         '''Reset options, state, etc.
 
         The available options and default values are:
@@ -1897,6 +1908,8 @@ class Asizer(object):
 
              *stats=0.0*     -- print statistics, see function **asizeof**
 
+             *stream=None*   -- output stream for printing
+
         See function **asizeof** for a description of the options.
         '''
          # options
@@ -1908,6 +1921,7 @@ class Asizer(object):
         self._infer_  = infer
         self._limit_  = limit
         self._stats_  = stats
+        self._stream  = stream
         if ignored:
             self._ign_d = _kind_ignored
         else:
