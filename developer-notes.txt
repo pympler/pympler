@@ -22,6 +22,9 @@ Tests
   $ python2.4 run.py --test --clean
 * check the sources with PyChecker
   $ run.py --pychecker
+* check test coverage with coverage.py (http://nedbatchelder.com/code/coverage/)
+  $ coverage run test/runtest.py
+  $ coverage html
 
 Docs
 ----

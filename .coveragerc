@@ -1,0 +1,6 @@
+[run]
+branch = True
+include = pympler/*
+
+[html]
+directory = coverage_html_report
