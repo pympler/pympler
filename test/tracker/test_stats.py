@@ -98,13 +98,12 @@ class LogTestCase(unittest.TestCase):
         """
         self.tracker.track_class(Bar, name='Bar')
         foo = Foo()
-        foo.data = range(1000)
+        foo.data = list(range(1000))
         bar1 = Bar()
         bar2 = Bar()
-
         self.tracker.track_object(foo, resolution_level=4)
+        self.tracker.create_snapshot()
 
-        self.tracker.create_snapshot('Footest')
         stats = Stats(tracker=self.tracker)
 
         # Test sort_stats and reverse_order

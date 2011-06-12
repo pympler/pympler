@@ -99,11 +99,11 @@ class TrackerTest(unittest.TestCase):
         # at the beginning, there should not be an indicator object listed
         tmp_tracker = tracker.SummaryTracker()
         sn = tmp_tracker.create_summary()
-        self.assert_(self._contains_indicator(sn) == None)
+        self.assertEqual(self._contains_indicator(sn), None)
         # now an indicator object should be listed
         o = self._get_indicator()
         sn = tmp_tracker.create_summary()
-        self.assert_(self._contains_indicator(sn) == 1)
+        self.assertEqual(self._contains_indicator(sn), 1)
         # with ignore_self enabled a second summary should not list the first
         # summary
         sn = tmp_tracker.create_summary()
@@ -134,7 +134,7 @@ class TrackerTest(unittest.TestCase):
         tmp = self._get_indicator()
         stracker.store_summary(key)
         s = stracker.summaries[key]
-        self.assert_(self._contains_indicator(s) == 1)
+        self.assertEqual(self._contains_indicator(s), 1)
 
 
 #
