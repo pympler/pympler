@@ -203,7 +203,10 @@ class Stats(object):
             for attr in crit:
                 toa = getattr(to1, attr)
                 tob = getattr(to2, attr)
-                res = (toa > tob) - (toa < tob)
+                try:
+                    res = (toa > tob) - (toa < tob)
+                except TypeError:
+                    continue
                 if res != 0:
                     if attr in ('tsize', 'size', 'death'):
                         return -res

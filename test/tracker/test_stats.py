@@ -131,7 +131,8 @@ class LogTestCase(unittest.TestCase):
         foo = Foo()
         self.tracker.track_object(foo, resolution_level=2)
         self.tracker.create_snapshot()
-        _, fname = mkstemp(prefix='pympler_test_dump')
+        fhandle, fname = mkstemp(prefix='pympler_test_dump')
+        os.close(fhandle)
         try:
             self.tracker.stats.dump_stats(fname)
             output = StringIO()

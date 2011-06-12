@@ -177,7 +177,8 @@ root-+-branch1-+-a
 
     def test_file_browser(self):
         crb = refbrowser.FileBrowser(None, maxdepth=1)
-        _, fname = mkstemp(prefix='test_file_browser', text=True)
+        fhandle, fname = mkstemp(prefix='test_file_browser', text=True)
+        os.close(fhandle)
         try:
             crb.print_tree(fname, tree=self.sample_tree)
             output = open(fname).read()
