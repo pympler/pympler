@@ -85,10 +85,26 @@ pygments_style = 'sphinx'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_theme = 'nature'
+html_theme = 'default'
+
+# Colors derived from palette "Dig My Olive Branch"
+# http://www.colourlovers.com/palette/728391/Dig_My_Olive_Branch
 html_theme_options = {
-    "nosidebar": "true",
+    'headbgcolor'      : '#E5EDB8', #'#ADB85F',
+    'headtextcolor'    : '#000000',
+    'headlinkcolor'    : '#000000',
+    'sidebarbgcolor'   : '#837B47', #'#ADB85F',
+    'sidebarlinkcolor' : '#E5EDB8',
+    'bgcolor'          : '#FFFFFF',
+    #'linkcolor'        : '#300018',
+    'relbarbgcolor'    : '#5A3D31',
+    'codebgcolor'      : '#E5EDB8', #'#837B47',
 }
+
+# Color palettes:
+# "fresh cut day" AEE239, 8FBE00, F9F2E7, 00A8C6, 40C0CB
+# "mystery machine" 554236, F1EFA5, 60B99A, D3CE3D, F77825
+# "wordless" FFFFFF, CBE86B, F2E9E1, 1C140D
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
