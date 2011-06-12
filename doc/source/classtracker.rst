@@ -198,7 +198,7 @@ objects to the standard output::
 
     stats = ConsoleStats()
     stats.load('profile.dat')
-    stats.sort_stats('size').print_stats(limit=10, filter='Node')
+    stats.sort_stats('size').print_stats(limit=10, clsname='Node')
 
 HTML Statistics
 ~~~~~~~~~~~~~~~

@@ -6,21 +6,22 @@ instances of certain classes. Tracked objects are sized recursively to provide
 an overview of memory distribution between the different tracked objects.
 """
 
-import time
-
+from inspect import stack, isclass
 from threading import Thread, Lock
+from time import sleep, time
 from weakref import ref as weakref_ref
+
 from pympler.util.compat import instancemethod
+from pympler.util.stringutils import safe_repr
+
 import pympler.asizeof as asizeof
 import pympler.process
 
-from inspect import stack, isclass
-from pympler.util.stringutils import safe_repr
 
 __all__ = ["ClassTracker"]
 
 # Fixpoint for program start relative time stamp.
-_local_start = time.time()
+_local_start = time()
 
 
 class _ClassObserver(object):
@@ -48,7 +49,7 @@ def _get_time():
     """
     Get a timestamp relative to the program start time.
     """
-    return time.time() - _local_start
+    return time() - _local_start
 
 class TrackedObject(object):
     """
@@ -169,7 +170,7 @@ class TrackedObject(object):
         """
         try:
             self.death = _get_time()
-        except Exception:
+        except Exception: # pragma: no cover
             pass
 
 
@@ -195,7 +196,7 @@ class PeriodicThread(Thread):
         self.stop = False
         while not self.stop:
             self.tracker.create_snapshot()
-            time.sleep(self.interval)
+            sleep(self.interval)
 
 
 class Snapshot(object):
@@ -220,9 +221,9 @@ class Snapshot(object):
         """
         if self.system_total.available:
             return self.system_total.vsz
-        elif self.asizeof_total:
+        elif self.asizeof_total: # pragma: no cover
             return self.asizeof_total
-        else:
+        else: # pragma: no cover
             return self.tracked_total
 
 
@@ -454,7 +455,7 @@ class ClassTracker(object):
             self._periodic_thread = PeriodicThread(self, interval, name='BackgroundMonitor')
             self._periodic_thread.setDaemon(True)
             self._periodic_thread.start()
-        elif self._periodic_thread.isAlive():
+        else:
             self._periodic_thread.interval = interval
 
     def stop_periodic_snapshots(self):

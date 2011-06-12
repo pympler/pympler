@@ -4,15 +4,21 @@ import re
 import sys
 import unittest
 
+from tempfile import mkstemp
+
 from pympler.util.compat import StringIO, BytesIO
 
 from pympler.tracker import ClassTracker
 from pympler.tracker.stats import *
 from pympler.asizeof import Asizer, asizeof
 
+
 class Foo:
     def __init__(self):
-        self.foo = 'foo'
+        self.foo = 'Foo'
+
+    def __repr__(self):
+        return '<%s>' % self.foo
 
 class Bar(Foo):
     def __init__(self):
@@ -27,6 +33,7 @@ class BarNew(FooNew):
     def __init__(self):
         super(BarNew, self).__init__()
 
+
 class LogTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -35,6 +42,7 @@ class LogTestCase(unittest.TestCase):
     def tearDown(self):
         self.tracker.stop_periodic_snapshots()
         self.tracker.clear()
+
 
     def test_dump(self):
         """Test serialization of log data.
@@ -54,7 +62,7 @@ class LogTestCase(unittest.TestCase):
         ConsoleStats(tracker=self.tracker, stream=f1).print_stats()
 
         tmp = BytesIO()
-        Stats(tracker=self.tracker).dump_stats(tmp, close=0)
+        Stats(tracker=self.tracker).dump_stats(tmp, close=False)
 
         self.tracker.clear()
 
@@ -70,6 +78,35 @@ class LogTestCase(unittest.TestCase):
 
         self.assertEqual(f1.getvalue(), f2.getvalue())
 
+        # Test partial printing
+        stats.stream = f3 = StringIO()
+        stats.sort_stats()
+        tolen = len(stats.sorted)
+        stats.print_stats(clsname='Bar')
+        self.assertEqual(len(stats.sorted), tolen)
+        stats.print_summary()
+        clsname = f3.getvalue().split('\n')[0]
+        self.assertNotEqual(re.search('\.Bar', clsname), None, clsname)
+
+        f1.close()
+        f2.close()
+        f3.close()
+
+
+    def test_sort_stats(self):
+        """Test sort_stats and reverse_order.
+        """
+        self.tracker.track_class(Bar, name='Bar')
+        foo = Foo()
+        foo.data = range(1000)
+        bar1 = Bar()
+        bar2 = Bar()
+
+        self.tracker.track_object(foo, resolution_level=4)
+
+        self.tracker.create_snapshot('Footest')
+        stats = Stats(tracker=self.tracker)
+
         # Test sort_stats and reverse_order
         self.assertEqual(stats.sort_stats('size'), stats)
         self.assertEqual(stats.sorted[0].classname, 'Foo')
@@ -78,21 +115,26 @@ class LogTestCase(unittest.TestCase):
         stats.sort_stats('classname', 'birth')
         self.assertEqual(stats.sorted[0].classname, 'Bar')
         self.assertRaises(ValueError, stats.sort_stats, 'name', 42, 'classn')
+        stats.sort_stats('classname')
 
-        # Test partial printing
-        stats.stream = f3 = StringIO()
-        stats.sort_stats()
-        tolen = len(stats.sorted)
-        stats.print_stats(clsname='Bar',limit=0.5)
-        self.assertEqual(len(stats.sorted), tolen)
-        stats.print_summary()
-        clsname = f3.getvalue().split('\n')[0]
-        self.assertNotEqual(re.search('\.Bar', clsname), None, clsname)
-        self.assert_(len(f3.getvalue()) < len(f1.getvalue()))
 
-        f1.close()
-        f2.close()
-        f3.close()
+    def test_dump_load_with_filename(self):
+        """Test serialization with filename.
+        """
+        foo = Foo()
+        self.tracker.track_object(foo, resolution_level=2)
+        self.tracker.create_snapshot()
+        _, fname = mkstemp(prefix='pympler_test_dump')
+        try:
+            Stats(tracker=self.tracker).dump_stats(fname)
+            output = StringIO()
+            stats = ConsoleStats(filename=fname, stream=output)
+            stats.print_stats()
+            self.assertTrue('<Foo>' in output.getvalue(), output.getvalue())
+            # Check if a Stats loaded from a dump can be dumped again
+            stats.dump_stats(fname)
+        finally:
+            os.unlink(fname)
 
 
     def test_tracked_classes(self):
@@ -109,8 +151,49 @@ class LogTestCase(unittest.TestCase):
         self.tracker.track_object(foo)
         self.tracker.create_snapshot()
 
-        stats = Stats(tracker=self.tracker)
+        output = StringIO()
+        stats = ConsoleStats(tracker=self.tracker, stream=output)
         self.assertEqual(stats.tracked_classes, ['Bar', 'Foo', 'FooNew'])
+        stats.print_summary()
+
+
+    def test_print_stats(self):
+        """Test printing class-filtered statistics.
+        """
+        self.tracker.track_class(Foo, name='Foo', trace=True)
+        self.tracker.track_class(Bar, name='Bar')
+
+        foo = Foo()
+        bar = Bar()
+
+        self.tracker.create_snapshot()
+
+        output = StringIO()
+        stats = ConsoleStats(tracker=self.tracker, stream=output)
+        stats.print_stats(clsname='Foo')
+        self.assertTrue('Foo' in output.getvalue(), output.getvalue())
+        self.assertFalse('Bar' in output.getvalue(), output.getvalue())
+        self.assertTrue('foo = Foo()' in output.getvalue(), output.getvalue())
+
+
+    def test_print_stats_limit(self):
+        """Test printing limited statistics.
+        """
+        self.tracker.track_class(Foo, name='Foo')
+
+        foo = [Foo() for _ in range(10)]
+
+        self.tracker.create_snapshot()
+
+        output = StringIO()
+        stats = ConsoleStats(tracker=self.tracker, stream=output)
+        stats.print_stats(limit=3)
+        self.assertEqual(output.getvalue().count('<Foo>'), 3)
+
+        output.seek(0)
+        output.truncate()
+        stats.print_stats(limit=0.5)
+        self.assertEqual(output.getvalue().count('<Foo>'), 5)
 
 
     def test_snapshots(self):
@@ -135,6 +218,7 @@ class LogTestCase(unittest.TestCase):
         stats.print_stats()
         stats.print_summary()
 
+
     def test_merge(self):
         """Test merging of reference trees.
         """
@@ -157,6 +241,9 @@ class LogTestCase(unittest.TestCase):
             if fp.desc == 'Merge test':
                 stats.annotate_snapshot(fp)
                 self.assert_(hasattr(fp, 'classes'))
+                classes = fp.classes
+                stats.annotate_snapshot(fp)
+                self.assertEqual(fp.classes, classes)
                 self.assert_('Foo' in fp.classes, fp.classes)
                 self.assert_('merged' in fp.classes['Foo'])
                 fm = fp.classes['Foo']['merged']
@@ -172,15 +259,18 @@ class LogTestCase(unittest.TestCase):
                 self.assert_('[V] b' in refs2.keys(), refs2.keys())
                 self.assertEqual(refs2['[V] a'].size, asizeof(f1.a, f2.a))
 
+
     def test_html(self):
         """Test emitting HTML statistics."""
         self.tracker.track_class(Foo, name='Foo', resolution_level=2)
+        self.tracker.track_class(Bar, name='Bar', trace=True)
 
         f1 = Foo()
         f1.a = list(range(100000))
         f2 = Foo()
         f2.a = list(range(1000))
         f2.b = 'This is some stupid spam.'
+        f1 = Bar()
 
         self.tracker.create_snapshot('Merge test')
 
@@ -191,7 +281,7 @@ class LogTestCase(unittest.TestCase):
         source = open(output).read()
         # Ensure relative links are used
         fname = os.path.join('footest_files', 'Foo.html')
-        self.assert_('<a href="%s">' % fname in source, (fname, source))
+        self.assertTrue('<a href="%s">' % fname in source, (fname, source))
 
 
     def test_charts(self):

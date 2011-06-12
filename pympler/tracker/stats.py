@@ -60,10 +60,11 @@ def _format_trace(trace):
     Returns a string.
     """
     lines = []
-    for frm in trace:
-        for line in frm[3]:
-            lines.append('    '+line.strip()+'\n')
-        lines.append('  %s:%4d in %s\n' % (frm[0], frm[1], frm[2]))
+    for fname, lineno, func, src, _ in trace:
+        if src:
+            for line in src:
+                lines.append('    '+line.strip()+'\n')
+        lines.append('  %s:%4d in %s\n' % (fname, lineno, func))
     return ''.join(lines)
 
 
@@ -73,12 +74,19 @@ class Stats(object):
     preferences.
     """
 
-    def __init__(self, tracker=None, filename=None, stream=sys.stdout):
+    def __init__(self, tracker=None, filename=None, stream=None):
         """
         Initialize the data log structures either from a `ClassTracker` instance
         (argument `tracker`) or a previously dumped file (argument `filename`).
+
+        :param tracker: ClassTracker instance
+        :param filename: filename of previously dumped statistics
+        :param stream: where to print statistics, defaults to ``sys.stdout``
         """
-        self.stream = stream
+        if stream:
+            self.stream = stream
+        else:
+            self.stream = sys.stdout
         self.tracker = tracker
         if tracker:
             self.index = tracker.index
@@ -104,7 +112,7 @@ class Stats(object):
         self.sorted = []
 
 
-    def dump_stats(self, fdump, close=1):
+    def dump_stats(self, fdump, close=True):
         """
         Dump the logged data to a file.
         The argument `file` can be either a filename or an open file object
@@ -147,23 +155,30 @@ class Stats(object):
     def sort_stats(self, *args):
         """
         Sort the tracked objects according to the supplied criteria. The
-        argument is a string identifying the basis of a sort (example: 'size' or
-        'classname'). When more than one key is provided, then additional keys
-        are used as secondary criteria when there is equality in all keys
-        selected before them. For example, sort_stats('name', 'size') will sort
-        all the entries according to their class name, and resolve all ties
-        (identical class names) by sorting by size.  The criteria are fields in
-        the tracked object instances. Results are stored in the `self.sorted`
-        list which is used by `Stats.print_stats()` and other methods. The
-        fields available for sorting are:
+        argument is a string identifying the basis of a sort (example: 'size'
+        or 'classname'). When more than one key is provided, then additional
+        keys are used as secondary criteria when there is equality in all keys
+        selected before them. For example, ``sort_stats('name', 'size')`` will
+        sort all the entries according to their class name, and resolve all
+        ties (identical class names) by sorting by size.  The criteria are
+        fields in the tracked object instances. Results are stored in the
+        ``self.sorted`` list which is used by ``Stats.print_stats()`` and other
+        methods. The fields available for sorting are:
 
-          'classname' : the name with which the class was registered
-          'name'      : the classname
-          'birth'     : creation timestamp
-          'death'     : destruction timestamp
-          'size'      : the maximum measured size of the object
-          'tsize'     : the measured size during the largest snapshot
-          'repr'      : string representation of the object
+            'classname'
+                the name with which the class was registered
+            'name'
+                the classname
+            'birth'
+                creation timestamp
+            'death'
+                destruction timestamp
+            'size'
+                the maximum measured size of the object
+            'tsize'
+                the measured size during the largest snapshot
+            'repr'
+                string representation of the object
 
         Note that sorts on size are in descending order (placing most memory
         consuming items first), whereas name, repr, and creation time searches
@@ -205,9 +220,7 @@ class Stats(object):
                     return mycmp(self.obj, other.obj) < 0
             return ObjectWrapper
 
-        if not self.sorted:
-            self._init_sort()
-
+        self._init_sort()
         self.sorted.sort(key=cmp2key(_sort))
 
         return self
@@ -217,8 +230,7 @@ class Stats(object):
         """
         Reverse the order of the tracked instance index `self.sorted`.
         """
-        if not self.sorted:
-            self._init_sort()
+        self._init_sort()
         self.sorted.reverse()
         return self
 
@@ -245,7 +257,7 @@ class Stats(object):
 
             try:
                 pct = total * 100.0 / snapshot.total
-            except ZeroDivisionError:
+            except ZeroDivisionError: # pragma: no cover
                 pct = 0
             try:
                 avg = total / active
@@ -290,54 +302,45 @@ class ConsoleStats(Stats):
                                  level=level+1)
 
 
-    def print_object(self, tobj, full=0):
+    def print_object(self, tobj):
         """
         Print the gathered information of object `tobj` in human-readable format.
         """
-        if full:
-            if tobj.death:
-                self.stream.write('%-32s ( free )   %-35s\n' % (
-                    trunc(tobj.name, 32, left=1), trunc(tobj.repr, 35)))
-            else:
-                self.stream.write('%-32s 0x%08x %-35s\n' % (
-                    trunc(tobj.name, 32, left=1),
-                    tobj.id,
-                    trunc(tobj.repr, 35)
-                ))
-            if tobj.trace:
-                self.stream.write(_format_trace(tobj.trace))
-            for (timestamp, size) in tobj.snapshots:
-                self.stream.write('  %-30s %s\n' % (
-                    pp_timestamp(timestamp), pp(size.size)
-                ))
-                self._print_refs(size.refs, size.size)
-            if tobj.death is not None:
-                self.stream.write('  %-30s finalize\n' % (
-                    pp_timestamp(tobj.death),
-                ))
+        if tobj.death:
+            self.stream.write('%-32s ( free )   %-35s\n' % (
+                trunc(tobj.name, 32, left=1), trunc(tobj.repr, 35)))
         else:
-            size = tobj.get_max_size()
-            if tobj.repr:
-                self.stream.write('%-64s %-14s\n' % (
-                    trunc(tobj.repr, 64),
-                    pp(size)
-                ))
-            else:
-                self.stream.write('%-64s %-14s\n' % (
-                    trunc(tobj.name, 64),
-                    pp(size)
-                ))
+            self.stream.write('%-32s 0x%08x %-35s\n' % (
+                trunc(tobj.name, 32, left=1),
+                tobj.id,
+                trunc(tobj.repr, 35)
+            ))
+        if tobj.trace:
+            self.stream.write(_format_trace(tobj.trace))
+        for (timestamp, size) in tobj.snapshots:
+            self.stream.write('  %-30s %s\n' % (
+                pp_timestamp(timestamp), pp(size.size)
+            ))
+            self._print_refs(size.refs, size.size)
+        if tobj.death is not None:
+            self.stream.write('  %-30s finalize\n' % (
+                pp_timestamp(tobj.death),
+            ))
 
 
     def print_stats(self, clsname=None, limit=1.0):
         """
-        Write tracked objects to stdout.  The output can be filtered and pruned.
-        Only objects are printed whose classname contain the substring supplied
-        by the `clsname` argument.  The output can be pruned by passing a limit
-        value. If `limit` is a float smaller than one, only the supplied
-        percentage of the total tracked data is printed. If `limit` is bigger
-        than one, this number of tracked objects are printed. Tracked objects
-        are first filtered, and then pruned (if specified).
+        Write tracked objects to stdout.  The output can be filtered and
+        pruned.  Only objects are printed whose classname contain the substring
+        supplied by the `clsname` argument.  The output can be pruned by
+        passing a `limit` value.
+
+        :param clsname: Only print objects whose classname contain the given
+            substring.
+        :param limit: If `limit` is a float smaller than one, only the supplied
+            percentage of the total tracked data is printed. If `limit` is
+            bigger than one, this number of tracked objects are printed.
+            Tracked objects are first filtered, and then pruned (if specified).
         """
         if self.tracker:
             self.tracker.stop_periodic_snapshots()
@@ -351,13 +354,12 @@ class ConsoleStats(Stats):
             _sorted = [to for to in _sorted if clsname in to.classname]
 
         if limit < 1.0:
-            _sorted = _sorted[:int(len(self.sorted)*limit)+1]
-        elif limit > 1:
-            _sorted = _sorted[:int(limit)]
+            limit = max(1, int(len(self.sorted) * limit))
+        _sorted = _sorted[:int(limit)]
 
         # Emit per-instance data
         for tobj in _sorted:
-            self.print_object(tobj, full=1)
+            self.print_object(tobj)
 
 
     def print_summary(self):
@@ -365,8 +367,7 @@ class ConsoleStats(Stats):
         Print per-class summary for each snapshot.
         """
         # Emit class summaries for each snapshot
-        classlist = list(self.index.keys())
-        classlist.sort()
+        classlist = self.tracked_classes
 
         fobj = self.stream
 
@@ -382,17 +383,13 @@ class ConsoleStats(Stats):
             ))
             for classname in classlist:
                 info = snapshot.classes.get(classname)
-                # If 'info' is None there is no such class in this snapshot. If
-                # print_stats is called multiple times there may exist older
-                # annotations in earlier snapshots.
-                if info:
-                    fobj.write('  %-33s %11d %12s %12s %4d%%\n' % (
-                        trunc(classname, 33),
-                        info['active'],
-                        pp(info['sum']),
-                        pp(info['avg']),
-                        info['pct']
-                    ))
+                fobj.write('  %-33s %11d %12s %12s %4d%%\n' % (
+                    trunc(classname, 33),
+                    info['active'],
+                    pp(info['sum']),
+                    pp(info['avg']),
+                    info['pct']
+                ))
         fobj.write('-'*79+'\n')
 
 
@@ -652,8 +649,7 @@ class HtmlStats(Stats):
         except ImportError:
             return self.nopylab_msg % ("memory allocation")
 
-        classlist = list(self.index.keys())
-        classlist.sort()
+        classlist = self.tracked_classes
 
         times = [snapshot.timestamp for snapshot in self.snapshots]
         base = [0] * len(self.snapshots)
