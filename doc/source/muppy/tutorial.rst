@@ -1,8 +1,8 @@
 .. _muppy_tutorial:
 
-========
-Tutorial
-========
+==================================
+Tutorial - Track Down Memory Leaks
+==================================
 
 This tutorial shows you ways in which :term:`muppy` can be used to track down
 memory leaks. From my experience, this can be done in 3 steps, each answering

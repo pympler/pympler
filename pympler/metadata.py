@@ -10,7 +10,7 @@ url          = 'http://packages.python.org/Pympler/'
 license      = 'Apache License, Version 2.0' #PYCHOK valid
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
 author_email = 'pympler-dev@googlegroups.com'
-copyright    = '2008-2009, ' + author #PYCHOK valid
+copyright    = '2008-2011, ' + author #PYCHOK valid
 description  = ('A development tool to measure, monitor and analyze '
                 'the memory behavior of Python objects.')
 long_description = '''
