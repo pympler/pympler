@@ -48,8 +48,7 @@ Finally, the gathered data can be printed or saved::
     >>> tracker.create_snapshot()
     >>> populate_factory(factory)
     >>> tracker.create_snapshot()
-    >>> from pympler.tracker.stats import ConsoleStats
-    >>> ConsoleStats(tracker=tracker).print_summary()
+    >>> tracker.stats.print_summary()
     ---- SUMMARY ------------------------------------------------------------------
                                              active      1.22 MB      average   pct
       Factory                                     1    344     B    344     B    0%
@@ -182,8 +181,7 @@ The more data is gathered by the `ClassTracker` the more noise is produced on th
 console. The acquired `ClassTracker` log data can also be saved to a file for
 off-line analysis::
 
-    from pympler.tracker.stats import Stats
-    Stats(tracker=tracker).dump_stats('profile.dat')
+    tracker.stats.dump_stats('profile.dat')
 
 The `Stats` class of the `ClassTracker` provides means to evaluate the collected
 data. The API is inspired by the `Stats class

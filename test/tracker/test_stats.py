@@ -37,7 +37,15 @@ class BarNew(FooNew):
 class LogTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.tracker = ClassTracker()
+        self.out = StringIO()
+        self.tracker = ClassTracker(stream=self.out)
+
+
+    @property
+    def output(self):
+        """Return output recorded in `ClassTracker` output stream."""
+        return self.out.getvalue()
+
 
     def tearDown(self):
         self.tracker.stop_periodic_snapshots()
@@ -104,7 +112,7 @@ class LogTestCase(unittest.TestCase):
         self.tracker.track_object(foo, resolution_level=4)
         self.tracker.create_snapshot()
 
-        stats = Stats(tracker=self.tracker)
+        stats = self.tracker.stats
 
         # Test sort_stats and reverse_order
         self.assertEqual(stats.sort_stats('size'), stats)
@@ -125,7 +133,7 @@ class LogTestCase(unittest.TestCase):
         self.tracker.create_snapshot()
         _, fname = mkstemp(prefix='pympler_test_dump')
         try:
-            Stats(tracker=self.tracker).dump_stats(fname)
+            self.tracker.stats.dump_stats(fname)
             output = StringIO()
             stats = ConsoleStats(filename=fname, stream=output)
             stats.print_stats()
@@ -150,8 +158,7 @@ class LogTestCase(unittest.TestCase):
         self.tracker.track_object(foo)
         self.tracker.create_snapshot()
 
-        output = StringIO()
-        stats = ConsoleStats(tracker=self.tracker, stream=output)
+        stats = self.tracker.stats
         self.assertEqual(stats.tracked_classes, ['Bar', 'Foo', 'FooNew'])
         stats.print_summary()
 
@@ -167,12 +174,11 @@ class LogTestCase(unittest.TestCase):
 
         self.tracker.create_snapshot()
 
-        output = StringIO()
-        stats = ConsoleStats(tracker=self.tracker, stream=output)
+        stats = self.tracker.stats
         stats.print_stats(clsname='Foo')
-        self.assertTrue('Foo' in output.getvalue(), output.getvalue())
-        self.assertFalse('Bar' in output.getvalue(), output.getvalue())
-        self.assertTrue('foo = Foo()' in output.getvalue(), output.getvalue())
+        self.assertTrue('Foo' in self.output, self.output)
+        self.assertFalse('Bar' in self.output, self.output)
+        self.assertTrue('foo = Foo()' in self.output, self.output)
 
 
     def test_print_stats_limit(self):
@@ -184,15 +190,15 @@ class LogTestCase(unittest.TestCase):
 
         self.tracker.create_snapshot()
 
-        output = StringIO()
-        stats = ConsoleStats(tracker=self.tracker, stream=output)
+        stats = self.tracker.stats
         stats.print_stats(limit=3)
-        self.assertEqual(output.getvalue().count('<Foo>'), 3)
+        self.assertEqual(self.output.count('<Foo>'), 3)
 
-        output.seek(0)
-        output.truncate()
+        self.out.seek(0)
+        self.out.truncate()
+
         stats.print_stats(limit=0.5)
-        self.assertEqual(output.getvalue().count('<Foo>'), 5)
+        self.assertEqual(self.output.count('<Foo>'), 5)
 
 
     def test_snapshots(self):
@@ -212,8 +218,7 @@ class LogTestCase(unittest.TestCase):
         del b
         self.tracker.create_snapshot()
 
-        stream = StringIO()
-        stats = ConsoleStats(tracker=self.tracker, stream=stream)
+        stats = self.tracker.stats
         stats.print_stats()
         stats.print_summary()
 
@@ -235,7 +240,7 @@ class LogTestCase(unittest.TestCase):
         sz1 = sizer.asized(f1)
         sz2 = sizer.asized(f2)
 
-        stats = Stats(tracker=self.tracker)
+        stats = self.tracker.stats
         for fp in stats.snapshots:
             if fp.desc == 'Merge test':
                 stats.annotate_snapshot(fp)
@@ -295,9 +300,9 @@ class LogTestCase(unittest.TestCase):
 
         self.tracker.create_snapshot('Merge test')
 
-        stats = Stats(tracker=self.tracker)
         from pympler.gui import charts
-        charts.tracker_timespace('tmp/data/timespace.png', stats)
+        charts.tracker_timespace('tmp/data/timespace.png', self.tracker.stats)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()

@@ -11,6 +11,7 @@ from threading import Thread, Lock
 from time import sleep, time
 from weakref import ref as weakref_ref
 
+from pympler.tracker.stats import ConsoleStats
 from pympler.util.compat import instancemethod
 from pympler.util.stringutils import safe_repr
 
@@ -237,7 +238,13 @@ class Snapshot(object):
 
 class ClassTracker(object):
 
-    def __init__(self):
+    def __init__(self, stream=None):
+        """
+        Creates a new `ClassTracker` object.
+
+        :param stream: Output stream to use when printing statistics via
+            ``stats``.
+        """
         # Dictionaries of TrackedObject objects associated with the actual
         # objects that are tracked. 'index' uses the class name as the key and
         # associates a list of tracked objects. It contains all TrackedObject
@@ -249,7 +256,7 @@ class ClassTracker(object):
         # lazily, i.e. when the id is recycled by another tracked object.
         self.objects = {}
 
-        # List of (timestamp, size_of_self.objects) tuples for each snapshot.
+        # List of `Snapshot` objects.
         self.snapshots = []
 
         # Keep objects alive by holding a strong reference.
@@ -260,6 +267,17 @@ class ClassTracker(object):
 
         # Thread object responsible for background monitoring
         self._periodic_thread = None
+
+        self._stream = stream
+
+
+    @property
+    def stats(self):
+        """
+        Return a ``ConsoleStats`` instance initialized with the current state
+        of the class tracker.
+        """
+        return ConsoleStats(tracker=self, stream=self._stream)
 
 
     def _tracker(self, _observer_, _self_, *args, **kwds):
