@@ -7,7 +7,7 @@ import unittest
 
 from tempfile import mkstemp
 
-from pympler.muppy import refbrowser
+from pympler import refbrowser
 from pympler.util.compat import StringIO
 
 

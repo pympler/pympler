@@ -1,8 +1,13 @@
-.. _muppy_intro:
+.. _muppy:
 
-=====
-Intro
-=====
+===================
+Muppy Documentation
+===================
+
+Muppy tries to help developers to identity memory leaks of Python
+applications. It enables the tracking of memory usage during runtime and the
+identification of objects which are leaking. Additionally, tools are provided
+which allow to locate the source of not released objects.
 
 Muppy is (yet another) Memory Usage Profiler for Python. The focus of this
 toolset is laid on the identification of memory leaks. Let's have a look what
@@ -13,7 +18,7 @@ The muppy module
 
 Muppy allows you to get hold of all objects,
 
->>> from pympler.muppy import muppy
+>>> from pympler import muppy
 >>> all_objects = muppy.get_objects()
 >>> len(all_objects)                           # doctest: +SKIP
 19700
@@ -57,7 +62,7 @@ The summary module
 
 You can create summaries
 
->>> from pympler.muppy import summary
+>>> from pympler import summary
 >>> sum1 = summary.summarize(all_objects)
 >>> summary.print_(sum1)                          # doctest: +SKIP
                        types |   # objects |   total size
@@ -106,7 +111,7 @@ The tracker module
 Of course we don't have to do all these steps manually, instead we can use
 muppy's tracker.
 
->>> from pympler.muppy import tracker
+>>> from pympler import tracker
 >>> tr = tracker.SummaryTracker()
 >>> tr.print_diff()                               # doctest: +SKIP
                                  types |   # objects |   total size
@@ -156,7 +161,7 @@ referenced, you can use the referrers browser.
 At first let's create a root object which we then reference from a tuple and a
 list.
 
->>> from pympler.muppy import refbrowser
+>>> from pympler import refbrowser
 >>> root = "some root object"
 >>> root_ref1 = [root]
 >>> root_ref2 = (root, )
@@ -196,11 +201,11 @@ e.g. the ConsoleBrowser we just started and the current execution context.
 This console browsing is of course kind of inconvenient. Much better would be an
 InteractiveBrowser. Let's see what we got.
 
->>> from pympler.muppy import refbrowser
+>>> from pympler import refbrowser
 >>> ib = refbrowser.InteractiveBrowser(root)
 >>> ib.main()
 
-.. image:: ../images/muppy_guibrowser.png
+.. image:: images/muppy_guibrowser.png
 
 Now you can click through all referrers of the root object.
 

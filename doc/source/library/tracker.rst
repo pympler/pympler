@@ -1,10 +1,10 @@
 .. _tracker_module:
 
-=======
-tracker
-=======
+===============
+pympler.tracker
+===============
 
-.. automodule:: pympler.muppy.tracker
+.. automodule:: pympler.tracker
 
 Classes
 -------

@@ -12,5 +12,5 @@ Table of Content
 
 .. toctree::
 
-   ../muppy/tutorial
+   muppy_tutorial
    scons-classtracker

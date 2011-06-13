@@ -4,7 +4,7 @@ import unittest
 import gc
 
 import pympler.muppy
-from pympler.muppy import muppy
+from pympler import muppy
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:

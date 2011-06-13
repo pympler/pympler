@@ -1,9 +1,10 @@
 .. _summary-module:
 
-summary
-=======
+===============
+pympler.summary
+===============
 
-.. automodule:: pympler.muppy.summary
+.. automodule:: pympler.summary
 
 
 functions

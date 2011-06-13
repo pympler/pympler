@@ -1,6 +1,6 @@
 import gc
 
-from pympler.muppy import summary
+from pympler import summary
 from pympler.util import compat
 
 from inspect import isframe, stack
@@ -254,3 +254,7 @@ def _remove_duplicates(objects):
         seen[marker] = 1
         result.append(item)
     return result
+
+def print_summary():
+    """Print a summary of all known objects."""
+    summary.print_(summary.summarize(get_objects()))

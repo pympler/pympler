@@ -2,8 +2,7 @@ import gc
 import sys
 import unittest
 
-from pympler.muppy import summary
-from pympler.muppy import tracker
+from pympler import summary, tracker
 from pympler.util import compat
 
 from testutils import disable

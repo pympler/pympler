@@ -2,8 +2,7 @@ import doctest
 import sys
 import unittest
 
-import pympler.muppy
-from pympler.muppy import summary, muppy
+from pympler import summary, muppy
 
 # default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
 try:

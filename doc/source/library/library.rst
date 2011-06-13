@@ -4,6 +4,9 @@
 Library
 =======
 
+Some functions of the library work on the entire object set of your running
+Python application. Expect some time-intensive computations.
+
 Modules
 -------
 
@@ -11,14 +14,14 @@ Modules
    :maxdepth: 1
 
    ../asizeof
-   ../muppy/library/muppy
-   ../muppy/library/refbrowser
-   ../muppy/library/summary
-   ../muppy/library/tracker
    classtracker
    classtracker_stats
-   process
-   refgraph
    garbagegraph
+   muppy
+   process
+   refbrowser
+   refgraph
+   summary
+   tracker
    web
 

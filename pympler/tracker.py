@@ -12,8 +12,7 @@ one time and compare with objects from an earlier time.
 import gc
 import inspect
 
-from pympler.muppy import muppy
-from pympler.muppy import summary
+from pympler import muppy, summary
 from pympler.util import compat
 
 class SummaryTracker(object):

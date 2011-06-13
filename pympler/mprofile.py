@@ -5,12 +5,12 @@ Memory usage profiler for Python.
 import inspect
 import sys
 
-from pympler.muppy import muppy
+from pympler import muppy
 
 class MProfiler(object):
     """A memory usage profiler class.
 
-    Memory data for each function is stored as a 3-element list in the 
+    Memory data for each function is stored as a 3-element list in the
     dictionary self.memories. The index is always a codepoint (see below).
     The following are the definitions of the members:
 
@@ -18,20 +18,20 @@ class MProfiler(object):
     [1] = Minimum memory consumption when this function was measured.
     [2] = Maximum memory consumption when this function was measured.
 
-    A codepoint is a list of 3-tuple of the type 
+    A codepoint is a list of 3-tuple of the type
     (filename, functionname, linenumber). You can omit either element, which
     will cause the profiling to be triggered if any of the other criteria
     match. E.g.
     - (None, foo, None), will profile any foo function,
-    - (bar, foo, None) will profile only the foo function from the bar file, 
-    - (bar, foo, 17) will profile only line 17 of the foo function defined 
+    - (bar, foo, None) will profile only the foo function from the bar file,
+    - (bar, foo, 17) will profile only line 17 of the foo function defined
       in the file bar.
 
-    Additionally, you can define on what events you want the profiling be 
-    triggered. Possible events are defined in 
-    http://docs.python.org/lib/debugger-hooks.html. 
+    Additionally, you can define on what events you want the profiling be
+    triggered. Possible events are defined in
+    http://docs.python.org/lib/debugger-hooks.html.
 
-    If you do not define either codepoints or events, the profiler will 
+    If you do not define either codepoints or events, the profiler will
     record the memory usage in at every codepoint and event.
 
     """
@@ -45,7 +45,7 @@ class MProfiler(object):
         self.memories = {}
         self.codepoints = codepoints
         self.events = events
-    
+
     def codepoint_included(self, codepoint):
         """Check if codepoint matches any of the defined codepoints."""
         if self.codepoints == None:
@@ -59,7 +59,7 @@ class MProfiler(object):
             if not mismatch:
                 return True
         return False
-        
+
     def profile(self, frame, event, arg): #PYCHOK arg requ. to match signature
         """Profiling method used to profile matching codepoints and events."""
         if (self.events == None) or (event in self.events):

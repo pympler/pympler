@@ -1,10 +1,10 @@
 .. _refbrowser_module:
 
-==========
-refbrowser
-==========
+==================
+pympler.refbrowser
+==================
 
-.. automodule:: pympler.muppy.refbrowser
+.. automodule:: pympler.refbrowser
 
 Classes
 -------

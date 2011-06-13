@@ -1,10 +1,10 @@
 .. _muppy_module:
 
-=====
-muppy
-=====
+=============
+pympler.muppy
+=============
 
-.. automodule:: pympler.muppy.muppy
+.. automodule:: pympler.muppy
 
 Functions
 ---------

@@ -1,6 +1,6 @@
 import unittest
 
-from pympler.muppy import mprofile
+from pympler import mprofile
 
 class MProfileTest(unittest.TestCase):
 
@@ -42,7 +42,7 @@ class MProfileTest(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.makeSuite(MProfileTest,'test') 
+    suite = unittest.makeSuite(MProfileTest,'test')
     return suite
 
 if __name__ == '__main__':

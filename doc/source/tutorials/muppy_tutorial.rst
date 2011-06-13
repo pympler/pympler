@@ -49,7 +49,7 @@ have a look at the objects, invoke an action, and look at the objects again.
 
 .. code-block:: python
 
-   from pympler.muppy import tracker
+   from pympler import tracker
 
    self.memory_tracker = tracker.SummaryTracker()
    self.memory_tracker.print_diff()

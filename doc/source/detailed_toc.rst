@@ -8,7 +8,7 @@ Below you can find a complete overview of all pages of this documentation.
    intro
    asizeof
    classtracker
-   muppy/muppy
+   muppy
    library/library
    tutorials/tutorials
    related
