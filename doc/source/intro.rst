@@ -20,10 +20,10 @@ visualisation and class tracker statistics.
 Requirements
 ------------
 
-Pympler is written entirely in Python, with no dependencies to
-external libraries or projects. Pympler has been tested with Python
-2.4, 2.5, 2.6, 3.0 and 3.1. However, the Pympler web frontend does not
-work with Python 2.4.
+Pympler is written entirely in Python, with no dependencies to external
+libraries or projects. Pympler has been tested with Python 2.4, 2.5,
+2.6, 2.7, 3.1 and 3.2. However, the Pympler web frontend does not work
+with Python 2.4.
 
 Pympler is platform independent and has been tested on various Linux
 distributions (32bit and 64bit), Windows XP, Windows 7 and MacOS X.

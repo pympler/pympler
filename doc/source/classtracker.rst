@@ -1,8 +1,8 @@
 .. _classtracker:
 
-==========================
-ClassTracker Documentation
-==========================
+========================
+Tracking class instances
+========================
 
 Introduction
 ------------

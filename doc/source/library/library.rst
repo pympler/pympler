@@ -13,7 +13,7 @@ Modules
 .. toctree::
    :maxdepth: 1
 
-   ../asizeof
+   asizeof
    classtracker
    classtracker_stats
    garbagegraph

@@ -1,8 +1,8 @@
 .. _muppy:
 
-===================
-Muppy Documentation
-===================
+========================
+Identifying memory leaks
+========================
 
 Muppy tries to help developers to identity memory leaks of Python
 applications. It enables the tracking of memory usage during runtime and the
