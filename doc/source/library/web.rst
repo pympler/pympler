@@ -1,10 +1,10 @@
 .. _web:
 
-===============
-pympler.gui.web
-===============
+===========
+pympler.web
+===========
 
-.. automodule:: pympler.gui.web
+.. automodule:: pympler.web
 
 Functions
 ---------

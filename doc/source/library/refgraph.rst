@@ -1,10 +1,10 @@
 .. _graph:
    
-=================
-pympler.gui.graph
-=================
+================
+pympler.refgraph
+================
 
-.. automodule:: pympler.gui.graph
+.. automodule:: pympler.refgraph
 
 Classes
 -------

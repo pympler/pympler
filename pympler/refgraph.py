@@ -62,7 +62,7 @@ class ReferenceGraph(object):
     The ReferenceGraph illustrates the references between a collection of objects
     by rendering a directed graph. That requires that 'graphviz' is installed.
 
-    >>> from pympler.gui.graph import ReferenceGraph
+    >>> from pympler.refgraph import ReferenceGraph
     >>> a = 42
     >>> b = 'spam'
     >>> c = {a: b}
@@ -225,7 +225,7 @@ class ReferenceGraph(object):
         are used that only replicate the meta-information, but share the same
         object list ``self.objects``.
 
-        >>> from pympler.gui.graph import ReferenceGraph
+        >>> from pympler.refgraph import ReferenceGraph
         >>> a = 42
         >>> b = 'spam'
         >>> c = {a: b}

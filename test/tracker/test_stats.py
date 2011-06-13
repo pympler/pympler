@@ -301,7 +301,7 @@ class LogTestCase(unittest.TestCase):
 
         self.tracker.create_snapshot('Merge test')
 
-        from pympler.gui import charts
+        from pympler import charts
         charts.tracker_timespace('tmp/data/timespace.png', self.tracker.stats)
 
 

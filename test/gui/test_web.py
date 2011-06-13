@@ -6,7 +6,7 @@ from pympler.util.compat import Request, urlopen, URLError
 from socket import error as socket_error
 from time import sleep
 
-from pympler.gui.web import start_profiler
+from pympler.web import start_profiler
 
 
 # Use separate process for server if available. Otherwise use a thread.

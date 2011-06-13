@@ -1,8 +1,8 @@
 .. _garbage:
    
-===================
-pympler.gui.garbage
-===================
+====================
+pympler.garbagegraph
+====================
 
 Garbage occurs if objects refer too each other in a circular fashion. Such
 reference cycles cannot be freed automatically and must be collected by the
@@ -14,7 +14,7 @@ collector.
 Reference cycles can be visualized with the help of 
 `graphviz <http://www.graphviz.org>`_.
 
-.. automodule:: pympler.gui.garbage
+.. automodule:: pympler.garbagegraph
 
 Classes
 -------

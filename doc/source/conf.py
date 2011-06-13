@@ -96,15 +96,23 @@ html_theme_options = {
     'sidebarbgcolor'   : '#837B47', #'#ADB85F',
     'sidebarlinkcolor' : '#E5EDB8',
     'bgcolor'          : '#FFFFFF',
-    #'linkcolor'        : '#300018',
     'relbarbgcolor'    : '#5A3D31',
     'codebgcolor'      : '#E5EDB8', #'#837B47',
 }
 
-# Color palettes:
-# "fresh cut day" AEE239, 8FBE00, F9F2E7, 00A8C6, 40C0CB
-# "mystery machine" 554236, F1EFA5, 60B99A, D3CE3D, F77825
-# "wordless" FFFFFF, CBE86B, F2E9E1, 1C140D
+"""
+# Colors derived from palette "ChampaigneMood"
+html_theme_options = {
+    'relbarbgcolor'    : '#403A26',
+    'headbgcolor'      : '#F1F7CD',
+    'sidebarbgcolor'   : '#81876C',
+    'sidebarlinkcolor' : '#F1F7CD',
+    'codebgcolor'      : '#F1F7CD',
+    'bgcolor'          : '#FFFFFF',
+    'headtextcolor'    : '#000000',
+    'headlinkcolor'    : '#000000',
+}
+"""
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

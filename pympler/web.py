@@ -7,7 +7,7 @@ web framework. Bottle is packaged with Pympler.
 The web server can be invoked almost as easily as setting a breakpoint using
 *pdb*::
 
-    from pympler.gui.web import start_profiler
+    from pympler.web import start_profiler
     start_profiler()
 
 Calling ``start_profiler`` suspends the current thread and executes the Pympler
@@ -35,8 +35,8 @@ from wsgiref.simple_server import make_server
 
 from pympler import DATA_PATH
 from pympler import asizeof
-from pympler.gui import charts
-from pympler.gui.garbage import GarbageGraph
+from pympler import charts
+from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 from pympler.tracker.stats import Stats
 

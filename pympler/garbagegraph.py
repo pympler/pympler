@@ -1,9 +1,12 @@
-from pympler.gui.graph import ReferenceGraph
+
+from pympler.refgraph import ReferenceGraph
 from pympler.util.stringutils import trunc, pp
+
 import sys
 import gc
 
 __all__ = ['GarbageGraph', 'start_debug_garbage', 'end_debug_garbage']
+
 
 class GarbageGraph(ReferenceGraph):
     """
@@ -18,7 +21,7 @@ class GarbageGraph(ReferenceGraph):
     It is recommended to disable the garbage collector when using the
     ``GarbageGraph``.
 
-    >>> from pympler.gui.garbage import GarbageGraph, start_debug_garbage
+    >>> from pympler.garbagegraph import GarbageGraph, start_debug_garbage
     >>> start_debug_garbage()
     >>> l = []
     >>> l.append(l)

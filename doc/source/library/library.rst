@@ -18,7 +18,7 @@ Modules
    tracker/classes
    tracker/stats
    process
-   gui/graph
-   gui/garbage
-   gui/web
+   refgraph
+   garbagegraph
+   web
 

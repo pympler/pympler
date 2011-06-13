@@ -3,8 +3,10 @@ import gc
 import os
 import sys
 import unittest
-from pympler.gui.garbage import *
-from pympler.gui.graph import _Edge
+
+from pympler.garbagegraph import GarbageGraph
+from pympler.refgraph import _Edge
+
 
 class Foo:
     def __init__(self):
@@ -26,6 +28,7 @@ class BarNew(FooNew):
 class Enemy(object):
     def __del__(self):
         pass
+
 
 class GarbageTestCase(unittest.TestCase):
     def setUp(self):
