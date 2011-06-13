@@ -57,7 +57,12 @@ Usage Examples
 
 Aaron is curious how much memory certain Python objects consume.  He
 uses one of the :ref:`asizeof <asizeof>` functions to get the size of
-these objects and all associated referents.
+these objects and all associated referents::
+
+    >>> from pympler.asizeof import asizeof
+    >>> obj = [1, 2, (3, 4), 'text']
+    >>> asizeof(obj)
+    176
 
 Peter is trying to compare different implementations of a new parser
 module.  For each implementation, he uses the :ref:`asizeof <asizeof>`

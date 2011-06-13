@@ -1,11 +1,12 @@
 
-import pympler.asizeof as asizeof
+import gc
+import os
 import sys
 import unittest
-import gc
 import weakref
 
-from os import linesep
+import pympler.asizeof as asizeof
+
 from inspect import stack
 
 if hasattr(sys, 'getsizeof'):
@@ -59,6 +60,29 @@ class ThinFoo(object):
 class OldFoo:
     def __init__(self, content):
         self.odata = content
+
+
+class PseudoDict(object):
+    '''Dict-like object for inferring dictionaries.'''
+
+    def __len__(self):
+        return 0
+
+    def get(self, *args, **kwargs):
+        return None
+
+    def has_key(self, *args, **kwargs):
+        return False
+
+    def items(self):
+        return []
+
+    def keys(self):
+        return []
+
+    def values(self):
+        return []
+
 
 class TypesTest(unittest.TestCase):
 
@@ -115,6 +139,81 @@ class TypesTest(unittest.TestCase):
         s3 = asizeof.asizeof(ThinFoo("short"))
         self.assert_(s3 <= s1)
 
+    def test_special_objects(self):
+        '''Test sizing special objects.
+        '''
+        module_size = asizeof.asizeof(unittest)
+        self.assertTrue(module_size > 0, module_size)
+
+    def test_enumerate(self):
+        '''Test sizing enumerators.
+        '''
+        enum = enumerate([1,2,3])
+        enum_size = asizeof.asizeof(enum)
+        self.assertTrue(enum_size > 0, enum_size)
+        refs = asizeof.named_refs(enum)
+        ref_names = set([name for name, _ in refs])
+        self.assertTrue(set(['__doc__']) <= ref_names)
+
+    def test_weakref(self):
+        '''Test sizing weak references.
+        '''
+        alive = Foo('alive')
+        aref = weakref.ref(alive)
+        dead = Foo('dead')
+        dref = weakref.ref(dead)
+        del dead
+        aref_size = asizeof.asizeof(aref)
+        self.assertTrue(aref_size > asizeof.asizeof(alive), aref_size)
+        refs = asizeof.named_refs(aref)
+        # TODO: Should a weakref return ('ref', obj)?
+        dref_size = asizeof.asizeof(dref)
+        self.assertTrue(dref_size > 0, dref_size)
+        self.assertNotEqual(dref_size, aref_size)
+        refs = asizeof.named_refs(dref)
+
+    def test_os_stat(self):
+        '''Test sizing os.stat and os.statvfs objects.
+        '''
+        try:
+            stat = os.stat(__file__)
+        except Exception:
+            pass
+        else:
+            stat_size = asizeof.asizeof(stat)
+            self.assertTrue(stat_size > 0, stat_size)
+            refs = asizeof.named_refs(stat)
+            ref_names = set([name for name, _ in refs])
+            self.assertTrue(set(['st_mode', 'st_size', 'st_mtime']) <= ref_names)
+
+        try:
+            stat = os.statvfs(__file__)
+        except Exception:
+            pass
+        else:
+            stat_size = asizeof.asizeof(stat)
+            self.assertTrue(stat_size > 0, stat_size)
+            refs = asizeof.named_refs(stat)
+            ref_names = set([name for name, _ in refs])
+            self.assertTrue(set(['f_bsize', 'f_blocks']) <= ref_names)
+
+    def test_exception(self):
+        '''Test sizing exceptions.
+        '''
+        try:
+            raise Exception("Test exception-sizing.")
+        except Exception:
+            etype, exc, etb = sys.exc_info()
+            try:
+                tb_size = asizeof.asizeof(etb)
+                self.assertTrue(tb_size > 0, tb_size)
+                refs = asizeof.named_refs(etb)
+                ref_names = set([name for name, _ in refs])
+                self.assertTrue(set(['tb_frame', 'tb_next']) <= ref_names)
+                ex_size = asizeof.asizeof(etype, exc)
+                self.assertTrue(ex_size > 0, ex_size)
+            finally:
+                del etb
 
     def test_ignore_frame(self):
         '''Test whether reference cycles are created
@@ -143,6 +242,10 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(len(refs), 1, refs)
         i = 42
         self.assertEqual(refs[0].size, asizeof.asizeof(i), refs[0].size)
+        # Size multiple objects
+        sizer = asizeof.Asizer()
+        sized_objs = sizer.asized(Foo(3), Foo(4), detail=2)
+        self.assertEqual(len(sized_objs), 2)
 
     def test_asizesof(self):
         '''Test asizeof.asizesof()
@@ -159,7 +262,12 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(sizes, rsizes, (sizes, rsizes))
         objs.reverse()
         isizes = [asizeof.asizeof(obj) for obj in objs]
-        self.assertEqual(sizes, isizes, (sizes, isizes))
+        self.assertEqual(sizes, isizes)
+        sizer = asizeof.Asizer()
+        asizer_sizes = sizer.asizesof(*objs)
+        self.assertEqual(list(asizer_sizes), sizes)
+        code_sizes = sizer.asizesof(*objs, **dict(code=True))
+        self.failIfEqual(list(code_sizes), sizes)
 
     def test_asizeof(self):
         '''Test asizeof.asizeof()
@@ -173,6 +281,18 @@ class FunctionTest(unittest.TestCase):
         for sz in sizes:
             sum += sz
         self.assertEqual(total, sum, (total, sum))
+
+    def test_asizer_limit(self):
+        '''Test limit setting for Asizer.
+        '''
+        objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
+        sizer = [asizeof.Asizer() for _ in range(4)]
+        for limit, asizer in enumerate(sizer):
+            asizer.asizeof(objs, limit=limit)
+        limit_sizes = [asizer.total for asizer in sizer]
+        self.assertTrue(limit_sizes[0] < limit_sizes[1], limit_sizes)
+        self.assertTrue(limit_sizes[1] < limit_sizes[2], limit_sizes)
+        self.assertTrue(limit_sizes[2] < limit_sizes[3], limit_sizes)
 
     def test_basicsize(self):
         '''Test asizeof.basicsize()
@@ -242,10 +362,35 @@ class FunctionTest(unittest.TestCase):
         self.assert_(42 in refs, refs)
         self.assert_(('tdata',) in refs, refs) # slots
 
+    def test_exclude_types(self):
+        '''Test Asizer.exclude_types().
+        '''
+        sizer = asizeof.Asizer()
+        sizer.exclude_types(Foo)
+        self.assertEqual(sizer.asizeof(Foo('ignored')), 0)
+
+    def test_asizer(self):
+        '''Test Asizer properties.
+        '''
+        sizer = asizeof.Asizer()
+        obj = 'unladen swallow'
+        mutable = [obj]
+        sizer.asizeof(obj)
+        self.assertEqual(sizer.total, asizeof.asizeof(obj))
+        sizer.asizeof(mutable, mutable)
+        self.assertEqual(sizer.duplicate, 1)
+        self.assertEqual(sizer.total, asizeof.asizeof(obj, mutable))
+
     def test_adict(self):
         '''Test asizeof.adict()
         '''
-        # TODO
+        pdict = PseudoDict()
+        size1 = asizeof.asizeof(pdict)
+        asizeof.adict(PseudoDict)
+        size2 = asizeof.asizeof(pdict)
+        # TODO: come up with useful assertions
+        self.assertEqual(size1, size2)
+
 
 def _repr(o):
     return repr(o)
@@ -282,7 +427,7 @@ class AsizeofDemos(unittest.TestCase):
     def _print_functions(self, obj, name=None, align=8, detail=MAX, code=False, limit=MAX,
                               opt='', **unused):
         if name:
-            self._printf('%sasizeof functions for %s ... %s', linesep, name, opt)
+            self._printf('%sasizeof functions for %s ... %s', os.linesep, name, opt)
         self._printf('%s(): %s', ' basicsize', asizeof.basicsize(obj))
         self._printf('%s(): %s', ' itemsize',  asizeof.itemsize(obj))
         self._printf('%s(): %r', ' leng',      asizeof.leng(obj))
@@ -322,12 +467,12 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_all(self):
         '''Test all=True example'''
-        self._printf('%sasizeof(limit=%s, code=%s, %s) ... %s', linesep, 'self.MAX', True, 'all=True', '-all')
+        self._printf('%sasizeof(limit=%s, code=%s, %s) ... %s', os.linesep, 'self.MAX', True, 'all=True', '-all')
         asizeof.asizeof(limit=self.MAX, code=True, stats=self.MAX, all=True)
 
     def test_basic(self):
         '''Test basic examples'''
-        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<basic_objects>', '((0, False), (MAX, False), (MAX, True))', '-basic')
+        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', os.linesep, '<basic_objects>', '((0, False), (MAX, False), (MAX, True))', '-basic')
         for o in (None, True, False,
                   1.0, 1.0e100, 1024, 1000000000,
                   '', 'a', 'abcdefg',
@@ -336,7 +481,7 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_class(self):
         '''Test class and instance examples'''
-        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<non-callable>', '((0, False), (MAX, False), (MAX, True))', '-class')
+        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', os.linesep, '<non-callable>', '((0, False), (MAX, False), (MAX, True))', '-class')
         for o in (self.C(), self.C.__dict__,
                   self.D(), self.D.__dict__,
                   self.E(), self.E.__dict__,
@@ -349,7 +494,7 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_code(self):
         '''Test code examples'''
-        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<callable>', '((0, False), (MAX, False), (MAX, True))', '-code')
+        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', os.linesep, '<callable>', '((0, False), (MAX, False), (MAX, True))', '-code')
         for o in (self.C, self.D, self.E, self.P, self.S, self.T,  # classes are callable
                   type,
                  asizeof._co_refs, asizeof._dict_refs, asizeof._inst_refs, asizeof._len_int, asizeof._seq_refs, lambda x: x,
@@ -359,7 +504,7 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_dict(self):
         '''Test dict and UserDict examples'''
-        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<Dicts>', '((0, False), (MAX, False), (MAX, True))', '-dict')
+        self._printf('%sasizeof(%s) for (limit, code) in %s ... %s', os.linesep, '<Dicts>', '((0, False), (MAX, False), (MAX, True))', '-dict')
         try:
             import UserDict  # no UserDict in 3.0
             for o in (UserDict.IterableUserDict(), UserDict.UserDict()):
@@ -385,7 +530,7 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_generator(self):
         '''Test generator examples'''
-        self._printf('%sasizeof(%s, code=%s) ... %s', linesep, '<generator>', True, '-gen[erator]')
+        self._printf('%sasizeof(%s, code=%s) ... %s', os.linesep, '<generator>', True, '-gen[erator]')
         def gen(x):
             i = 0
             while i < x:
@@ -399,11 +544,11 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_globals(self):
         '''Test globals examples'''
-        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'globals()', 'MAX', False, '-glob[als]')
+        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', os.linesep, 'globals()', 'MAX', False, '-glob[als]')
         asizeof.asizeof(globals(), limit=self.MAX, code=False, stats=1)
         self._print_functions(globals(), 'globals()', opt='-glob[als]')
 
-        self._printf('%sasizesof(%s, limit=%s, code=%s) ... %s', linesep, 'globals(), locals()', 'MAX', False, '-glob[als]')
+        self._printf('%sasizesof(%s, limit=%s, code=%s) ... %s', os.linesep, 'globals(), locals()', 'MAX', False, '-glob[als]')
         asizeof.asizesof(globals(), locals(), limit=self.MAX, code=False, stats=1)
         asizeof.asized(globals(), align=0, detail=self.MAX, limit=self.MAX, code=False, stats=1)
 
@@ -418,7 +563,7 @@ class AsizeofDemos(unittest.TestCase):
             _L17d = 1 << 256
             t = '<int>'
 
-        self._printf('%sasizeof(%s, align=%s, limit=%s) ... %s', linesep, t, 0, 0, '-int')
+        self._printf('%sasizeof(%s, align=%s, limit=%s) ... %s', os.linesep, t, 0, 0, '-int')
         for o in (1024, 1000000000,
                   1.0, 1.0e100, 1024, 1000000000,
                   self.MAX, 1 << 32, _L5d, -_L5d, _L17d, -_L17d):
@@ -427,7 +572,7 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_iterator(self):
         '''Test iterator examples'''
-        self._printf('%sasizeof(%s, code=%s) ... %s', linesep, '<iterator>', False, '-iter[ator]')
+        self._printf('%sasizeof(%s, code=%s) ... %s', os.linesep, '<iterator>', False, '-iter[ator]')
         o = iter('0123456789')
         e = iter('')
         d = iter({})
@@ -441,14 +586,14 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_locals(self):
         '''Test locals examples'''
-        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'locals()', 'MAX', False, '-loc[als]')
+        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', os.linesep, 'locals()', 'MAX', False, '-loc[als]')
         asizeof.asizeof(locals(), limit=self.MAX, code=False, stats=1)
         self._print_functions(locals(), 'locals()', opt='-loc[als]')
 
     def test_pairs(self):
         '''Test key pair examples'''
          # <http://jjinux.blogspot.com/2008/08/python-memory-conservation-tip.html>
-        self._printf('%sasizeof(%s) vs asizeof(%s) ... %s', linesep, 'dict[i][j]', 'dict[(i,j)]', '-pair[s]')
+        self._printf('%sasizeof(%s) vs asizeof(%s) ... %s', os.linesep, 'dict[i][j]', 'dict[(i,j)]', '-pair[s]')
         n = m = 200
 
         p = {}  # [i][j]
@@ -465,11 +610,11 @@ class AsizeofDemos(unittest.TestCase):
                 t[(i,j)] = None
         t = asizeof.asizeof(t, stats=1)
 
-        self._printf('%sasizeof(dict[i][j]) is %s of asizeof(dict[(i,j)])', linesep, asizeof._p100(p, t))
+        self._printf('%sasizeof(dict[i][j]) is %s of asizeof(dict[(i,j)])', os.linesep, asizeof._p100(p, t))
 
     def test_slots(self):
         '''Test slots examples'''
-        self._printf('%sasizeof(%s, code=%s) ... %s', linesep, '<__slots__>', False, '-slots')
+        self._printf('%sasizeof(%s, code=%s) ... %s', os.linesep, '<__slots__>', False, '-slots')
         class Old:
             pass  # m = None
         class New(object):
@@ -502,13 +647,13 @@ class AsizeofDemos(unittest.TestCase):
 
     def test_stack(self):
         '''Test stack examples'''
-        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'stack(MAX)[1:]', 'MAX', False, '')
+        self._printf('%sasizeof(%s, limit=%s, code=%s) ... %s', os.linesep, 'stack(MAX)[1:]', 'MAX', False, '')
         asizeof.asizeof(stack(self.MAX)[1:], limit=self.MAX, code=False, stats=1)
         self._print_functions(stack(self.MAX)[1:], 'stack(MAX)', opt='-stack')
 
     def test_sys_mods(self):
         '''Test sys.modules examples'''
-        self._printf('%sasizeof(limit=%s, code=%s, *%s) ... %s', linesep, 'MAX', False, 'sys.modules.values()', '-sys')
+        self._printf('%sasizeof(limit=%s, code=%s, *%s) ... %s', os.linesep, 'MAX', False, 'sys.modules.values()', '-sys')
         asizeof.asizeof(limit=self.MAX, code=False, stats=1, *sys.modules.values())
         self._print_functions(sys.modules, 'sys.modules', opt='-sys')
 
@@ -516,7 +661,7 @@ class AsizeofDemos(unittest.TestCase):
         '''Test showing all basic _typedefs'''
         t = len(asizeof._typedefs)
         w = len(str(t)) * ' '
-        self._printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', linesep, t, '-type[def]s')
+        self._printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', os.linesep, t, '-type[def]s')
         for k, v in sorted([(asizeof._prepr(k), v) for k, v in asizeof._items(asizeof._typedefs)]):  # [] for Python 2.2
             s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
             self._printf('%s %s: %s', w, k, s)

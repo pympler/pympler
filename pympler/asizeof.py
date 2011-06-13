@@ -190,7 +190,7 @@ def _calcsize(fmt):
     '''struct.calcsize() handling 'z' for Py_ssize_t.
     '''
      # sizeof(long) != sizeof(ssize_t) on LLP64
-    if _sizeof_Clong < _sizeof_Cvoidp:
+    if _sizeof_Clong < _sizeof_Cvoidp: # pragma: no coverage
         z = 'P'
     else:
         z = 'L'
@@ -209,7 +209,7 @@ try:  # C typedef digit for multi-precision int (or long)
     _sizeof_Cdigit = long.__itemsize__
 except NameError:  # no long in Python 3.0
     _sizeof_Cdigit = int.__itemsize__
-if _sizeof_Cdigit < 2:
+if _sizeof_Cdigit < 2: # pragma: no coverage
     raise AssertionError('sizeof(%s) bad: %d' % ('digit', _sizeof_Cdigit))
 
 try:  # sizeof(unicode_char)
@@ -219,7 +219,7 @@ except NameError:  # no unicode() in Python 3.0
 u = u.encode('unicode-internal')  # see .../Lib/test/test_sys.py
 _sizeof_Cunicode = len(u)
 del u
-if sys.maxunicode >= (1 << (_sizeof_Cunicode << 3)):
+if sys.maxunicode >= (1 << (_sizeof_Cunicode << 3)): # pragma: no coverage
     raise AssertionError('sizeof(%s) bad: %d' % ('unicode', _sizeof_Cunicode))
 
 try:  # size of GC header, sizeof(PyGC_Head)
@@ -233,7 +233,7 @@ except (ImportError, AttributeError):  # sizeof(PyGC_Head)
 del t
 
  # size of refcounts (Python debug build only)
-if hasattr(sys, 'gettotalrefcount'):
+if hasattr(sys, 'gettotalrefcount'): # pragma: no coverage
     _sizeof_Crefcounts = _calcsize('2z')
 else:
     _sizeof_Crefcounts =  0

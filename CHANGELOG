@@ -2,10 +2,11 @@ Release 0.2
 ===========
 
 The second release is one of several steps to better integrate the different
-sub-systems of pympler. Pympler 0.2 introduces a web interface to facilitate
-memory profiling. Pympler now fully supports Python 3.x. This release also adds
-several modules replacing the *Heapmonitor* module with the new *class tracker*
-facility.
+sub-systems of Pympler. All modules now directly reside in the pympler namespace
+which simplifies the import of Pympler modules.  Pympler 0.2 introduces a web
+interface to facilitate memory profiling.  Pympler now fully supports Python
+3.x. This release also adds several modules replacing the *Heapmonitor* module
+with the new *class tracker* facility.
 
   * Introduce web frontend
 
@@ -29,4 +30,4 @@ you want to give us, wishes, bug reports, or feature requests please send them
 to **pympler-dev@googlegroups.com**.
 
 
-* First Public Release.
+  * First Public Release.
