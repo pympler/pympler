@@ -7,7 +7,7 @@ ClassTracker Documentation
 Introduction
 ------------
 
-.. automodule:: pympler.tracker.classes
+.. automodule:: pympler.classtracker
 
 Usage
 -----
@@ -41,7 +41,7 @@ to track. Then spots of interest for snapshot creation have to be identified.
 Finally, the gathered data can be printed or saved::
     
     >>> factory = create_factory()
-    >>> from pympler.tracker import ClassTracker
+    >>> from pympler.classtracker import ClassTracker
     >>> tracker = ClassTracker()
     >>> tracker.track_object(factory)
     >>> tracker.track_class(Employee)
@@ -71,7 +71,7 @@ size of the object is sampled when taking a snapshot.
 
 To track the size of an individual object::
     
-    from pympler.tracker import ClassTracker
+    from pympler.classtracker import ClassTracker
     tracker = ClassTracker()
     obj = MyClass()
     tracker.track_object(obj)
@@ -192,7 +192,7 @@ the output noise to a manageable magnitude.
 The following example reads the dumped data and prints the ten largest Node
 objects to the standard output::
 
-    from pympler.tracker.stats import ConsoleStats
+    from pympler.classtracker_stats import ConsoleStats
 
     stats = ConsoleStats()
     stats.load('profile.dat')
@@ -205,12 +205,12 @@ The `ClassTracker` data can also be emitted in HTML format together with a
 number of charts (needs python-matplotlib). HTML statistics can be emitted
 using the *HtmlStats* class::
 
-    from pympler.tracker.stats import HtmlStats
+    from pympler.classtracker_stats import HtmlStats
     HtmlStats(tracker=tracker).create_html('profile.html')
 
 However, you can also reprocess a previously generated dump::
 
-    from pympler.tracker.stats import HtmlStats
+    from pympler.classtracker_stats import HtmlStats
 
     stats = HtmlStats(filename='profile.dat')
     stats.create_html('profile.html')
@@ -242,7 +242,7 @@ during its lifetime, see the following example::
     class A():
       pass
 
-    from pympler.tracker import ClassTracker
+    from pympler.classtracker import ClassTracker
     tracker = ClassTracker()
 
     a = A()

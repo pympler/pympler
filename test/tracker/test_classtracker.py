@@ -3,7 +3,7 @@ import sys
 import time
 import unittest
 
-from pympler.tracker import ClassTracker
+from pympler.classtracker import ClassTracker
 import pympler.process
 
 

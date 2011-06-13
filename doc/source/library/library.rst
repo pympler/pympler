@@ -15,8 +15,8 @@ Modules
    ../muppy/library/refbrowser
    ../muppy/library/summary
    ../muppy/library/tracker
-   tracker/classes
-   tracker/stats
+   classtracker
+   classtracker_stats
    process
    refgraph
    garbagegraph

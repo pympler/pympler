@@ -11,7 +11,7 @@ from threading import Thread, Lock
 from time import sleep, time
 from weakref import ref as weakref_ref
 
-from pympler.tracker.stats import ConsoleStats
+from pympler.classtracker_stats import ConsoleStats
 from pympler.util.compat import instancemethod
 from pympler.util.stringutils import safe_repr
 

@@ -8,8 +8,8 @@ from tempfile import mkstemp
 
 from pympler.util.compat import StringIO, BytesIO
 
-from pympler.tracker import ClassTracker
-from pympler.tracker.stats import *
+from pympler.classtracker import ClassTracker
+from pympler.classtracker_stats import ConsoleStats, HtmlStats, Stats
 from pympler.asizeof import Asizer, asizeof
 
 

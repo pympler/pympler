@@ -24,8 +24,7 @@ shall be tracked, taking snapshots, and printing the gathered profile data.
 SCons has a simple memory profiling tool that we will override. The SCons
 MemStats class provides all we need::
   
-    from pympler.tracker import ClassTracker
-    from pympler.tracker.stats import ConsoleStats
+    from pympler.classtracker import ClassTracker
 
     class MemStats(Stats):
         def __init__(self):
@@ -38,7 +37,7 @@ MemStats class provides all we need::
         def do_append(self, label):
             self.tracker.create_snapshot(label)
         def do_print(self):
-            stats = ConsoleStats(tracker=self.tracker)
+            stats = self.tracker.stats
             stats.print_summary()
             stats.dump_stats('pympler.stats')
 
@@ -90,7 +89,7 @@ instances of the individual tracked classes. A more appealing and well arranged
 representation of the data can be generated with the ``HtmlStats`` class. The
 dump generated previously can be loaded and a set of HTML pages can be emitted::
 
-    from pympler.tracker.stats import HtmlStats
+    from pympler.classtracker_stats import HtmlStats
 
     stats = HtmlStats()
     stats.load_stats('pympler.stats')

@@ -38,7 +38,6 @@ from pympler import asizeof
 from pympler import charts
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
-from pympler.tracker.stats import Stats
 
 from pympler.util.compat import bottle
 
@@ -315,7 +314,7 @@ def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
     tmpdir = mkdtemp(prefix='pympler')
 
     if tracker and not stats:
-        cache.stats = Stats(tracker=tracker)
+        cache.stats = tracker.stats
     else:
         cache.stats = stats
     try:
