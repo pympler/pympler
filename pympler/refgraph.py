@@ -20,7 +20,7 @@ __all__ = ['ReferenceGraph']
 # ValueError if stdin/stdout/stderr is piped:
 # http://code.google.com/p/pympler/issues/detail?id=28#c1
 popen_flags = {}
-if platform not in ['win32']:
+if platform not in ['win32']: # pragma: no branch
     popen_flags['close_fds'] = True
 
 
@@ -132,6 +132,7 @@ class ReferenceGraph(object):
             reduced.metadata = []
             reduced.edges = []
             self.num_in_cycles = reduced._reduce_to_cycles()
+            reduced.num_in_cycles = self.num_in_cycles
             if self.num_in_cycles:
                 reduced._get_edges()
                 reduced._annotate_objects()
@@ -277,12 +278,9 @@ class ReferenceGraph(object):
             md.id = id(obj)
             try:
                 md.type = obj.__class__.__name__
-            except (AttributeError, ReferenceError):
-                md.type = type(obj)
-            try:
-                md.str = safe_repr(obj, clip=128)
-            except ReferenceError:
-                md.str = ''
+            except (AttributeError, ReferenceError): # pragma: no cover
+                md.type = type(obj).__name__
+            md.str = safe_repr(obj, clip=128)
             self.metadata.append(md)
 
 

@@ -12,3 +12,4 @@ exclude_lines =
     except .*NameError
     except AttributeError.*missing
     if __name__ == '__main__'
+    def __repr__

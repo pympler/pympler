@@ -44,18 +44,22 @@ class GarbageGraph(ReferenceGraph):
 
         ReferenceGraph.__init__(self, gc.garbage, reduce)
 
-    def print_stats(self, fobj=sys.stdout):
+    def print_stats(self, stream=None):
         """
         Log annotated garbage objects to console or file.
+
+        :param stream: open file, uses sys.stdout if not given
         """
+        if not stream: # pragma: no cover
+            stream = sys.stdout
         self.metadata.sort(key=lambda x: x.size)
         self.metadata.reverse()
-        fobj.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
+        stream.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
         for g in self.metadata:
-            fobj.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, trunc(g.type, 12),
+            stream.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, trunc(g.type, 12),
                 trunc(g.str, 46)))
-        fobj.write('Garbage: %8d collected objects (%6d in cycles): %12s\n' % \
-            (self.count, self.count_in_cycles, pp(self.total_size)))
+        stream.write('Garbage: %8d collected objects (%s in cycles): %12s\n' % \
+            (self.count, self.num_in_cycles, pp(self.total_size)))
 
 
 def start_debug_garbage():

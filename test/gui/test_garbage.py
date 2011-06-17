@@ -1,11 +1,13 @@
 
 import gc
+import inspect
 import os
 import sys
 import unittest
 
-from pympler.garbagegraph import GarbageGraph
+from pympler.garbagegraph import GarbageGraph, start_debug_garbage, end_debug_garbage
 from pympler.refgraph import _Edge
+from pympler.util.compat import StringIO
 
 
 class Foo:
@@ -32,14 +34,19 @@ class Enemy(object):
 
 class GarbageTestCase(unittest.TestCase):
     def setUp(self):
-        gc.collect()
-        gc.disable()
+        start_debug_garbage()
         gc.set_debug(gc.DEBUG_SAVEALL)
 
     def tearDown(self):
-        gc.set_debug(0)
+        end_debug_garbage()
         del gc.garbage[:]
-        gc.enable()
+
+    def test_empty(self):
+        """Test empty garbage graph.
+        """
+        gb = GarbageGraph()
+        self.assertEqual(gb.count, 0)
+        self.assertEqual(gb.render('garbage.eps'), False)
 
     def test_findgarbage(self):
         """Test garbage annotation.
@@ -75,6 +82,8 @@ class GarbageTestCase(unittest.TestCase):
         self.assert_(gbar.size > 0, gbar.size)
         self.assertNotEqual(gbar.str, '')
 
+
+
     def test_split(self):
         """Test splitting into subgraphs.
         """
@@ -98,11 +107,12 @@ class GarbageTestCase(unittest.TestCase):
         del l
 
         gb = GarbageGraph()
-        subs = list(gb.split())
+        subs = gb.split_and_sort()
         self.assertEqual(len(subs), 2)
 
-        fbg = [x for x in subs if x.count == 4][0]
-        lig = [x for x in subs if x.count == 1][0]
+        self.assertEqual(subs[0].count, 4)
+        self.assertEqual(subs[1].count, 1)
+        fbg, lig = subs
 
         self.assert_(isinstance(fbg, GarbageGraph))
         self.assert_(isinstance(lig, GarbageGraph))
@@ -117,7 +127,7 @@ class GarbageTestCase(unittest.TestCase):
         self.assert_(_Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges)
         self.assert_(_Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges)
 
-    def test_noprune(self):
+    def test_prune(self):
         """Test pruning of reference graph.
         """
         foo = Foo()
@@ -132,7 +142,7 @@ class GarbageTestCase(unittest.TestCase):
         del bar
 
         gb1 = GarbageGraph()
-        gb2 = GarbageGraph(reduce=1)
+        gb2 = GarbageGraph(reduce=True)
 
         self.assertEqual(gb1.count, gb2.count)
         self.assert_(len(gb1.metadata) > len(gb2.metadata))
@@ -141,6 +151,21 @@ class GarbageTestCase(unittest.TestCase):
         self.assertEqual(len(gbar), 1)
         gbar = [x for x in gb2.metadata if x.id == idb]
         self.assertEqual(len(gbar), 0)
+
+        full = StringIO()
+        gb1.print_stats(stream=full)
+        reduced = StringIO()
+        gb2.print_stats(stream=reduced)
+        lazy_reduce = StringIO()
+        gb1_pruned = gb1.reduce_to_cycles()
+        self.assertTrue(gb1_pruned is gb1.reduce_to_cycles())
+        gb1_pruned.print_stats(stream=lazy_reduce)
+        self.assertEqual(lazy_reduce.getvalue(), reduced.getvalue())
+
+        self.assertTrue('Foo' in reduced.getvalue())
+        self.assertFalse('Bar' in reduced.getvalue())
+        self.assertTrue('Foo' in full.getvalue())
+        self.assertTrue('Bar' in full.getvalue())
 
     def test_edges_old(self):
         """Test referent identification for old-style classes.
@@ -212,6 +237,8 @@ class GarbageTestCase(unittest.TestCase):
         genemy = [x for x in gb.metadata if x.id == idenemy]
         self.assertEqual(len(genemy), 1)
 
+        self.assertEqual(gb.reduce_to_cycles(), None)
+
     def test_write_graph(self):
         """Test writing graph as text.
         """
@@ -229,7 +256,12 @@ class GarbageTestCase(unittest.TestCase):
         """
         foo = Foo()
         foo.parent = foo
+        foo.constructor = foo.__init__
 
+        def leak_frame():
+            frame = inspect.currentframe()
+
+        leak_frame()
         del foo
 
         g = GarbageGraph()
