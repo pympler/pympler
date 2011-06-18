@@ -12,7 +12,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
 
 <h2>Coalesced Referents per Snapshot</h2>
 
-%for snapshot in stats.footprint:
+%for snapshot in stats.snapshots:
     %if clsname in snapshot.classes:
         %merged = snapshot.classes[clsname]['merged']
         <h3>Snapshot: {{snapshot.desc}}</h3>
@@ -53,7 +53,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
                 </td>
             </tr>
         %end
-        %for (timestamp, size) in tobj.footprint:
+        %for (timestamp, size) in tobj.snapshots:
             <tr>
             <td>{{pp_timestamp(timestamp)}}</td>
             %if not size.refs:

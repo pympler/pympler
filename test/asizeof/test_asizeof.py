@@ -153,7 +153,7 @@ class TypesTest(unittest.TestCase):
         self.assertTrue(enum_size > 0, enum_size)
         refs = asizeof.named_refs(enum)
         ref_names = set([name for name, _ in refs])
-        self.assertTrue(set(['__doc__']) <= ref_names)
+        self.assertTrue(set(['__doc__']) <= ref_names, ref_names)
 
     def test_weakref(self):
         '''Test sizing weak references.
@@ -184,7 +184,7 @@ class TypesTest(unittest.TestCase):
             self.assertTrue(stat_size > 0, stat_size)
             refs = asizeof.named_refs(stat)
             ref_names = set([name for name, _ in refs])
-            self.assertTrue(set(['st_mode', 'st_size', 'st_mtime']) <= ref_names)
+            self.assertTrue(set(['st_mode', 'st_size', 'st_mtime']) <= ref_names, ref_names)
 
         try:
             stat = os.statvfs(__file__)
@@ -195,7 +195,7 @@ class TypesTest(unittest.TestCase):
             self.assertTrue(stat_size > 0, stat_size)
             refs = asizeof.named_refs(stat)
             ref_names = set([name for name, _ in refs])
-            self.assertTrue(set(['f_bsize', 'f_blocks']) <= ref_names)
+            self.assertTrue(set(['f_bsize', 'f_blocks']) <= ref_names, ref_names)
 
     def test_exception(self):
         '''Test sizing exceptions.
@@ -209,7 +209,7 @@ class TypesTest(unittest.TestCase):
                 self.assertTrue(tb_size > 0, tb_size)
                 refs = asizeof.named_refs(etb)
                 ref_names = set([name for name, _ in refs])
-                self.assertTrue(set(['tb_frame', 'tb_next']) <= ref_names)
+                self.assertTrue(set(['tb_frame', 'tb_next']) <= ref_names, ref_names)
                 ex_size = asizeof.asizeof(etype, exc)
                 self.assertTrue(ex_size > 0, ex_size)
             finally:

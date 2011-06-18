@@ -25,6 +25,7 @@ if sys.hexversion < 0x02050000:
     raise ImportError("Web frontend requires Python 2.5 or newer.")
 
 import os
+import threading
 
 from inspect import getouterframes
 from shutil import rmtree
@@ -42,20 +43,27 @@ from pympler.process import get_current_threads, ProcessMemoryInfo
 from pympler.util.compat import bottle
 
 
-class Cache(object):
+class ServerState(threading.local):
     """
+    Represents the state of a running server. Needs to be thread local so
+    multiple servers can be started in different threads without interfering
+    with each other.
+
     Cache internal structures (garbage graphs, tracker statistics).
     """
     def __init__(self):
+        self.server = None
         self.stats = None
         self.garbage_graphs = None
+        self.id2ref = WeakValueDictionary()
+        self.id2obj = dict()
 
-    def clear(self):
+
+    def clear_cache(self):
         self.garbage_graphs = None
 
 
-id2ref = WeakValueDictionary()
-id2obj = dict()
+server = ServerState()
 
 
 def get_ref(obj):
@@ -69,21 +77,16 @@ def get_ref(obj):
     """
     oid = id(obj)
     try:
-        id2ref[oid] = obj
+        server.id2ref[oid] = obj
     except TypeError:
-        id2obj[oid] = obj
+        server.id2obj[oid] = obj
     return str(oid)
 
 
 def get_obj(ref):
     """Get object from string reference."""
     oid = int(ref)
-    return id2ref.get(oid) or id2obj[oid]
-
-
-cache = None
-server = None
-tmpdir = None
+    return server.id2ref.get(oid) or server.id2obj[oid]
 
 
 static_files = os.path.join(DATA_PATH, 'templates')
@@ -112,8 +115,8 @@ def process():
 @bottle.view('tracker')
 def tracker_index():
     """Get tracker overview."""
-    stats = cache.stats
-    if stats:
+    stats = server.stats
+    if stats and stats.snapshots:
         for snapshot in stats.snapshots:
             stats.annotate_snapshot(snapshot)
         timeseries = []
@@ -150,7 +153,7 @@ def tracker_index():
 @bottle.view('tracker_class')
 def tracker_class(clsname):
     """Get class instance details."""
-    stats = cache.stats
+    stats = server.stats
     if not stats:
         bottle.redirect('/tracker')
     return dict(stats=stats, clsname=clsname)
@@ -159,16 +162,8 @@ def tracker_class(clsname):
 @bottle.route('/refresh')
 def refresh():
     """Clear all cached information."""
-    cache.clear()
+    server.clear_cache()
     bottle.redirect('/')
-
-
-@bottle.route('/tracker/distribution')
-def tracker_dist():
-    """Render timespace chart for tracker data."""
-    filename = os.path.join(tmpdir, 'distribution.png')
-    charts.tracker_timespace(filename, cache.stats)
-    bottle.send_file('distribution.png', root=tmpdir)
 
 
 @bottle.route('/traceback/:threadid')
@@ -207,19 +202,13 @@ def static_file(filename):
     bottle.send_file(filename, root=static_files)
 
 
-@bottle.route('/static/img/:filename')
-def serve_img(filename):
-    """Expose static images."""
-    bottle.send_file(filename, root="templates/img")
-
-
 def _compute_garbage_graphs():
     """
     Retrieve garbage graph objects from cache, compute if cache is cold.
     """
-    if cache.garbage_graphs is None:
-        cache.garbage_graphs = GarbageGraph().split_and_sort()
-    return cache.garbage_graphs
+    if server.garbage_graphs is None:
+        server.garbage_graphs = GarbageGraph().split_and_sort()
+    return server.garbage_graphs
 
 
 @bottle.route('/garbage')
@@ -247,7 +236,7 @@ def _get_graph(graph, filename):
         rendered = graph.rendered_file
     except AttributeError:
         try:
-            graph.render(os.path.join(tmpdir, filename), format='png')
+            graph.render(os.path.join(server.tmpdir, filename), format='png')
             rendered = filename
         except OSError:
             rendered = None
@@ -265,7 +254,7 @@ def garbage_graph(index):
     filename = 'garbage%so%s.png' % (index, reduce_graph)
     rendered_file = _get_graph(graph, filename)
     if rendered_file:
-        bottle.send_file(rendered_file, root=tmpdir)
+        bottle.send_file(rendered_file, root=server.tmpdir)
     else:
         return None
 
@@ -306,27 +295,17 @@ def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
     :param stats: `Stats` instance, analyze `ClassTracker` profiling dumps
         (useful for off-line analysis)
     """
-    global cache
-    global server
-    global tmpdir
-
-    cache = Cache()
-    tmpdir = mkdtemp(prefix='pympler')
-
     if tracker and not stats:
-        cache.stats = tracker.stats
+        server.stats = tracker.stats
     else:
-        cache.stats = stats
+        server.stats = stats
     try:
-        os.mkdir(tmpdir)
-    except OSError:
-        pass
-    server = PymplerServer(host=host, port=port, **kwargs)
-    bottle.debug(debug)
-    try:
-        bottle.run(server=server)
-    except Exception:
-        rmtree(tmpdir)
+        server.tmpdir = mkdtemp(prefix='pympler')
+        server.server = PymplerServer(host=host, port=port, **kwargs)
+        bottle.debug(debug)
+        bottle.run(server=server.server)
+    finally:
+        rmtree(server.tmpdir)
 
 
 class ProfilerThread(Thread):

@@ -18,6 +18,11 @@ Windows without the win32 module is not supported.
 
 import threading
 
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+
 from os import getpid
 from subprocess  import Popen, PIPE
 
@@ -226,4 +231,9 @@ class ThreadInfo(object):
 def get_current_threads():
     """Get a list of `ThreadInfo` objects."""
     return [ThreadInfo(thread) for thread in threading.enumerate()]
+
+
+def get_current_thread_id():
+    """Get the ID of the current thread."""
+    return thread.get_ident()
 
