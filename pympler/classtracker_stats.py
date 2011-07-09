@@ -198,33 +198,17 @@ class Stats(object):
         if not args:
             args = criteria
 
-        def _sort(to1, to2, crit=args):
-            """Compare two objects using a list of attributes."""
-            for attr in crit:
-                toa = getattr(to1, attr)
-                tob = getattr(to2, attr)
-                try:
-                    res = (toa > tob) - (toa < tob)
-                except TypeError:
-                    continue
-                if res != 0:
-                    if attr in ('tsize', 'size', 'death'):
-                        return -res
-                    return res
-            return 0
-
-        def cmp2key(mycmp):
-            """Converts a cmp= function into a key= function"""
-            class ObjectWrapper(object):
-                """Wraps an object exposing the given comparison logic."""
-                def __init__(self, obj, *args):
-                    self.obj = obj
-                def __lt__(self, other):
-                    return mycmp(self.obj, other.obj) < 0
-            return ObjectWrapper
+        def args_to_tuple(obj):
+            keys = []
+            for attr in args:
+                attribute = getattr(obj, attr)
+                if attr in ('tsize', 'size'):
+                    attribute = -attribute
+                keys.append(attribute)
+            return tuple(keys)
 
         self._init_sort()
-        self.sorted.sort(key=cmp2key(_sort))
+        self.sorted.sort(key=args_to_tuple)
 
         return self
 

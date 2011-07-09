@@ -19,9 +19,9 @@ Windows without the win32 module is not supported.
 import threading
 
 try:
-    import thread
+    from thread import get_ident
 except ImportError:
-    import _thread as thread
+    from _thread import get_ident
 
 from os import getpid
 from subprocess  import Popen, PIPE
@@ -63,7 +63,7 @@ class _ProcessMemoryInfo(object):
         Refresh the information using platform instruments. Returns true if this
         operation yields useful values on the current platform.
         """
-        return False
+        return False # pragma: no cover
 
 ProcessMemoryInfo = _ProcessMemoryInfo
 
@@ -84,15 +84,15 @@ class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
         try:
             p = Popen(['/bin/ps', '-p%s' % self.pid, '-o', 'rss,vsz'],
                       stdout=PIPE, stderr=PIPE)
-        except OSError:
+        except OSError: # pragma: no cover
             pass
         else:
             s = p.communicate()[0].split()
-            if p.returncode == 0 and len(s) >= 2:
+            if p.returncode == 0 and len(s) >= 2: # pragma: no branch
                 self.vsz = int(s[-1]) * 1024
                 self.rss = int(s[-2]) * 1024
                 return True
-        return False
+        return False # pragma: no cover
 
 
 class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
@@ -118,8 +118,8 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
         try:
             stat = open('/proc/self/stat')
             status = open('/proc/self/status')
-        except IOError:
-            pass
+        except IOError: # pragma: no cover
+            return False
         else:
             stats = stat.read().split()
             self.vsz = int( stats[22] )
@@ -145,7 +145,6 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
             stat.close()
             status.close()
             return True
-        return False
 
 
 try:
@@ -174,11 +173,11 @@ try:
             self.pagefaults = usage.ru_majflt
             return self.rss != 0
 
-    if _ProcessMemoryInfoProc().update():
+    if _ProcessMemoryInfoProc().update(): # pragma: no branch
         ProcessMemoryInfo = _ProcessMemoryInfoProc
-    elif _ProcessMemoryInfoPS().update():
+    elif _ProcessMemoryInfoPS().update(): # pragma: no cover
         ProcessMemoryInfo = _ProcessMemoryInfoPS
-    elif _ProcessMemoryInfoResource().update():
+    elif _ProcessMemoryInfoResource().update(): # pragma: no cover
         ProcessMemoryInfo = _ProcessMemoryInfoResource
 
 except ImportError:
@@ -210,7 +209,7 @@ class ThreadInfo(object):
         self.ident = 0
         try:
             self.ident = thread.ident
-        except AttributeError:
+        except AttributeError: # Python 2.5
             # Thread.ident was introduced in Python 2.6. On Python 2.5 use the
             # undocumented `_active` dictionary to map thread objects to thread
             # IDs.
@@ -220,11 +219,11 @@ class ThreadInfo(object):
                     break
         try:
             self.name = thread.name
-        except AttributeError:
+        except AttributeError: # Python 2.5
             self.name = thread.getName()
         try:
             self.daemon = thread.daemon
-        except AttributeError:
+        except AttributeError: # Python 2.5
             self.daemon = thread.isDaemon()
 
 
@@ -235,5 +234,5 @@ def get_current_threads():
 
 def get_current_thread_id():
     """Get the ID of the current thread."""
-    return thread.get_ident()
+    return get_ident()
 

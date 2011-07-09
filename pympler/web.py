@@ -251,6 +251,8 @@ def garbage_graph(index):
     reduce_graph = bottle.request.GET.get('reduce', '')
     if reduce_graph:
         graph = graph.reduce_to_cycles()
+    if not graph:
+        return None
     filename = 'garbage%so%s.png' % (index, reduce_graph)
     rendered_file = _get_graph(graph, filename)
     if rendered_file:
