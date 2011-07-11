@@ -41,6 +41,7 @@ from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
 from pympler.util.compat import bottle
+from pympler.util.stringutils import safe_repr
 
 
 class ServerState(threading.local):
@@ -192,7 +193,7 @@ def get_obj_referents(oid):
         refs = asizeof._getreferents(root)
         named_objects = [(repr(type(x)), x) for x in refs]
     for name, obj in named_objects:
-        referents[name] = (get_ref(obj), obj, asizeof.asizeof(obj))
+        referents[name] = (get_ref(obj), type(obj).__name__, safe_repr(obj, clip=48), asizeof.asizeof(obj))
     return dict(referents=referents)
 
 

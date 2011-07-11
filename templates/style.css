@@ -931,13 +931,14 @@ div.stacktrace div.stackframe
     margin: 8px;
 }
 
-div.stackframe div.context
+div.stackframe .context,
+div.stackframe .local
 {
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
     border-radius: 4px;
     padding: 4px;
-    margin-left: 1em;
+    margin-left: 10px;
     margin-top: 4px;
     background: #f2f2f2;
 }
@@ -969,19 +970,19 @@ div.referents
 {
     margin-top: 4px;
     margin-bottom: 4px;
-    margin-left: 1em;
+    margin-left: 10px;
 }
 
-div.local
+div.stackframe div.local
 {
-    font-size: 80%;
+    background: #fafafa;
 }
 
 div.local span.local_name,
 div.local span.local_size
 {
     font-family: monospace;
-    font-weight: bold;
+    padding: 1px;
 }
 
 div.local span.local_value,
@@ -990,6 +991,14 @@ div.local span.local_type
 {
     font-family: monospace;
     margin-left: 1em;
+}
+div.local span.local_type
+{
+    color: #999;
+}
+div.local span.local_size
+{
+    color: #03F;
 }
 div.local div.referents a
 {

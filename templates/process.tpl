@@ -63,6 +63,13 @@
         });
         return false;
     });
+    $(".stacks").delegate(".expand_local", "click", function() {
+        oid = $(this).attr("id");
+        $.get("/objects/"+oid, function(data) {
+            $("#"+oid).replaceWith(data);
+        });
+        return false;
+    });
     $(".stacks").delegate(".expand_ref", "click", function() {
         oid = $(this).attr("id");
         $.get("/objects/"+oid, function(data) {

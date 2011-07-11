@@ -28,14 +28,3 @@
         Cannot retrieve stacktrace for thread {{threadid}}.
     %end
 </div>
-
-<script type="text/javascript">
-    $(".expand_local").click(function() {
-        oid = $(this).attr("id");
-        $.get("/objects/"+oid, function(data) {
-            $("#"+oid).replaceWith(data);
-        });
-        return false;
-    });
-</script>
-
