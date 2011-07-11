@@ -980,6 +980,7 @@ div.local
 div.local span.local_name,
 div.local span.local_size
 {
+    font-family: monospace;
     font-weight: bold;
 }
 
@@ -987,5 +988,18 @@ div.local span.local_value,
 div.local span.local_size,
 div.local span.local_type
 {
+    font-family: monospace;
     margin-left: 1em;
 }
+div.local div.referents a
+{
+    color: #000;
+    text-decoration: none;
+}
+div.local div.referents a:hover 
+{
+    background-color: #EEE;
+    color: #090;
+    text-decoration: none;
+}
+

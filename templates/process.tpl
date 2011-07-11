@@ -47,11 +47,13 @@
 
 <h2>Thread stacks</h2>
 
-%for tinfo in threads:
-    <div class="stacktrace" id="{{tinfo.ident}}">
-        <a class="show_traceback" href="#">Traceback for thread {{tinfo.name}}</a>
-    </div>
-%end
+<div class="stacks">
+    %for tinfo in threads:
+        <div class="stacktrace" id="{{tinfo.ident}}">
+            <a class="show_traceback" href="#">Traceback for thread {{tinfo.name}}</a>
+        </div>
+    %end
+</div>
 
 <script type="text/javascript">
     $(".show_traceback").click(function() {
@@ -59,6 +61,19 @@
         $.get("/traceback/"+tid, function(data) {
             $("#"+tid).replaceWith(data);
         });
+        return false;
+    });
+    $(".stacks").delegate(".expand_ref", "click", function() {
+        oid = $(this).attr("id");
+        $.get("/objects/"+oid, function(data) {
+            $("#children_"+oid).append(data);
+        });
+        $(this).removeClass("expand_ref").addClass("toggle_ref");
+        return false;
+    });
+    $(".stacks").delegate(".toggle_ref", "click", function() {
+        oid = $(this).attr("id");
+        $("#children_"+oid).toggle();
         return false;
     });
 </script>
