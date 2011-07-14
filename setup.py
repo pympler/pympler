@@ -23,6 +23,7 @@ if sys.hexversion > 0x3020000:
 
 import os
 from distutils.command.build_py import build_py
+from distutils.command.install_lib import install_lib
 from distutils.core   import Command
 from distutils.core   import setup
 from distutils.dist   import Distribution
@@ -30,6 +31,7 @@ from distutils.errors import DistutilsExecError
 from distutils.spawn  import spawn  # raises DistutilsExecError
 
 from glob import glob
+from shutil import rmtree
 
 
 # Hack to fix data install path: Data just points to $prefix by default.
@@ -55,6 +57,19 @@ class BuildPyModule(build_py):
         elif sys.hexversion < 0x3000000 and module == 'bottle3':
             return
         build_py.build_module(self, module, module_file, package)
+
+
+# Remove all already installed modules. Make sure old removed or renamed
+# modules cannot be imported anymore.
+class InstallCommand(install_lib):
+    def run(self):
+        target_path = os.path.join(self.install_dir, 'pympler')
+        try:
+            rmtree(target_path)
+            print ("purging %s" % target_path)
+        except OSError:
+            pass
+        install_lib.run(self)
 
 
 class BaseTestCommand(Command):
@@ -102,9 +117,7 @@ def run_setup(include_tests=0):
           url=metadata.url,
           version=metadata.version,
 
-          packages=['pympler',
-                    'pympler.asizeof', 'pympler.tracker', 'pympler.gui',
-                    'pympler.muppy', 'pympler.util'] + tests,
+          packages=['pympler', 'pympler.util'] + tests,
 
           data_files=[('templates', glob('templates/*.tpl') + \
                                     glob('templates/*.js') + \
@@ -122,7 +135,9 @@ def run_setup(include_tests=0):
                        ],
           cmdclass={'try': PreinstallTestCommand,
                     'test': PostinstallTestCommand,
-                    'build_py': BuildPyModule}
+                    'build_py': BuildPyModule,
+                    'install_lib': InstallCommand,
+                    }
           )
 
 

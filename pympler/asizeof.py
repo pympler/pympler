@@ -162,7 +162,7 @@ from __future__ import generators  #PYCHOK for yield in Python 2.2
 from inspect    import isbuiltin, isclass, iscode, isframe, \
                        isfunction, ismethod, ismodule, stack
 from math       import log
-from os         import linesep
+from os         import curdir, linesep
 from struct     import calcsize  # type/class Struct only in Python 2.5+
 import sys
 import types    as     Types
@@ -1234,8 +1234,13 @@ except NameError:  # missing
     pass
 
 try:
-    from os import curdir, stat, statvfs
+    from os import stat
     _typedef_both(type(stat(   curdir)), refs=_stat_refs)     # stat_result
+except ImportError:  # missing
+    pass
+
+try:
+    from os import statvfs
     _typedef_both(type(statvfs(curdir)), refs=_statvfs_refs,  # statvfs_result
                                          item=_sizeof_Cvoidp, leng=_len)
 except ImportError:  # missing
