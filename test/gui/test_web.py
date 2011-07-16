@@ -153,10 +153,10 @@ class WebGuiTest(unittest.TestCase):
             resp = self.get('/traceback/%d' % threadid, status=200)
             if threadid == get_current_thread_id():
                 locals_id = id(locals())
-                self.assertTrue('id="%d"' % locals_id in resp, resp)
+                self.assertTrue('id="%d' % locals_id in resp, resp)
                 resp = self.get('/objects/%d' % locals_id, status=200)
                 self.assertTrue('dummy' in resp, resp)
-                self.assertTrue('id="%d"' % id(dummy) in resp, resp)
+                self.assertTrue('id="%d' % id(dummy) in resp, resp)
                 self.get('/objects/%d' % id(dummy), status=200)
 
         self.get('/traceback/gabelstapler', status=500)
