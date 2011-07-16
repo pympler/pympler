@@ -71,16 +71,17 @@
         return false;
     });
     $(".stacks").delegate(".expand_ref", "click", function() {
-        oid = $(this).attr("id");
+        node_id = $(this).attr("id");
+        oid = node_id.split("_")[0];
         $.get("/objects/"+oid, function(data) {
-            $("#children_"+oid).append(data);
+            $("#children_"+node_id).append(data);
         });
         $(this).removeClass("expand_ref").addClass("toggle_ref");
         return false;
     });
     $(".stacks").delegate(".toggle_ref", "click", function() {
-        oid = $(this).attr("id");
-        $("#children_"+oid).toggle();
+        node_id = $(this).attr("id");
+        $("#children_"+node_id).toggle();
         return false;
     });
 </script>

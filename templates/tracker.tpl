@@ -143,8 +143,7 @@
 %else:
 
     <p>No objects are currently tracked. Consult the Pympler documentation for
-    instructions of how to use the tracker module. TODO: Link to local or
-    online documentation.</p>
+    instructions of how to use the classtracker module.</p>
 
 %end
 
