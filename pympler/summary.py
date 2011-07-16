@@ -44,7 +44,6 @@ more detailed information at higher verbosity levels than 1.
 """
 
 import re
-import string
 import sys
 import types
 

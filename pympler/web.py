@@ -1,7 +1,7 @@
 """
 This module provides a web-based memory profiling interface. The Pympler web
 frontend exposes process information, tracker statistics, and garbage graphs.
-The web frontend uses `Bottle <http://bottle.paws.de>`_, a lightweight Python
+The web frontend uses `Bottle <http://bottlepy.org>`_, a lightweight Python
 web framework. Bottle is packaged with Pympler.
 
 The web server can be invoked almost as easily as setting a breakpoint using
@@ -36,7 +36,6 @@ from wsgiref.simple_server import make_server
 
 from pympler import DATA_PATH
 from pympler import asizeof
-from pympler import charts
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
@@ -186,14 +185,14 @@ def get_traceback(threadid):
 @bottle.view('referents')
 def get_obj_referents(oid):
     referents = {}
-    root = get_obj(oid)
-    if type(root) is dict:
-        named_objects = asizeof.named_refs(root)
+    obj = get_obj(oid)
+    if type(obj) is dict:
+        named_objects = asizeof.named_refs(obj)
     else:
-        refs = asizeof._getreferents(root)
+        refs = asizeof._getreferents(obj)
         named_objects = [(repr(type(x)), x) for x in refs]
-    for name, obj in named_objects:
-        referents[name] = (get_ref(obj), type(obj).__name__, safe_repr(obj, clip=48), asizeof.asizeof(obj))
+    for name, o in named_objects:
+        referents[name] = (get_ref(o), type(o).__name__, safe_repr(o, clip=48), asizeof.asizeof(o))
     return dict(referents=referents)
 
 
