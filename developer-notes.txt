@@ -20,6 +20,8 @@ Tests
   $ run.py --test [--clean]
 * make sure the tests pass for all supported Python versions, e.g.
   $ python2.4 run.py --test --clean
+* there is also a bash script to test Pympler on multiple Python versions
+  $ bash tools/release_test.sh
 * check the sources with PyChecker
   $ run.py --pychecker
 * check test coverage with coverage.py (http://nedbatchelder.com/code/coverage/)

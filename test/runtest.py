@@ -71,7 +71,12 @@ def suite(dirs=['.'], clean=False, pre=True, verbose=2):
                 else:  # import test
                    mod = __import__(test)
                 res.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
-            except (SyntaxError, NameError, ImportError):
+            except ImportError:
+                if sys.hexversion < 0x02050000:
+                   _print('Warning: ignoring %r - incompatible with this Python version' % test)
+                else:
+                    raise
+            except (SyntaxError, NameError):
                 if pre:
                    _print('Warning: ignoring %r due to an error while importing' % test)
                 else:
