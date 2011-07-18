@@ -4,7 +4,8 @@ import re
 import sys
 import unittest
 
-from tempfile import mkstemp
+from shutil import rmtree
+from tempfile import mkdtemp, mkstemp
 
 from pympler.util.compat import StringIO, BytesIO
 
@@ -280,13 +281,17 @@ class LogTestCase(unittest.TestCase):
         self.tracker.create_snapshot('Merge test')
 
         stats = HtmlStats(tracker=self.tracker)
-        output = 'tmp/data/footest.html'
-        stats.create_html(output)
+        try:
+            target = mkdtemp(prefix='pympler_test')
+            output = os.path.join(target, 'footest.html')
+            stats.create_html(output)
 
-        source = open(output).read()
-        # Ensure relative links are used
-        fname = os.path.join('footest_files', 'Foo.html')
-        self.assertTrue('<a href="%s">' % fname in source, (fname, source))
+            source = open(output).read()
+            # Ensure relative links are used
+            fname = os.path.join('footest_files', 'Foo.html')
+            self.assertTrue('<a href="%s">' % fname in source, (fname, source))
+        finally:
+            rmtree(target)
 
 
     def test_charts(self):
@@ -302,7 +307,12 @@ class LogTestCase(unittest.TestCase):
         self.tracker.create_snapshot('Merge test')
 
         from pympler import charts
-        charts.tracker_timespace('tmp/data/timespace.png', self.tracker.stats)
+        try:
+            target = mkdtemp(prefix='pympler_test')
+            output = os.path.join(target, 'timespace.png')
+            charts.tracker_timespace(output, self.tracker.stats)
+        finally:
+            rmtree(target)
 
 
 if __name__ == "__main__":
