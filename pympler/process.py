@@ -210,6 +210,9 @@ class ThreadInfo(object):
         try:
             self.ident = thread.ident
         except AttributeError: # Python 2.5
+            pass
+
+        if not self.ident: # Python 2.5; http://bugs.python.org/issue5632
             # Thread.ident was introduced in Python 2.6. On Python 2.5 use the
             # undocumented `_active` dictionary to map thread objects to thread
             # IDs.
