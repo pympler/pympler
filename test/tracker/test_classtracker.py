@@ -189,12 +189,13 @@ class SnapshotTestCase(unittest.TestCase):
         self.assert_(fp_with_total.asizeof_total >= fp_with_total.tracked_total)
 
         if pympler.process.is_available():
-            self.assertEqual(fp.total, fp.system_total.vsz)
-            self.assert_(fp.system_total.vsz > 0)
-            self.assert_(fp.system_total.rss > 0)
-            self.assert_(fp.system_total.vsz >= fp.system_total.rss)
-            self.assert_(fp.system_total.vsz > fp.overhead)
-            self.assert_(fp.system_total.vsz > fp.tracked_total)
+            procmem = fp.system_total
+            self.assertEqual(fp.total, procmem.vsz)
+            self.assert_(procmem.vsz > 0, procmem)
+            self.assert_(procmem.rss > 0, procmem)
+            self.assertTrue(procmem.vsz >= procmem.rss, procmem)
+            self.assert_(procmem.vsz > fp.overhead, procmem)
+            self.assert_(procmem.vsz > fp.tracked_total, procmem)
             self.assert_(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
         else:
             self.assertEqual(fp_with_total.total, fp_with_total.asizeof_total)

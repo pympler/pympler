@@ -58,6 +58,11 @@ class _ProcessMemoryInfo(object):
 
         self.available = self.update()
 
+
+    def __repr__(self):
+        return "<%s vsz=%d rss=%d>" % (self.__class__.__name__, self.vsz, self.rss)
+
+
     def update(self):
         """
         Refresh the information using platform instruments. Returns true if this
@@ -184,7 +189,7 @@ except ImportError:
     try:
         # Requires pywin32
         from win32process import GetProcessMemoryInfo
-        from win32api import GetCurrentProcess
+        from win32api import GetCurrentProcess, GlobalMemoryStatusEx
     except ImportError:
         # TODO Emit Warning:
         #print "It is recommended to install pywin32 when running pympler on Microsoft Windows."
@@ -193,10 +198,11 @@ except ImportError:
         class _ProcessMemoryInfoWin32(_ProcessMemoryInfo):
             def update(self):
                 process_handle = GetCurrentProcess()
-                memory_info = GetProcessMemoryInfo( process_handle )
-                self.vsz        = memory_info['PagefileUsage']
-                self.rss        = memory_info['WorkingSetSize']
-                self.pagefaults = memory_info['PageFaultCount']
+                meminfo = GetProcessMemoryInfo(process_handle)
+                memstatus = GlobalMemoryStatusEx()
+                self.vsz = memstatus['TotalVirtual'] - memstatus['AvailVirtual']
+                self.rss = meminfo['WorkingSetSize']
+                self.pagefaults = meminfo['PageFaultCount']
                 return True
 
         ProcessMemoryInfo = _ProcessMemoryInfoWin32
