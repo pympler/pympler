@@ -22,17 +22,15 @@ the lifetime of Python objects can be obtained.  Undesirable or
 unexpected runtime behavior like memory bloat and other "pymples"
 can easily be identified.
 
-Pympler integrates three previously separate modules into a single,
-comprehensive profiling tool.  The  asizeof module provides basic
-size information for one or several Python objects, module  muppy
-is used for on-line monitoring of a Python application and module
-tracker provides off-line analysis of the lifetime of selected
-Python objects.
+Pympler integrates three previously separate projects into a single,
+comprehensive profiling tool. Asizeof provides basic size information
+for one or several Python objects, muppy is used for on-line
+monitoring of a Python application and the class tracker provides
+off-line analysis of the lifetime of selected Python objects. A
+web profiling frontend exposes process statistics, garbage
+visualisation and class tracker statistics.
 
-Pympler is written entirely in Python, with no dependencies other
-than standard Python modules and libraries.  All Pympler modules
-work with Python 2.4, 2.5 and 2.6.  Module  asizeof has also been
-tested with Python 2.2, 2.3 and 3.0 on a number of Linux distros,
-MacOS X (10.4.11 Intel and 10.3.9 PPC), Solaris 10 (Opteron) and
-Windows XP with 32-bit and several 64-bit Python builds.
+Pympler is written entirely in Python, with no dependencies to
+external libraries. It has been tested with Python 2.4, 2.5, 2.6, 2.7,
+3.1, 3.2 on Linux, Windows and MacOS X.
 '''
