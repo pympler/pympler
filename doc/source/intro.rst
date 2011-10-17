@@ -21,8 +21,8 @@ Requirements
 ------------
 
 Pympler is written entirely in Python, with no dependencies to external
-libraries. It integrates `Bottle<http://bottlepy.org>`_ and
-`Highcharts<http://www.highcharts.com>`_. Pympler has been tested with
+libraries. It integrates `Bottle <http://bottlepy.org>`_ and
+`Highcharts <http://www.highcharts.com>`_. Pympler has been tested with
 Python 2.4, 2.5, 2.6, 2.7, 3.1 and 3.2. However, the Pympler web
 frontend does not work with Python 2.4.
 
