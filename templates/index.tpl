@@ -6,10 +6,7 @@
 
 <h2>Process overview</h2>
 
-<table id="one-column-emphasis">
-    <colgroup>
-        <col class="oce-first" />
-    </colgroup>
+<table class="tdata">
     <tbody>
     <tr>
         <th>Virtual size:</th>

@@ -100,20 +100,6 @@ html_theme_options = {
     'codebgcolor'      : '#E5EDB8', #'#837B47',
 }
 
-"""
-# Colors derived from palette "ChampaigneMood"
-html_theme_options = {
-    'relbarbgcolor'    : '#403A26',
-    'headbgcolor'      : '#F1F7CD',
-    'sidebarbgcolor'   : '#81876C',
-    'sidebarlinkcolor' : '#F1F7CD',
-    'codebgcolor'      : '#F1F7CD',
-    'bgcolor'          : '#FFFFFF',
-    'headtextcolor'    : '#000000',
-    'headlinkcolor'    : '#000000',
-}
-"""
-
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None

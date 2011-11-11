@@ -57,22 +57,22 @@
 
 <script type="text/javascript">
     $(".show_traceback").click(function() {
-        tid = $(this).parent().attr("id");
+        var tid = $(this).parent().attr("id");
         $.get("/traceback/"+tid, function(data) {
             $("#"+tid).replaceWith(data);
         });
         return false;
     });
     $(".stacks").delegate(".expand_local", "click", function() {
-        oid = $(this).attr("id");
+        var oid = $(this).attr("id");
         $.get("/objects/"+oid, function(data) {
             $("#"+oid).replaceWith(data);
         });
         return false;
     });
     $(".stacks").delegate(".expand_ref", "click", function() {
-        node_id = $(this).attr("id");
-        oid = node_id.split("_")[0];
+        var node_id = $(this).attr("id");
+        var oid = node_id.split("_")[0];
         $.get("/objects/"+oid, function(data) {
             $("#children_"+node_id).append(data);
         });
@@ -80,7 +80,7 @@
         return false;
     });
     $(".stacks").delegate(".toggle_ref", "click", function() {
-        node_id = $(this).attr("id");
+        var node_id = $(this).attr("id");
         $("#children_"+node_id).toggle();
         return false;
     });

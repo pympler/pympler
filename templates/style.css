@@ -28,7 +28,7 @@ div.bodywrapper {
 
 div.body {
     background-color: white;
-    padding: 0 20px 30px 20px;
+    padding: 0 20px 16px 20px;
 }
 
 div.sphinxsidebarwrapper {
@@ -65,7 +65,7 @@ div.footer a {
 }
 
 div.related {
-    background-color: #0B6000;
+    background-color: #5A3D31;
     color: #fff;
     width: 100%;
     height: 30px;
@@ -500,7 +500,7 @@ p.subhead {
 }
 
 a {
-    color: #15A900;
+    color: #355F7C;
     text-decoration: none;
 }
 
@@ -515,30 +515,27 @@ div.body h4,
 div.body h5,
 div.body h6 {
     font-weight: bold;
-    margin: 20px -20px 10px -20px;
+    margin: 16px -20px 16px -20px;
     padding: 3px 0 3px 10px;
 }
 
 div.body h1 {
     margin-top: 0;
     font-size: 140%;
-    background-color: #CCE2CC;
-    color: #360;
-    border-top: 0.1em solid #fff;
-    border-bottom: 0.1em solid #0d6200;
-    background-image: -moz-linear-gradient(top center, #AAC0AA, #CCE2CC);
+    background-color: #E5EDB8;
+    color: #000;
+    border-bottom: 1px solid #ccc;
 }
 div.body h2 {
     font-size: 120%;
-    background-color: #CCE2CC;
-    color: #360;
-    border-top: 0.1em solid #0d6200;
-    border-bottom: 0.1em solid #0d6200;
+    background-color: #E5EDB8;
+    color: #000;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
 }
 div.body h3 {
-    text-align: right;
-    font-size: 140%;
-    border-bottom: 0.1em dashed #0d6200;
+    font-size: 120%;
+    border-bottom: 1px dashed #ccc;
 }
 div.body h4 { font-size: 120%; }
 div.body h5 { font-size: 110%; }
@@ -865,52 +862,33 @@ table.tdata th
 {
     font-size: 14px;
     font-weight: normal;
-    color: #390;
-    padding: 10px 8px;
-    border-bottom: 2px solid #78b166;
+    padding: 8px 8px;
+    background-color: #E5EDB8;
+    border-bottom: 1px solid #ccc;
 }
+
+table.tdata tr:first-child th:first-child 
+{
+    border-top-left-radius: 8px;
+}
+
+table.tdata tr:first-child th:last-child 
+{
+    border-top-right-radius: 8px;
+}
+
 table.tdata td
 {
     border-bottom: 1px solid #ccc;
-    color: #696;
-    padding: 6px 8px;
+    padding: 8px 8px;
 }
+
 table.tdata tbody tr:hover td
 {
-    color: #090;
+    color: #060;
 }
-#one-column-emphasis
-{
-    font-size: 12px;
-    /* margin: 45px; */
-    /* width: 480px; */
-    text-align: left;
-    border-collapse: collapse;
-}
-#one-column-emphasis th
-{
-    font-size: 14px;
-    font-weight: normal;
-    padding: 6px 8px;
-    color: #360;
-}
-#one-column-emphasis td
-{
-    padding: 6px 8px;
-    color: #696;
-    border-top: 1px solid #e8ffed;
-}
-.oce-first
-{
-    background: #d0fdda;
-    border-right: 10px solid transparent;
-    border-left: 10px solid transparent;
-}
-#one-column-emphasis tr:hover td
-{
-    color: #360;
-    background: #f2ffef;
-}
+
+table th.num,
 table td.num
 {
     text-align: right;
@@ -945,7 +923,7 @@ div.stackframe .local
 
 div.stackframe div.context div.highlighted
 {
-    background: #ffffa0;
+    background: #E5EDB8;
 }
 
 div.stackframe span.lineno,
