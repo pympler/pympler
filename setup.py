@@ -9,6 +9,7 @@ your browser to the ./doc/html/index.html file.
 """
 import sys
 import pympler.metadata as metadata
+import fileinput
 
 def _not_supported(why):
     print('NotImplementedError: ' + why + '.')
@@ -46,9 +47,13 @@ class BuildPyModule(build_py):
     def build_module(self, module, module_file, package):
         cobj = self.distribution.command_obj.get('install')
         if cobj and package == 'pympler' and module == '__init__':
-            f = open(module_file, 'w')
-            f.write("DATA_PATH = '%s'\n" % cobj.install_data)
-            f.close()
+            # If installed from an egg with easy_install, the data will reside
+            # in the egg along with the code.
+            data_path = cobj.install_data
+            for line in fileinput.FileInput(module_file, inplace=True):
+                if line.startswith("DATA_PATH = "):
+                    line = "DATA_PATH = '%s'" % data_path
+                sys.stdout.write(line)
         # TODO: Cannot build bottle2 at Python3 and vice versa.
         if sys.hexversion >= 0x3000000 and module == 'bottle2':
             return
