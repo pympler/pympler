@@ -1,5 +1,4 @@
 %include header category='Garbage', title='Garbage' 
-%from cgi import escape
 
 <h1>Garbage - Cycle {{index}}</h1>
 <table class="tdata" width="100%">
@@ -17,7 +16,7 @@
             <td>{{'0x%08x' % o.id}}</td>
             <td class="num">{{o.size}}</td>
             <td>{{o.type}}</td>
-            <td>{{escape(o.str)}}</td>
+            <td>{{o.str}}</td>
         </tr>
     %end
     </tbody>

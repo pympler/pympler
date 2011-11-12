@@ -222,6 +222,14 @@ class Stats(object):
         return self
 
 
+    def annotate(self):
+        """
+        Annotate all snapshots with class-based summaries.
+        """
+        for snapshot in self.snapshots:
+            self.annotate_snapshot(snapshot)
+
+
     def annotate_snapshot(self, snapshot):
         """
         Store additional statistical data in snapshot.
@@ -716,8 +724,7 @@ class HtmlStats(Stats):
         self.links = {}
 
         # Annotate all snapshots in advance
-        for snapshot in self.snapshots:
-            self.annotate_snapshot(snapshot)
+        self.annotate()
 
         # Create charts. The tags to show the images are returned and stored in
         # the self.charts dictionary. This allows to return alternative text if

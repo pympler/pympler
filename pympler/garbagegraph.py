@@ -52,8 +52,7 @@ class GarbageGraph(ReferenceGraph):
         """
         if not stream: # pragma: no cover
             stream = sys.stdout
-        self.metadata.sort(key=lambda x: x.size)
-        self.metadata.reverse()
+        self.metadata.sort(key=lambda x: -x.size)
         stream.write('%-10s %8s %-12s %-46s\n' % ('id', 'size', 'type', 'representation'))
         for g in self.metadata:
             stream.write('0x%08x %8d %-12s %-46s\n' % (g.id, g.size, trunc(g.type, 12),

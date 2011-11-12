@@ -956,25 +956,25 @@ div.stackframe div.local
     background: #fafafa;
 }
 
-div.local span.local_name,
-div.local span.local_size
+div.referents span.local_name,
+div.referents span.local_size
 {
     font-family: monospace;
     padding: 1px;
 }
 
-div.local span.local_value,
-div.local span.local_size,
-div.local span.local_type
+div.referents span.local_value,
+div.referents span.local_size,
+div.referents span.local_type
 {
     font-family: monospace;
     margin-left: 1em;
 }
-div.local span.local_type
+div.referents span.local_type
 {
     color: #999;
 }
-div.local span.local_size
+div.referents span.local_size
 {
     color: #03F;
 }

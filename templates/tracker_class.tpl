@@ -18,8 +18,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
         <h3>Snapshot: {{snapshot.desc}}</h3>
         <p>{{pp(merged.size)}} occupied by instances of class {{clsname}}</p>
         %if merged.refs:
-            <strong>TODO: print refs</strong>
-            % #self._print_refs(fobj, merged.refs, merged.size)
+            %include asized_referents referents=merged.refs
         %else:
             <p>No per-referent sizes recorded.</p>
         %end
@@ -44,12 +43,20 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
             <th>Lifetime</th>
             <td>{{pp_timestamp(tobj.birth)}} - {{pp_timestamp(tobj.death)}}</td>
         </tr>
-        %if hasattr(tobj, 'trace'):
+        %if getattr(tobj, 'trace'):
             <tr>
                 <th>Instantiation</th>
                 <td>
-                    <strong>TODO: print instantiation</strong>
-                    % #<pre>%s</pre>" % (_format_trace(tobj.trace))
+                    % # <div class="stacktrace">
+                        %for frame in tobj.trace:
+                            <div class="stackframe">
+                                <span class="filename">{{frame[0]}}</span>
+                                <span class="lineno">{{frame[1]}}</span>
+                                <span class="function">{{frame[2]}}</span>
+                                <div class="context">{{frame[3][0].strip()}}</div>
+                            </div>
+                        %end
+                    % # </div>
                 </td>
             </tr>
         %end
@@ -61,8 +68,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
             %else:
                 <td>
                     {{pp(size.size)}}
-                    <strong>TODO: print refs</strong>
-                    %# self._print_refs(fobj, size.refs, size.size)
+                    %include asized_referents referents=size.refs
                 </td>
             %end
             </tr>

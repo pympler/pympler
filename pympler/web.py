@@ -117,8 +117,7 @@ def tracker_index():
     """Get tracker overview."""
     stats = server.stats
     if stats and stats.snapshots:
-        for snapshot in stats.snapshots:
-            stats.annotate_snapshot(snapshot)
+        stats.annotate()
         timeseries = []
         for cls in stats.tracked_classes:
             series = []
@@ -156,6 +155,7 @@ def tracker_class(clsname):
     stats = server.stats
     if not stats:
         bottle.redirect('/tracker')
+    stats.annotate()
     return dict(stats=stats, clsname=clsname)
 
 
