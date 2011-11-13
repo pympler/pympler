@@ -332,17 +332,22 @@ class ReferenceGraph(object):
 
         data = self._get_graphviz_data()
 
+        options = ('-Nfontsize=10',
+                   '-Efontsize=10',
+                   '-Nstyle=filled',
+                   '-Nfillcolor=#E5EDB8',
+                   '-Ncolor=#CCCCCC')
+        cmdline = (cmd, '-T%s' % format, '-o', filename) + options
+
         if unflatten:
             p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE,
                 **popen_flags)
-            p2 = Popen((cmd, '-T%s' % format, '-o', filename), stdin=p1.stdout,
-                **popen_flags)
+            p2 = Popen(cmdline, stdin=p1.stdout, **popen_flags)
             p1.communicate(encode4pipe(data))
             p2.communicate()
             return p2.returncode == 0
         else:
-            p = Popen((cmd, '-T%s' % format, '-o', filename), stdin=PIPE,
-                **popen_flags)
+            p = Popen(cmdline, stdin=PIPE, **popen_flags)
             p.communicate(encode4pipe(data))
             return p.returncode == 0
 
