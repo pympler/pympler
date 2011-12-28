@@ -21,7 +21,9 @@ import gc
 import inspect
 import sys
 
-from pympler.muppy import summary
+from pympler import muppy
+from pympler import summary
+
 
 class _Node(object):
     """A node as it is used in the tree structure.
@@ -239,8 +241,6 @@ class FileBrowser(StreamBrowser):
 try:
     import Tkinter as _Tkinter
     from idlelib import TreeWidget as _TreeWidget
-
-    from pympler.muppy import muppy
 
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
