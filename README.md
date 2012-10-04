@@ -45,6 +45,6 @@ you can read it online at *http://packages.python.org/Pympler/*.
 Contributing
 ------------
 You can post wishes, bug reports or patches at our issue tracker
-under *http://code.google.com/p/pympler/issues/* or write an
+under *https://github.com/pympler/pympler/issues* or write an
 email to *pympler-dev@googlegroups.com*.
 
