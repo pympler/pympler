@@ -2,7 +2,7 @@ README for pympler
 ==================
 
 
-Before installing Pympler, try it with your Python version::
+Before installing Pympler, try it with your Python version:
 
     python setup.py try
 
@@ -14,19 +14,19 @@ and 3.2.
 
 Installation
 
-1. Build the Pympler package::
+1. Build the Pympler package:
 
     python setup.py build
 
-2.a) For a system-wide installation run::
+2.a) For a system-wide installation run:
 
     python setup.py install
 
-2.b) For a user-specific** installation run::
+2.b) For a user-specific** installation run:
 
     python setup.py --user install
 
-3) Test the installed Pympler package::
+3) Test the installed Pympler package:
 
     python setup.py test
 
@@ -39,14 +39,14 @@ Usage
 -----
 The usage of pympler is described in the documentation.  It is
 available either in this distribution at *doc/index.html* or
-you can read it online at *http://packages.python.org/Pympler/*.
+you can [read it online](http://packages.python.org/Pympler/).
 
 
 Contributing
 ------------
-You can post wishes, bug reports or patches at our issue tracker
-under *https://github.com/pympler/pympler/issues* or write an
-email to *pympler-dev@googlegroups.com*.
+You can post wishes, bug reports or patches at our
+[issue tracker](https://github.com/pympler/pympler/issues) or
+write an email to *pympler-dev@googlegroups.com*.
 
-.. image:: https://secure.travis-ci.org/pympler/pympler.png
-    :target: http://travis-ci.org/pympler/pympler
+
+[![Build status](https://secure.travis-ci.org/pympler/pympler.png)](http://travis-ci.org/pympler/pympler)
