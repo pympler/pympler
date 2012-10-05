@@ -48,3 +48,5 @@ You can post wishes, bug reports or patches at our issue tracker
 under *https://github.com/pympler/pympler/issues* or write an
 email to *pympler-dev@googlegroups.com*.
 
+.. image:: https://secure.travis-ci.org/pympler/pympler.png
+    :target: http://travis-ci.org/pympler/pympler
