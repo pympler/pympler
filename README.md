@@ -49,4 +49,4 @@ You can post wishes, bug reports or patches at our
 write an email to *pympler-dev@googlegroups.com*.
 
 
-[![Build status](https://secure.travis-ci.org/pympler/pympler.png)](http://travis-ci.org/pympler/pympler)
+[![Build status](https://secure.travis-ci.org/pympler/pympler.png?branch=master)](http://travis-ci.org/pympler/pympler)
