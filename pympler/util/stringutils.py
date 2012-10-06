@@ -2,6 +2,7 @@
 String utility functions.
 """
 
+
 def safe_repr(obj, clip=None):
     """
     Convert object to string representation, yielding the same result a `repr`
@@ -20,18 +21,19 @@ def safe_repr(obj, clip=None):
         if not clip or len(s) <= clip:
             return s
         else:
-            return s[:clip-4]+'..'+s[-2:]
+            return s[:clip - 4] + '..' + s[-2:]
     except:
         return 'N/A'
 
 
 def trunc(obj, max, left=0):
     """
-    Convert `obj` to string, eliminate newlines and truncate the string to `max`
-    characters. If there are more characters in the string add ``...`` to the
-    string. With `left=True`, the string can be truncated at the beginning.
+    Convert `obj` to string, eliminate newlines and truncate the string to
+    `max` characters. If there are more characters in the string add ``...`` to
+    the string. With `left=True`, the string can be truncated at the beginning.
 
-    @note: Does not catch exceptions when converting `obj` to string with `str`.
+    @note: Does not catch exceptions when converting `obj` to string with
+        `str`.
 
     >>> trunc('This is a long text.', 8)
     This ...
@@ -42,11 +44,12 @@ def trunc(obj, max, left=0):
     s = s.replace('\n', '|')
     if len(s) > max:
         if left:
-            return '...'+s[len(s)-max+3:]
+            return '...' + s[len(s) - max + 3:]
         else:
-            return s[:(max-3)]+'...'
+            return s[:(max - 3)] + '...'
     else:
         return s
+
 
 def pp(i, base=1024):
     """
@@ -61,6 +64,7 @@ def pp(i, base=1024):
     scales = ['B', 'KB', 'MB', 'GB', 'TB', 'EB']
     return pattern % (i, scales[degree])
 
+
 def pp_timestamp(t):
     """
     Get a friendly timestamp represented as a string.
@@ -69,4 +73,3 @@ def pp_timestamp(t):
         return ''
     h, m, s = int(t / 3600), int(t / 60 % 60), t % 60
     return "%02d:%02d:%05.2f" % (h, m, s)
-

@@ -7,11 +7,9 @@ python:
   - "3.2"
   - "3.3"
 install:
-  - pip install pep8 --use-mirrors
-  - pip install https://github.com/dcramer/pyflakes/tarball/master
+  - pip install flake8 --use-mirrors
 before_script:
-  - "pep8 --ignore=E501,E225 pympler"
-  - pyflakes -x W pympler
+  - '[ "$TRAVIS_PYTHON_VERSION" \> 3 ] || flake8 pympler'
 script:
   - python setup.py try
   - python setup.py install

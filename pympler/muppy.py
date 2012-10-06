@@ -10,9 +10,10 @@ try:
     from sys import getsizeof as _getsizeof
 except ImportError:
     from pympler.asizeof import flatsize
-    _getsizeof = flatsize
+    _getsizeof = flatsize # NOQA
 
-__TPFLAGS_HAVE_GC = 1<<14
+__TPFLAGS_HAVE_GC = 1 << 14
+
 
 def get_objects(remove_dups=True, include_frames=False):
     """Return a list of all known objects excluding frame objects.
@@ -54,6 +55,7 @@ def get_objects(remove_dups=True, include_frames=False):
             res.append(sf[0])
     return res
 
+
 def get_size(objects):
     """Compute the total size of all elements in objects."""
     res = 0
@@ -63,6 +65,7 @@ def get_size(objects):
         except AttributeError:
             print("IGNORING: type=%s; o=%s" % (str(type(o)), str(o)))
     return res
+
 
 def get_diff(left, right):
     """Get the difference of both lists.
@@ -106,12 +109,14 @@ def get_diff(left, right):
     res['-'] = get_not_included(left, right_objects)
     return res
 
+
 def sort(objects):
     """Sort objects by size in bytes."""
     objects = sorted(objects, key=_getsizeof)
     return objects
 
-def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter
+
+def filter(objects, Type=None, min=-1, max=-1):
     """Filter objects.
 
     The filter can be by type, minimum size, and/or maximum size.
@@ -133,6 +138,7 @@ def filter(objects, Type=None, min=-1, max=-1): #PYCHOK muppy filter
         res = [o for o in res if _getsizeof(o) > max]
     return res
 
+
 def get_referents(object, level=1):
     """Get all referents of an object up to a certain level.
 
@@ -152,6 +158,7 @@ def get_referents(object, level=1):
             res.extend(get_referents(o, level))
     res = _remove_duplicates(res)
     return res
+
 
 def _get_usage(function, *args):
     """Test if more memory is used after the function has been called.
@@ -219,7 +226,8 @@ def _get_usage(function, *args):
         return summary._sweep(res)
 
     # calibrate; twice for initialization
-    def noop(): pass
+    def noop():
+        pass
     offset = _get_usage(noop)
     offset = _get_usage(noop)
     # perform operation twice to handle objects possibly used in
@@ -232,12 +240,14 @@ def _get_usage(function, *args):
         res = tmp
     return res
 
+
 def _is_containerobject(o):
     """Is the passed object a container object."""
     if type(o).__flags__ & __TPFLAGS_HAVE_GC == 0:
         return False
     else:
         return True
+
 
 def _remove_duplicates(objects):
     """Remove duplicate objects.
@@ -254,6 +264,7 @@ def _remove_duplicates(objects):
         seen[marker] = 1
         result.append(item)
     return result
+
 
 def print_summary():
     """Print a summary of all known objects."""
