@@ -7,12 +7,15 @@ python:
   - "3.2"
   - "3.3"
 install:
+  - pip install Sphinx --use-mirrors
   - pip install pep8 --use-mirrors
   - pip install pyflakes --use-mirrors
 before_script:
-  - 'pep8 --exclude=metadata.py,bottle*.py --max-line-length=80 pympler'
+  - 'pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler'
   - '[ "$TRAVIS_PYTHON_VERSION" \> 3 ] || pyflakes -x W'
 script:
   - python setup.py try
   - python setup.py install
   - python setup.py test
+  - python run.py --doctest
+  - python run.py --html

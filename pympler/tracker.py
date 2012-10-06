@@ -15,6 +15,7 @@ import inspect
 from pympler import muppy, summary
 from pympler.util import compat
 
+
 class SummaryTracker(object):
     """ Helper class to track changes between two summaries taken.
 
@@ -26,8 +27,9 @@ class SummaryTracker(object):
     a new summary will be created. Thus, a diff between the new and the last
     summary can be extracted.
 
-    Be aware that filtering out previous summaries is time-intensive. You should
-    therefore restrict yourself to the number of summaries you really need.
+    Be aware that filtering out previous summaries is time-intensive. You
+    should therefore restrict yourself to the number of summaries you really
+    need.
 
     """
     def __init__(self, ignore_self=True):
@@ -71,6 +73,7 @@ class SummaryTracker(object):
 
             all_of_them = []  # every single object
             ref_counter = {}  # how often it is referenced; (id(o), o) pairs
+
             def store_info(o):
                 all_of_them.append(o)
                 if id(o) in ref_counter:
@@ -120,7 +123,8 @@ class SummaryTracker(object):
             if summary1 is not None:
                 res = summary.get_diff(summary1, summary2)
             else:
-                raise ValueError("You cannot provide summary2 without summary1.")
+                raise ValueError(
+                    "You cannot provide summary2 without summary1.")
         return summary._sweep(res)
 
     def print_diff(self, summary1=None, summary2=None):
@@ -185,12 +189,14 @@ class ObjectTracker(object):
             return res
 
         tmp = gc.get_objects()
-        ignore.append(inspect.currentframe()) #PYCHOK change ignore
-        ignore.append(self) #PYCHOK change ignore
-        if hasattr(self, 'o0'): ignore.append(self.o0) #PYCHOK change ignore
-        if hasattr(self, 'o1'): ignore.append(self.o1) #PYCHOK change ignore
-        ignore.append(ignore) #PYCHOK change ignore
-        ignore.append(remove_ignore) #PYCHOK change ignore
+        ignore.append(inspect.currentframe())  # PYCHOK change ignore
+        ignore.append(self)  # PYCHOK change ignore
+        if hasattr(self, 'o0'):
+            ignore.append(self.o0)  # PYCHOK change ignore
+        if hasattr(self, 'o1'):
+            ignore.append(self.o1)  # PYCHOK change ignore
+        ignore.append(ignore)  # PYCHOK change ignore
+        ignore.append(remove_ignore)  # PYCHOK change ignore
         # this implies that referenced objects are also ignored
         tmp = remove_ignore(tmp, ignore)
         res = []
@@ -219,12 +225,12 @@ class ObjectTracker(object):
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe()) #PYCHOK change ignore
+        ignore.append(inspect.currentframe())  # PYCHOK change ignore
         self.o1 = self._get_objects(ignore)
         diff = muppy.get_diff(self.o0, self.o1)
         self.o0 = self.o1
         # manual cleanup, see comment above
-        del ignore[:] #PYCHOK change ignore
+        del ignore[:]  # PYCHOK change ignore
         return diff
 
     def print_diff(self, ignore=[]):
@@ -234,7 +240,7 @@ class ObjectTracker(object):
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe()) #PYCHOK change ignore
+        ignore.append(inspect.currentframe())  # PYCHOK change ignore
         diff = self.get_diff(ignore)
         print("Added objects:")
         summary.print_(summary.summarize(diff['+']))

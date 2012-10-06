@@ -53,6 +53,7 @@ class _Node(object):
         else:
             return str(self.o)
 
+
 class RefBrowser(object):
     """Base class to other RefBrowser implementations.
 
@@ -62,7 +63,8 @@ class RefBrowser(object):
 
     """
 
-    def __init__(self, rootobject, maxdepth=3, str_func=summary._repr, repeat=True, stream=None):
+    def __init__(self, rootobject, maxdepth=3, str_func=summary._repr,
+                 repeat=True, stream=None):
         """You have to provide the root object used in the refbrowser.
 
         keyword arguments
@@ -101,11 +103,11 @@ class RefBrowser(object):
 
         """
         self.ignore.append(inspect.currentframe())
-        res = _Node(root, self.str_func) #PYCHOK use root parameter
-        self.already_included.add(id(root)) #PYCHOK use root parameter
+        res = _Node(root, self.str_func)  # PYCHOK use root parameter
+        self.already_included.add(id(root))  # PYCHOK use root parameter
         if maxdepth == 0:
             return res
-        objects = gc.get_referrers(root) #PYCHOK use root parameter
+        objects = gc.get_referrers(root)  # PYCHOK use root parameter
         self.ignore.append(objects)
         for o in objects:
             # XXX: find a better way to ignore dict of _Node objects
@@ -116,11 +118,11 @@ class RefBrowser(object):
             _id = id(o)
             if not self.repeat and (_id in self.already_included):
                 s = self.str_func(o)
-                res.children.append("%s (already included, id %s)" %\
+                res.children.append("%s (already included, id %s)" %
                                     (s, _id))
                 continue
             if (not isinstance(o, _Node)) and (o not in self.ignore):
-                res.children.append(self._get_tree(o, maxdepth-1))
+                res.children.append(self._get_tree(o, maxdepth - 1))
         return res
 
 
@@ -163,7 +165,7 @@ class StreamBrowser(RefBrowser):
         """
         level = prefix.count(self.cross) + prefix.count(self.vline)
         len_children = 0
-        if isinstance(tree , _Node):
+        if isinstance(tree, _Node):
             len_children = len(tree.children)
 
         # add vertex
@@ -172,7 +174,7 @@ class StreamBrowser(RefBrowser):
         carryon += self.space * len(str(tree))
         if (level == self.maxdepth) or (not isinstance(tree, _Node)) or\
            (len_children == 0):
-            self.stream.write(prefix+'\n')
+            self.stream.write(prefix + '\n')
             return
         else:
             # add in between connections
@@ -192,14 +194,14 @@ class StreamBrowser(RefBrowser):
                     # the caryon becomes the prefix for all following children
                     prefix = carryon[:-2] + self.cross + self.hline
                     # remove the vlines for any children of last branch
-                    if b == (len_children-1):
-                        carryon = carryon[:-2] + 2*self.space
+                    if b == (len_children - 1):
+                        carryon = carryon[:-2] + 2 * self.space
                     self._print(tree.children[b], prefix, carryon)
                     # leave a free line before the next branch
-                    if b == (len_children-1):
+                    if b == (len_children - 1):
                         if len(carryon.strip(' ')) == 0:
                             return
-                        self.stream.write(carryon[:-2].rstrip()+'\n')
+                        self.stream.write(carryon[:-2].rstrip() + '\n')
 
 
 class ConsoleBrowser(StreamBrowser):
@@ -269,27 +271,35 @@ try:
             _TreeWidget.TreeNode.drawtext(self)
             # create a menu
             menu = _Tkinter.Menu(self.canvas, tearoff=0)
-            menu.add_command(label="reload referrers", command=self.reload_referrers)
+            menu.add_command(label="reload referrers",
+                             command=self.reload_referrers)
             menu.add_command(label="print", command=self.print_object)
             menu.add_separator()
             menu.add_command(label="expand", command=self.expand)
             menu.add_separator()
             # the popup only disappears when to click on it
             menu.add_command(label="Close Popup Menu")
+
             def do_popup(event):
                 menu.post(event.x_root, event.y_root)
+
             self.label.bind("<Button-3>", do_popup)
             # override, i.e. disable the editing of items
 
             # disable editing of TreeNodes
-            def edit(self, event=None): pass #PYCHOK see comment above
-            def edit_finish(self, event=None): pass #PYCHOK see comment above
-            def edit_cancel(self, event=None): pass #PYCHOK see comment above
+            def edit(self, event=None):
+                pass  # PYCHOK see comment above
+
+            def edit_finish(self, event=None):
+                pass  # PYCHOK see comment above
+
+            def edit_cancel(self, event=None):
+                pass  # PYCHOK see comment above
 
     class _ReferrerTreeItem(_TreeWidget.TreeItem, _Tkinter.Label):
         """Tree item wrapper around _Node object."""
 
-        def __init__(self, parentwindow, node, reftree): #PYCHOK constr. calls
+        def __init__(self, parentwindow, node, reftree):  # PYCHOK constr calls
             """You need to provide the parent window, the node this TreeItem
             represents, as well as the tree (_Node) which the node
             belongs to.
@@ -304,8 +314,8 @@ try:
         def _clear_children(self):
             """Clear children list from any TreeNode instances.
 
-            Normally these objects are not required for memory profiling, as they
-            are part of the profiler.
+            Normally these objects are not required for memory profiling, as
+            they are part of the profiler.
 
             """
             new_children = []
@@ -354,28 +364,31 @@ try:
                 children = self.node.children
 
             for child in children:
-                item = _ReferrerTreeItem(self.parentwindow, child, self.reftree)
+                item = _ReferrerTreeItem(self.parentwindow, child,
+                                         self.reftree)
                 sublist.append(item)
             return sublist
 
 except ImportError:
     _Tkinter = _TreeWidget = None
 
+
 def gui_default_str_function(o):
     """Default str function for InteractiveBrowser."""
     return summary._repr(o) + '(id=%s)' % id(o)
+
 
 class InteractiveBrowser(RefBrowser):
     """Interactive referrers browser.
 
     The interactive browser is based on a TreeWidget implemented in IDLE. It is
     available only if you have Tcl/Tk installed. If you try to instantiate the
-    interactive browser without having Tkinter installed, an ImportError will be
-    raised.
+    interactive browser without having Tkinter installed, an ImportError will
+    be raised.
 
     """
-    def __init__(self, rootobject, maxdepth=3,\
-                     str_func=gui_default_str_function, repeat=True):
+    def __init__(self, rootobject, maxdepth=3,
+                 str_func=gui_default_str_function, repeat=True):
         """You have to provide the root object used in the refbrowser.
 
         keyword arguments
@@ -386,7 +399,8 @@ class InteractiveBrowser(RefBrowser):
 
         """
         if _Tkinter is None:
-            raise ImportError("InteractiveBrowser requires Tkinter to be installed.")
+            raise ImportError(
+                "InteractiveBrowser requires Tkinter to be installed.")
         RefBrowser.__init__(self, rootobject, maxdepth, str_func, repeat)
 
     def main(self, standalone=False):
@@ -398,8 +412,8 @@ class InteractiveBrowser(RefBrowser):
 
         """
         window = _Tkinter.Tk()
-        sc = _TreeWidget.ScrolledCanvas(window, bg="white",\
-                                       highlightthickness=0, takefocus=1)
+        sc = _TreeWidget.ScrolledCanvas(window, bg="white",
+                                        highlightthickness=0, takefocus=1)
         sc.frame.pack(expand=1, fill="both")
         item = _ReferrerTreeItem(window, self.get_tree(), self)
         node = _TreeNode(sc.canvas, None, item)
@@ -415,16 +429,20 @@ for i in range(3):
     tmp = [root]
     superlist.append(tmp)
 
-def foo(o): return str(type(o))
+
+def foo(o):
+    return str(type(o))
 
 
 def print_sample():
     cb = ConsoleBrowser(root, str_func=foo)
     cb.print_tree()
 
+
 def write_sample():
     fb = FileBrowser(root, str_func=foo)
     fb.print_tree('sample.txt')
+
 
 if __name__ == "__main__":
 #    print_sample()
