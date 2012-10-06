@@ -12,7 +12,7 @@ Windows without the win32 module is not supported.
 
     >>> from pympler.process import ProcessMemoryInfo
     >>> pmi = ProcessMemoryInfo()
-    >>> print "Virtual size [Byte]:", pmi.vsz # doctest: +ELLIPSIS
+    >>> print ("Virtual size [Byte]: " + str(pmi.vsz)) # doctest: +ELLIPSIS
     Virtual size [Byte]: ...
 """
 

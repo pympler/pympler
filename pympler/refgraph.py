@@ -228,7 +228,7 @@ class ReferenceGraph(object):
         >>> t = (1,2,3)
         >>> rg = ReferenceGraph([a,b,c,t])
         >>> for subgraph in rg.split():
-        ...   print subgraph.index
+        ...   print (subgraph.index)
         0
         1
         """
