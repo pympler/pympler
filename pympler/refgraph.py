@@ -20,7 +20,7 @@ __all__ = ['ReferenceGraph']
 # ValueError if stdin/stdout/stderr is piped:
 # http://code.google.com/p/pympler/issues/detail?id=28#c1
 popen_flags = {}
-if platform not in ['win32']: # pragma: no branch
+if platform not in ['win32']:  # pragma: no branch
     popen_flags['close_fds'] = True
 
 
@@ -48,7 +48,8 @@ class _Edge(object):
         self.group = None
 
     def __repr__(self):
-        return "<%08x => %08x, '%s', %s>" % (self.src, self.dst, self.label, self.group)
+        return "<%08x => %08x, '%s', %s>" % (self.src, self.dst, self.label,
+                                             self.group)
 
     def __hash__(self):
         return (self.src, self.dst, self.label).__hash__()
@@ -59,8 +60,9 @@ class _Edge(object):
 
 class ReferenceGraph(object):
     """
-    The ReferenceGraph illustrates the references between a collection of objects
-    by rendering a directed graph. That requires that 'graphviz' is installed.
+    The ReferenceGraph illustrates the references between a collection of
+    objects by rendering a directed graph. That requires that 'graphviz' is
+    installed.
 
     >>> from pympler.refgraph import ReferenceGraph
     >>> a = 42
@@ -81,13 +83,12 @@ class ReferenceGraph(object):
 
         if reduce:
             self.num_in_cycles = self._reduce_to_cycles()
-            self._reduced = self # TODO: weakref?
+            self._reduced = self  # TODO: weakref?
         else:
             self._reduced = None
 
         self._get_edges()
         self._annotate_objects()
-
 
     def _eliminate_leafs(self, graph):
         """
@@ -103,13 +104,12 @@ class ReferenceGraph(object):
                 result.append(n)
         return result
 
-
     def _reduce_to_cycles(self):
         """
         Iteratively eliminate leafs to reduce the set of objects to only those
         that build cycles. Return the number of objects involved in reference
-        cycles. If there are no cycles, `self.objects` will be an empty list and
-        this method returns 0.
+        cycles. If there are no cycles, `self.objects` will be an empty list
+        and this method returns 0.
         """
         cycles = self.objects[:]
         cnt = 0
@@ -118,7 +118,6 @@ class ReferenceGraph(object):
             cycles = self._eliminate_leafs(cycles)
         self.objects = cycles
         return len(self.objects)
-
 
     def reduce_to_cycles(self):
         """
@@ -143,7 +142,6 @@ class ReferenceGraph(object):
             self._reduced = reduced
         return self._reduced
 
-
     def _get_edges(self):
         """
         Compute the edges for the reference graph.
@@ -166,7 +164,6 @@ class ReferenceGraph(object):
                         label = k
                         break
                 self.edges.add(_Edge(id(n), ref, label))
-
 
     def _annotate_groups(self):
         """
@@ -198,7 +195,6 @@ class ReferenceGraph(object):
 
         self._max_group = idx
 
-
     def _filter_group(self, group):
         """
         Eliminate all objects but those which belong to `group`.
@@ -218,7 +214,6 @@ class ReferenceGraph(object):
 
         return True
 
-
     def split(self):
         """
         Split the graph into sub-graphs. Only connected objects belong to the
@@ -233,7 +228,7 @@ class ReferenceGraph(object):
         >>> t = (1,2,3)
         >>> rg = ReferenceGraph([a,b,c,t])
         >>> for subgraph in rg.split():
-        ...   print subgraph.index
+        ...   print (subgraph.index)
         0
         1
         """
@@ -251,7 +246,6 @@ class ReferenceGraph(object):
                 index += 1
                 yield subgraph
 
-
     def split_and_sort(self):
         """
         Split the graphs into sub graphs and return a list of all graphs sorted
@@ -262,7 +256,6 @@ class ReferenceGraph(object):
         for index, graph in enumerate(graphs):
             graph.index = index
         return graphs
-
 
     def _annotate_objects(self):
         """
@@ -278,11 +271,10 @@ class ReferenceGraph(object):
             md.id = id(obj)
             try:
                 md.type = obj.__class__.__name__
-            except (AttributeError, ReferenceError): # pragma: no cover
+            except (AttributeError, ReferenceError):  # pragma: no cover
                 md.type = type(obj).__name__
             md.str = safe_repr(obj, clip=128)
             self.metadata.append(md)
-
 
     def _get_graphviz_data(self):
         """
@@ -292,7 +284,7 @@ class ReferenceGraph(object):
         """
         s = []
         header = '// Process this file with graphviz\n'
-        s.append( header)
+        s.append(header)
         s.append('digraph G {\n')
         s.append('    node [shape=box];\n')
         for md in self.metadata:
@@ -302,28 +294,27 @@ class ReferenceGraph(object):
                 extra = ', color=red'
             elif md.type == 'frame':
                 extra = ', color=orange'
-            s.append('    "X%s" [ label = "%s\\n%s" %s ];\n' % \
-                (hex(md.id)[1:], label, md.type, extra))
+            s.append('    "X%s" [ label = "%s\\n%s" %s ];\n' %
+                     (hex(md.id)[1:], label, md.type, extra))
         for e in self.edges:
             extra = ''
             if e.label == '__dict__':
                 extra = ',weight=100'
-            s.append('    X%s -> X%s [label="%s"%s];\n' % \
-                (hex(e.src)[1:], hex(e.dst)[1:], e.label, extra))
+            s.append('    X%s -> X%s [label="%s"%s];\n' %
+                     (hex(e.src)[1:], hex(e.dst)[1:], e.label, extra))
 
         s.append('}\n')
         return "".join(s)
-
 
     def render(self, filename, cmd='dot', format='ps', unflatten=False):
         """
         Render the graph to `filename` using graphviz. The graphviz invocation
         command may be overriden by specifying `cmd`. The `format` may be any
-        specifier recognized by the graph renderer ('-Txxx' command).  The graph
-        can be preprocessed by the *unflatten* tool if the `unflatten` parameter
-        is True.  If there are no objects to illustrate, the method does not
-        invoke graphviz and returns False. If the renderer returns successfully
-        (return code 0), True is returned.
+        specifier recognized by the graph renderer ('-Txxx' command).  The
+        graph can be preprocessed by the *unflatten* tool if the `unflatten`
+        parameter is True.  If there are no objects to illustrate, the method
+        does not invoke graphviz and returns False. If the renderer returns
+        successfully (return code 0), True is returned.
 
         An `OSError` is raised if the graphviz tool cannot be found.
         """
@@ -341,7 +332,7 @@ class ReferenceGraph(object):
 
         if unflatten:
             p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE,
-                **popen_flags)
+                       **popen_flags)
             p2 = Popen(cmdline, stdin=p1.stdout, **popen_flags)
             p1.communicate(encode4pipe(data))
             p2.communicate()
@@ -351,7 +342,6 @@ class ReferenceGraph(object):
             p.communicate(encode4pipe(data))
             return p.returncode == 0
 
-
     def write_graph(self, filename):
         """
         Write raw graph data which can be post-processed using graphviz.
@@ -359,4 +349,3 @@ class ReferenceGraph(object):
         f = open(filename, 'w')
         f.write(self._get_graphviz_data())
         f.close()
-

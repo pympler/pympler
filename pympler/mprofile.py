@@ -7,6 +7,7 @@ import sys
 
 from pympler import muppy
 
+
 class MProfiler(object):
     """A memory usage profiler class.
 
@@ -39,7 +40,8 @@ class MProfiler(object):
     def __init__(self, codepoints=None, events=None):
         """
         keyword arguments:
-        codepoints -- a list of points in code to monitor (defaults to all codepoints)
+        codepoints -- a list of points in code to monitor (defaults to all
+            codepoints)
         events -- a list of events to monitor (defaults to all events)
         """
         self.memories = {}
@@ -48,7 +50,7 @@ class MProfiler(object):
 
     def codepoint_included(self, codepoint):
         """Check if codepoint matches any of the defined codepoints."""
-        if self.codepoints == None:
+        if self.codepoints is None:
             return True
         for cp in self.codepoints:
             mismatch = False
@@ -60,16 +62,16 @@ class MProfiler(object):
                 return True
         return False
 
-    def profile(self, frame, event, arg): #PYCHOK arg requ. to match signature
+    def profile(self, frame, event, arg):  # PYCHOK arg req to match signature
         """Profiling method used to profile matching codepoints and events."""
-        if (self.events == None) or (event in self.events):
+        if (self.events is None) or (event in self.events):
             frame_info = inspect.getframeinfo(frame)
             cp = (frame_info[0], frame_info[2], frame_info[1])
             if self.codepoint_included(cp):
                 objects = muppy.get_objects()
                 size = muppy.get_size(objects)
                 if cp not in self.memories:
-                    self.memories[cp] = [0,0,0,0]
+                    self.memories[cp] = [0, 0, 0, 0]
                     self.memories[cp][0] = 1
                     self.memories[cp][1] = size
                     self.memories[cp][2] = size
@@ -92,5 +94,3 @@ if __name__ == "__main__":
     p = MProfiler()
     p.run("print 'hello'")
     print(p.memories)
-
-

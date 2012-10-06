@@ -27,10 +27,10 @@ try:
             pct = [fp.classes[clsname]['pct'] for fp in stats.snapshots]
             if max(pct) > 3.0:
                 sizes = [fp.classes[clsname]['sum'] for fp in stats.snapshots]
-                sizes = [float(x)/(1024*1024) for x in sizes]
-                sizes = [offset+size for offset, size in zip(offsets, sizes)]
+                sizes = [float(x) / (1024 * 1024) for x in sizes]
+                sizes = [offset + size for offset, size in zip(offsets, sizes)]
                 poly = matplotlib.mlab.poly_between(timestamps, offsets, sizes)
-                polys.append( (poly, {'label': clsname}) )
+                polys.append((poly, {'label': clsname}))
                 poly_labels.append(clsname)
                 offsets = sizes
 
@@ -42,20 +42,17 @@ try:
         axis.set_ylabel("Virtual Memory [MiB]")
 
         totals = [x.asizeof_total for x in stats.snapshots]
-        totals = [float(x)/(1024*1024) for x in totals]
+        totals = [float(x) / (1024 * 1024) for x in totals]
         axis.plot(timestamps, totals, 'r--', label='Total')
         tracked = [x.tracked_total for x in stats.snapshots]
-        tracked = [float(x)/(1024*1024) for x in tracked]
+        tracked = [float(x) / (1024 * 1024) for x in tracked]
         axis.plot(timestamps, tracked, 'b--', label='Tracked total')
 
         for (args, kwds) in polys:
             axis.fill(*args, **kwds)
-        axis.legend(loc=2) # TODO fill legend
+        axis.legend(loc=2)  # TODO fill legend
         fig.savefig(filename)
 
 except ImportError:
     def tracker_timespace(*_args):
         pass
-
-
-

@@ -24,14 +24,14 @@ def _merge_asized(base, other, level=0):
     if level > 0:
         base.name = ref2key(base)
     # Add refs from other to base. Any new refs are appended.
-    base.refs = list(base.refs) # we may need to append items
+    base.refs = list(base.refs)  # we may need to append items
     refs = {}
     for ref in base.refs:
         refs[ref2key(ref)] = ref
     for ref in other.refs:
         key = ref2key(ref)
         if key in refs:
-            _merge_asized(refs[key], ref, level=level+1)
+            _merge_asized(refs[key], ref, level=level + 1)
         else:
             # Don't modify existing Asized instances => deepcopy
             base.refs.append(deepcopy(ref))
@@ -63,7 +63,7 @@ def _format_trace(trace):
     for fname, lineno, func, src, _ in trace:
         if src:
             for line in src:
-                lines.append('    '+line.strip()+'\n')
+                lines.append('    ' + line.strip() + '\n')
         lines.append('  %s:%4d in %s\n' % (fname, lineno, func))
     return ''.join(lines)
 
@@ -76,8 +76,9 @@ class Stats(object):
 
     def __init__(self, tracker=None, filename=None, stream=None):
         """
-        Initialize the data log structures either from a `ClassTracker` instance
-        (argument `tracker`) or a previously dumped file (argument `filename`).
+        Initialize the data log structures either from a `ClassTracker`
+        instance (argument `tracker`) or a previously dumped file (argument
+        `filename`).
 
         :param tracker: ClassTracker instance
         :param filename: filename of previously dumped statistics
@@ -98,7 +99,6 @@ class Stats(object):
         if filename:
             self.load_stats(filename)
 
-
     def load_stats(self, fdump):
         """
         Load the data from a dump file.
@@ -110,7 +110,6 @@ class Stats(object):
         self.index = pickle.load(fdump)
         self.snapshots = pickle.load(fdump)
         self.sorted = []
-
 
     def dump_stats(self, fdump, close=True):
         """
@@ -128,7 +127,6 @@ class Stats(object):
         pickle.dump(self.snapshots, fdump, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
             fdump.close()
-
 
     def _init_sort(self):
         """
@@ -150,7 +148,6 @@ class Stats(object):
                     tobj.size = tobj.get_max_size()
                     tobj.tsize = tobj.get_size_at_time(tmax)
                 self.sorted.extend(self.index[key])
-
 
     def sort_stats(self, *args):
         """
@@ -212,7 +209,6 @@ class Stats(object):
 
         return self
 
-
     def reverse_order(self):
         """
         Reverse the order of the tracked instance index `self.sorted`.
@@ -221,14 +217,12 @@ class Stats(object):
         self.sorted.reverse()
         return self
 
-
     def annotate(self):
         """
         Annotate all snapshots with class-based summaries.
         """
         for snapshot in self.snapshots:
             self.annotate_snapshot(snapshot)
-
 
     def annotate_snapshot(self, snapshot):
         """
@@ -246,13 +240,14 @@ class Stats(object):
             for tobj in self.index[classname]:
                 _merge_objects(snapshot.timestamp, merged, tobj)
                 total += tobj.get_size_at_time(snapshot.timestamp)
-                if tobj.birth < snapshot.timestamp and \
-                    (tobj.death is None or tobj.death > snapshot.timestamp):
+                if (tobj.birth < snapshot.timestamp and
+                        (tobj.death is None or
+                         tobj.death > snapshot.timestamp)):
                     active += 1
 
             try:
                 pct = total * 100.0 / snapshot.total
-            except ZeroDivisionError: # pragma: no cover
+            except ZeroDivisionError:  # pragma: no cover
                 pct = 0
             try:
                 avg = total / active
@@ -264,7 +259,6 @@ class Stats(object):
                                                pct=pct,
                                                active=active)
             snapshot.classes[classname]['merged'] = merged
-
 
     @property
     def tracked_classes(self):
@@ -286,20 +280,20 @@ class ConsoleStats(Stats):
         lrefs.sort(key=lambda x: x.size)
         lrefs.reverse()
         for ref in lrefs:
-            if ref.size > minsize and (ref.size*100.0/total) > minpct:
+            if ref.size > minsize and (ref.size * 100.0 / total) > minpct:
                 self.stream.write('%-50s %-14s %3d%% [%d]\n' % (
-                    trunc(prefix+str(ref.name), 50),
+                    trunc(prefix + str(ref.name), 50),
                     pp(ref.size),
-                    int(ref.size*100.0/total),
+                    int(ref.size * 100.0 / total),
                     level
                 ))
-                self._print_refs(ref.refs, total, prefix=prefix+'  ',
-                                 level=level+1)
-
+                self._print_refs(ref.refs, total, prefix=prefix + '  ',
+                                 level=level + 1)
 
     def print_object(self, tobj):
         """
-        Print the gathered information of object `tobj` in human-readable format.
+        Print the gathered information of object `tobj` in human-readable
+        format.
         """
         if tobj.death:
             self.stream.write('%-32s ( free )   %-35s\n' % (
@@ -321,7 +315,6 @@ class ConsoleStats(Stats):
             self.stream.write('  %-30s finalize\n' % (
                 pp_timestamp(tobj.death),
             ))
-
 
     def print_stats(self, clsname=None, limit=1.0):
         """
@@ -356,7 +349,6 @@ class ConsoleStats(Stats):
         for tobj in _sorted:
             self.print_object(tobj)
 
-
     def print_summary(self):
         """
         Print per-class summary for each snapshot.
@@ -366,7 +358,7 @@ class ConsoleStats(Stats):
 
         fobj = self.stream
 
-        fobj.write('---- SUMMARY '+'-'*66+'\n')
+        fobj.write('---- SUMMARY ' + '-' * 66 + '\n')
         for snapshot in self.snapshots:
             self.annotate_snapshot(snapshot)
             fobj.write('%-35s %11s %12s %12s %5s\n' % (
@@ -385,7 +377,7 @@ class ConsoleStats(Stats):
                     pp(info['avg']),
                     info['pct']
                 ))
-        fobj.write('-'*79+'\n')
+        fobj.write('-' * 79 + '\n')
 
 
 class HtmlStats(Stats):
@@ -393,7 +385,7 @@ class HtmlStats(Stats):
     Output the `ClassTracker` statistics as HTML pages and graphs.
     """
 
-    style          = """<style type="text/css">
+    style = """<style type="text/css">
         table { width:100%; border:1px solid #000; border-spacing:0px; }
         td, th { border:0px; }
         div { width:200px; padding:10px; background-color:#FFEECC; }
@@ -416,15 +408,15 @@ class HtmlStats(Stats):
     </style>
     """
 
-    nopylab_msg    = """<div color="#FFCCCC">Could not generate %s chart!
+    nopylab_msg = """<div color="#FFCCCC">Could not generate %s chart!
     Install <a href="http://matplotlib.sourceforge.net/">Matplotlib</a>
     to generate charts.</div>\n"""
 
-    chart_tag      = '<img src="%s">\n'
-    header         = "<html><head><title>%s</title>%s</head><body>\n"
-    tableheader    = '<table border="1">\n'
-    tablefooter    = '</table>\n'
-    footer         = '</body></html>\n'
+    chart_tag = '<img src="%s">\n'
+    header = "<html><head><title>%s</title>%s</head><body>\n"
+    tableheader = '<table border="1">\n'
+    tablefooter = '</table>\n'
+    footer = '</body></html>\n'
 
     refrow = """<tr id="r%(level)d">
         <td id="p%(level)d">%(name)s</td>
@@ -441,21 +433,21 @@ class HtmlStats(Stats):
         if level == 1:
             fobj.write('<table>\n')
         for ref in lrefs:
-            if ref.size > minsize and (ref.size*100.0/total) > minpct:
+            if ref.size > minsize and (ref.size * 100.0 / total) > minpct:
                 data = dict(level=level,
                             name=trunc(str(ref.name), 128),
                             size=pp(ref.size),
-                            pct=ref.size*100.0/total)
+                            pct=ref.size * 100.0 / total)
                 fobj.write(self.refrow % data)
-                self._print_refs(fobj, ref.refs, total, level=level+1)
+                self._print_refs(fobj, ref.refs, total, level=level + 1)
         if level == 1:
             fobj.write("</table>\n")
 
     class_summary = """<p>%(cnt)d instances of %(cls)s were registered. The
-    average size is %(avg)s, the minimal size is %(min)s, the maximum size is
-    %(max)s.</p>\n"""
-    class_snapshot = '''<h3>Snapshot: %(name)s, %(total)s occupied by instances of
-    class %(cls)s</h3>\n'''
+        average size is %(avg)s, the minimal size is %(min)s, the maximum size
+        is %(max)s.</p>\n"""
+    class_snapshot = '''<h3>Snapshot: %(name)s, %(total)s occupied by instances
+        of class %(cls)s</h3>\n'''
 
     def print_class_details(self, fname, classname):
         """
@@ -484,7 +476,9 @@ class HtmlStats(Stats):
             if classname in snapshot.classes:
                 merged = snapshot.classes[classname]['merged']
                 fobj.write(self.class_snapshot % {
-                    'name': snapshot.desc, 'cls':classname, 'total': pp(merged.size)
+                    'name': snapshot.desc,
+                    'cls': classname,
+                    'total': pp(merged.size),
                 })
                 if merged.refs:
                     self._print_refs(fobj, merged.refs, merged.size)
@@ -494,13 +488,18 @@ class HtmlStats(Stats):
         fobj.write("<h2>Instances</h2>\n")
         for tobj in self.index[classname]:
             fobj.write('<table id="tl" width="100%" rules="rows">\n')
-            fobj.write('<tr><td id="hl" width="140px">Instance</td><td id="hl">%s at 0x%08x</td></tr>\n' % (tobj.name, tobj.id))
+            fobj.write('<tr><td id="hl" width="140px">Instance</td>' +
+                       '<td id="hl">%s at 0x%08x</td></tr>\n' %
+                       (tobj.name, tobj.id))
             if tobj.repr:
-                fobj.write("<tr><td>Representation</td><td>%s&nbsp;</td></tr>\n" % tobj.repr)
-            fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" % (pp_timestamp(tobj.birth), pp_timestamp(tobj.death)))
+                fobj.write("<tr><td>Representation</td>" +
+                           "<td>%s&nbsp;</td></tr>\n" % tobj.repr)
+            fobj.write("<tr><td>Lifetime</td><td>%s - %s</td></tr>\n" %
+                       (pp_timestamp(tobj.birth), pp_timestamp(tobj.death)))
             if tobj.trace:
                 trace = "<pre>%s</pre>" % (_format_trace(tobj.trace))
-                fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" % trace)
+                fobj.write("<tr><td>Instantiation</td><td>%s</td></tr>\n" %
+                           trace)
             for (timestamp, size) in tobj.snapshots:
                 fobj.write("<tr><td>%s</td>" % pp_timestamp(timestamp))
                 if not size.refs:
@@ -528,11 +527,11 @@ class HtmlStats(Stats):
         <td align="right">%(avg)s</td>
         <td align="right">%(pct)3.2f%%</td></tr>\n"""
 
-    snapshot_summary = """<p>Total virtual memory assigned to the program at that time
-        was %(sys)s, which includes %(overhead)s profiling overhead. The
-        ClassTracker tracked %(tracked)s in total. The measurable objects
-        including code objects but excluding overhead have a total size of
-        %(asizeof)s.</p>\n"""
+    snapshot_summary = """<p>Total virtual memory assigned to the program
+        at that time was %(sys)s, which includes %(overhead)s profiling
+        overhead. The ClassTracker tracked %(tracked)s in total. The measurable
+        objects including code objects but excluding overhead have a total size
+        of %(asizeof)s.</p>\n"""
 
     def relative_path(self, filepath, basepath=None):
         """
@@ -575,9 +574,9 @@ class HtmlStats(Stats):
             ))
 
             data = {}
-            data['sys']      = pp(snapshot.system_total.vsz)
-            data['tracked']  = pp(snapshot.tracked_total)
-            data['asizeof']  = pp(snapshot.asizeof_total)
+            data['sys'] = pp(snapshot.system_total.vsz)
+            data['tracked'] = pp(snapshot.tracked_total)
+            data['asizeof'] = pp(snapshot.asizeof_total)
             data['overhead'] = pp(getattr(snapshot, 'overhead', 0))
 
             fobj.write(self.snapshot_summary % data)
@@ -586,7 +585,8 @@ class HtmlStats(Stats):
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
                     data = snapshot.classes[classname].copy()
-                    data['cls'] = '<a href="%s">%s</a>' % (self.relative_path(self.links[classname]), classname)
+                    path = self.relative_path(self.links[classname])
+                    data['cls'] = '<a href="%s">%s</a>' % (path, classname)
                     data['sum'] = pp(data['sum'])
                     data['avg'] = pp(data['avg'])
                     fobj.write(self.snapshot_cls % data)
@@ -608,7 +608,7 @@ class HtmlStats(Stats):
         try:
             from pylab import figure, title, xlabel, ylabel, plot, savefig
         except ImportError:
-            return HtmlStats.nopylab_msg % (classname+" lifetime")
+            return HtmlStats.nopylab_msg % (classname + " lifetime")
 
         cnt = []
         for tobj in self.index[classname]:
@@ -617,12 +617,10 @@ class HtmlStats(Stats):
                 cnt.append([tobj.death, -1])
         cnt.sort()
         for i in range(1, len(cnt)):
-            cnt[i][1] += cnt[i-1][1]
-            #if cnt[i][0] == cnt[i-1][0]:
-            #    del cnt[i-1]
+            cnt[i][1] += cnt[i - 1][1]
 
-        x = [t for [t,c] in cnt]
-        y = [c for [t,c] in cnt]
+        x = [t for [t, c] in cnt]
+        y = [c for [t, c] in cnt]
 
         figure()
         xlabel("Execution time [s]")
@@ -635,11 +633,12 @@ class HtmlStats(Stats):
 
     def create_snapshot_chart(self, filename=''):
         """
-        Create chart that depicts the memory allocation over time apportioned to
-        the tracked classes.
+        Create chart that depicts the memory allocation over time apportioned
+        to the tracked classes.
         """
         try:
-            from pylab import figure, title, xlabel, ylabel, plot, fill, legend, savefig
+            from pylab import (figure, title, xlabel, ylabel, plot, fill,
+                               legend, savefig)
             import matplotlib.mlab as mlab
         except ImportError:
             return self.nopylab_msg % ("memory allocation")
@@ -653,10 +652,11 @@ class HtmlStats(Stats):
         for cn in classlist:
             pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots]
             if max(pct) > 3.0:
-                sz = [float(fp.classes[cn]['sum'])/(1024*1024) for fp in self.snapshots]
-                sz = [sx+sy for sx, sy in zip(base, sz)]
+                sz = [float(fp.classes[cn]['sum']) / (1024 * 1024)
+                      for fp in self.snapshots]
+                sz = [sx + sy for sx, sy in zip(base, sz)]
                 xp, yp = mlab.poly_between(times, base, sz)
-                polys.append( ((xp, yp), {'label': cn}) )
+                polys.append(((xp, yp), {'label': cn}))
                 poly_labels.append(cn)
                 base = sz
 
@@ -665,9 +665,11 @@ class HtmlStats(Stats):
         xlabel("Execution Time [s]")
         ylabel("Virtual Memory [MiB]")
 
-        sizes = [float(fp.asizeof_total)/(1024*1024) for fp in self.snapshots]
+        sizes = [float(fp.asizeof_total) / (1024 * 1024)
+                 for fp in self.snapshots]
         plot(times, sizes, 'r--', label='Total')
-        sizes = [float(fp.tracked_total)/(1024*1024) for fp in self.snapshots]
+        sizes = [float(fp.tracked_total) / (1024 * 1024)
+                 for fp in self.snapshots]
         plot(times, sizes, 'b--', label='Tracked total')
 
         for (args, kwds) in polys:
@@ -679,8 +681,8 @@ class HtmlStats(Stats):
 
     def create_pie_chart(self, snapshot, filename=''):
         """
-        Create a pie chart that depicts the distribution of the allocated memory
-        for a given `snapshot`. The chart is saved to `filename`.
+        Create a pie chart that depicts the distribution of the allocated
+        memory for a given `snapshot`. The chart is saved to `filename`.
         """
         try:
             from pylab import figure, title, pie, axes, savefig
@@ -703,7 +705,7 @@ class HtmlStats(Stats):
         #sizelist = [x*0.01 for x in sizelist]
 
         title("Snapshot (%s) Memory Distribution" % (snapshot.desc))
-        figure(figsize=(8,8))
+        figure(figsize=(8, 8))
         axes([0.1, 0.1, 0.8, 0.8])
         pie(sizelist, labels=classlist)
         savefig(filename, dpi=50)
@@ -738,13 +740,13 @@ class HtmlStats(Stats):
             self.charts[fp] = self.create_pie_chart(fp, fn)
 
         for cn in list(self.index.keys()):
-            fn = os.path.join(self.filesdir, cn.replace('.', '_')+'-lt.png')
+            fn = os.path.join(self.filesdir, cn.replace('.', '_') + '-lt.png')
             self.charts[cn] = self.create_lifetime_chart(cn, fn)
 
         # Create HTML pages first for each class and then the index page.
         for cn in list(self.index.keys()):
-            fn = os.path.join(self.filesdir, cn.replace('.', '_')+'.html')
-            self.links[cn]  = fn
+            fn = os.path.join(self.filesdir, cn.replace('.', '_') + '.html')
+            self.links[cn] = fn
             self.print_class_details(fn, cn)
 
         self.create_title_page(fname, title=title)

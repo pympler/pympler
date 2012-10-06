@@ -58,7 +58,6 @@ class ServerState(threading.local):
         self.id2ref = WeakValueDictionary()
         self.id2obj = dict()
 
-
     def clear_cache(self):
         self.garbage_graphs = None
 
@@ -175,7 +174,7 @@ def get_traceback(threadid):
         frame = frames[threadid]
         stack = getouterframes(frame, 5)
         stack.reverse()
-        stack = [(get_ref(f[0].f_locals),)+f[1:] for f in stack]
+        stack = [(get_ref(f[0].f_locals),) + f[1:] for f in stack]
     else:
         stack = []
     return dict(stack=stack, threadid=threadid)
@@ -192,7 +191,8 @@ def get_obj_referents(oid):
         refs = asizeof._getreferents(obj)
         named_objects = [(repr(type(x)), x) for x in refs]
     for name, o in named_objects:
-        referents[name] = (get_ref(o), type(o).__name__, safe_repr(o, clip=48), asizeof.asizeof(o))
+        referents[name] = (get_ref(o), type(o).__name__,
+                           safe_repr(o, clip=48), asizeof.asizeof(o))
     return dict(referents=referents)
 
 
@@ -312,8 +312,11 @@ def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
 
 class ProfilerThread(Thread):
     """Encapsulates a thread to run the web server."""
-    def __init__(self, group=None, target=None, name='Pympler web frontend', **kwargs):
-        super(ProfilerThread, self).__init__(group=group, target=target, name=name)
+    def __init__(self, group=None, target=None, name='Pympler web frontend',
+                 **kwargs):
+        super(ProfilerThread, self).__init__(group=group,
+                                             target=target,
+                                             name=name)
         self.kwargs = kwargs
         self.daemon = True
 
@@ -333,4 +336,3 @@ def start_in_background(**kwargs):
     thread = ProfilerThread(**kwargs)
     thread.start()
     return thread
-

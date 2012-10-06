@@ -1,9 +1,10 @@
 """
-The `ClassTracker` is a facility delivering insight into the memory distribution
-of a Python program. It can introspect memory consumption of certain classes and
-objects. Facilities are provided to track and size individual objects or all
-instances of certain classes. Tracked objects are sized recursively to provide
-an overview of memory distribution between the different tracked objects.
+The `ClassTracker` is a facility delivering insight into the memory
+distribution of a Python program. It can introspect memory consumption of
+certain classes and objects. Facilities are provided to track and size
+individual objects or all instances of certain classes. Tracked objects are
+sized recursively to provide an overview of memory distribution between the
+different tracked objects.
 """
 
 from inspect import stack, isclass
@@ -52,13 +53,14 @@ def _get_time():
     """
     return time() - _local_start
 
+
 class TrackedObject(object):
     """
-    Stores size and lifetime information of a tracked object. A weak reference is
-    attached to monitor the object without preventing its deletion.
+    Stores size and lifetime information of a tracked object. A weak reference
+    is attached to monitor the object without preventing its deletion.
     """
     __slots__ = ("ref", "id", "repr", "name", "birth", "death", "trace",
-        "snapshots", "_resolution_level", "__dict__")
+                 "snapshots", "_resolution_level", "__dict__")
 
     def __init__(self, instance, resolution_level=0, trace=False):
         """
@@ -83,7 +85,6 @@ class TrackedObject(object):
         size = asizeof.Asized(initial_size, initial_size)
         self.snapshots = [(self.birth, size)]
 
-
     def __getstate__(self):
         """
         Make the object serializable for dump_stats. Read the available slots
@@ -97,7 +98,6 @@ class TrackedObject(object):
                 state[name] = getattr(self, name)
         return state
 
-
     def __setstate__(self, state):
         """
         Restore the state from pickled data. Needed because a slotted class is
@@ -106,7 +106,6 @@ class TrackedObject(object):
         for key, value in list(state.items()):
             setattr(self, key, value)
 
-
     def _save_trace(self):
         """
         Save current stack trace as formatted string.
@@ -114,7 +113,7 @@ class TrackedObject(object):
         stack_trace = stack()
         try:
             self.trace = []
-            for frm in stack_trace[5:]: # eliminate our own overhead
+            for frm in stack_trace[5:]:  # eliminate our own overhead
                 self.trace.insert(0, frm[1:])
         finally:
             del stack_trace
@@ -157,7 +156,7 @@ class TrackedObject(object):
         """
         self._resolution_level = resolution_level
 
-    def finalize(self, ref): #PYCHOK required to match callback
+    def finalize(self, ref):
         """
         Mark the reference as dead and remember the timestamp.  It would be
         great if we could measure the pre-destruction size.  Unfortunately, the
@@ -165,13 +164,13 @@ class TrackedObject(object):
         weakref callbacks are useful to be informed when tracked objects died
         without the need of destructors.
 
-        If the object is destroyed at the end of the program execution, it's not
-        possible to import modules anymore. Hence, the finalize callback just
-        does nothing (self.death stays None).
+        If the object is destroyed at the end of the program execution, it's
+        not possible to import modules anymore. Hence, the finalize callback
+        just does nothing (self.death stays None).
         """
         try:
             self.death = _get_time()
-        except Exception: # pragma: no cover
+        except Exception:  # pragma: no cover
             pass
 
 
@@ -212,7 +211,6 @@ class Snapshot(object):
         self.system_total = None
         self.desc = None
 
-
     @property
     def total(self):
         """
@@ -222,11 +220,10 @@ class Snapshot(object):
         """
         if self.system_total.available:
             return self.system_total.vsz
-        elif self.asizeof_total: # pragma: no cover
+        elif self.asizeof_total:  # pragma: no cover
             return self.asizeof_total
-        else: # pragma: no cover
+        else:  # pragma: no cover
             return self.tracked_total
-
 
     @property
     def label(self):
@@ -252,8 +249,9 @@ class ClassTracker(object):
         self.index = {}
 
         # 'objects' uses the id (address) as the key and associates the tracked
-        # object with it. TrackedObject's referring to dead objects are replaced
-        # lazily, i.e. when the id is recycled by another tracked object.
+        # object with it. TrackedObject's referring to dead objects are
+        # replaced lazily, i.e. when the id is recycled by another tracked
+        # object.
         self.objects = {}
 
         # List of `Snapshot` objects.
@@ -270,7 +268,6 @@ class ClassTracker(object):
 
         self._stream = stream
 
-
     @property
     def stats(self):
         """
@@ -279,12 +276,11 @@ class ClassTracker(object):
         """
         return ConsoleStats(tracker=self, stream=self._stream)
 
-
     def _tracker(self, _observer_, _self_, *args, **kwds):
         """
         Injected constructor for tracked classes.
-        Call the actual constructor of the object and track the object.
-        Attach to the object before calling the constructor to track the object with
+        Call the actual constructor of the object and track the object.  Attach
+        to the object before calling the constructor to track the object with
         the parameters of the most specialized class.
         """
         self.track_object(_self_,
@@ -293,7 +289,6 @@ class ClassTracker(object):
                           keep=_observer_.keep,
                           trace=_observer_.trace)
         _observer_.init(_self_, *args, **kwds)
-
 
     def _inject_constructor(self, cls, func, name, resolution_level, keep,
                             trace):
@@ -323,13 +318,11 @@ class ClassTracker(object):
             cls
         )
 
-
     def _is_tracked(self, cls):
         """
         Determine if the class is tracked.
         """
         return cls in self._observers
-
 
     def _track_modify(self, cls, name, detail, keep, trace):
         """
@@ -337,14 +330,12 @@ class ClassTracker(object):
         """
         self._observers[cls].modify(name, detail, keep, trace)
 
-
     def _restore_constructor(self, cls):
         """
         Restore the original constructor, lose track of class.
         """
         cls.__init__ = self._observers[cls].init
         del self._observers[cls]
-
 
     def track_change(self, instance, resolution_level=0):
         """
@@ -354,11 +345,11 @@ class ClassTracker(object):
         tobj = self.objects[id(instance)]
         tobj.set_resolution_level(resolution_level)
 
-
-    def track_object(self, instance, name=None, resolution_level=0, keep=False, trace=False):
+    def track_object(self, instance, name=None, resolution_level=0,
+                     keep=False, trace=False):
         """
-        Track object 'instance' and sample size and lifetime information.
-        Not all objects can be tracked; trackable objects are class instances and
+        Track object 'instance' and sample size and lifetime information.  Not
+        all objects can be tracked; trackable objects are class instances and
         other objects that can be weakly referenced. When an object cannot be
         tracked, a `TypeError` is raised.
 
@@ -377,10 +368,12 @@ class ClassTracker(object):
         # is checked. If it is 'None' a tracked object is dead and another one
         # takes the same 'id'.
         if id(instance) in self.objects and \
-            self.objects[id(instance)].ref() is not None:
+                self.objects[id(instance)].ref() is not None:
             return
 
-        tobj = TrackedObject(instance, resolution_level=resolution_level, trace=trace)
+        tobj = TrackedObject(instance,
+                             resolution_level=resolution_level,
+                             trace=trace)
 
         if name is None:
             name = instance.__class__.__name__
@@ -392,19 +385,20 @@ class ClassTracker(object):
         if keep:
             self._keepalive.append(instance)
 
-
-    def track_class(self, cls, name=None, resolution_level=0, keep=False, trace=False):
+    def track_class(self, cls, name=None, resolution_level=0, keep=False,
+                    trace=False):
         """
         Track all objects of the class `cls`. Objects of that type that already
         exist are *not* tracked. If `track_class` is called for a class already
-        tracked, the tracking parameters are modified. Instantiation traces can be
-        generated by setting `trace` to True.
+        tracked, the tracking parameters are modified. Instantiation traces can
+        be generated by setting `trace` to True.
         A constructor is injected to begin instance tracking on creation
         of the object. The constructor calls `track_object` internally.
 
-        :param cls: class to be tracked, may be an old-style or a new-style class
-        :param name: reference the class by a name, default is the concatenation of
-            module and class name
+        :param cls: class to be tracked, may be an old-style or a new-style
+            class
+        :param name: reference the class by a name, default is the
+            concatenation of module and class name
         :param resolution_level: The recursion depth up to which referents are
             sized individually. Resolution level 0 (default) treats the object
             as an opaque entity, 1 sizes all direct referents individually, 2
@@ -420,8 +414,8 @@ class ClassTracker(object):
         if self._is_tracked(cls):
             self._track_modify(cls, name, resolution_level, keep, trace)
         else:
-            self._inject_constructor(cls, self._tracker, name, resolution_level, keep, trace)
-
+            self._inject_constructor(cls, self._tracker, name,
+                                     resolution_level, keep, trace)
 
     def detach_class(self, cls):
         """
@@ -430,7 +424,6 @@ class ClassTracker(object):
         """
         self._restore_constructor(cls)
 
-
     def detach_all_classes(self):
         """
         Detach from all tracked classes.
@@ -438,7 +431,6 @@ class ClassTracker(object):
         classes = list(self._observers.keys())
         for cls in classes:
             self.detach_class(cls)
-
 
     def detach_all(self):
         """
@@ -449,7 +441,6 @@ class ClassTracker(object):
         self.objects.clear()
         self.index.clear()
         self._keepalive[:] = []
-
 
     def clear(self):
         """
@@ -464,13 +455,15 @@ class ClassTracker(object):
 
     def start_periodic_snapshots(self, interval=1.0):
         """
-        Start a thread which takes snapshots periodically. The `interval` specifies
-        the time in seconds the thread waits between taking snapshots. The thread is
-        started as a daemon allowing the program to exit. If periodic snapshots are
-        already active, the interval is updated.
+        Start a thread which takes snapshots periodically. The `interval`
+        specifies the time in seconds the thread waits between taking
+        snapshots. The thread is started as a daemon allowing the program to
+        exit. If periodic snapshots are already active, the interval is
+        updated.
         """
         if not self._periodic_thread:
-            self._periodic_thread = PeriodicThread(self, interval, name='BackgroundMonitor')
+            self._periodic_thread = PeriodicThread(self, interval,
+                                                   name='BackgroundMonitor')
             self._periodic_thread.setDaemon(True)
             self._periodic_thread.start()
         else:
@@ -523,8 +516,9 @@ class ClassTracker(object):
             sizer.exclude_refs(*objs)
 
             # The objects need to be sized in a deterministic order. Sort the
-            # objects by its creation date which should at least work for non-parallel
-            # execution. The "proper" fix would be to handle shared data separately.
+            # objects by its creation date which should at least work for
+            # non-parallel execution. The "proper" fix would be to handle
+            # shared data separately.
             tracked_objects = list(self.objects.values())
             tracked_objects.sort(key=lambda x: x.birth)
             for tobj in tracked_objects:
@@ -539,7 +533,8 @@ class ClassTracker(object):
             snapshot.system_total = pympler.process.ProcessMemoryInfo()
             snapshot.desc = str(description)
 
-            # Compute overhead of all structures, use sizer to exclude tracked objects(!)
+            # Compute overhead of all structures, use sizer to exclude tracked
+            # objects(!)
             snapshot.overhead = 0
             if snapshot.tracked_total:
                 snapshot.overhead = sizer.asizeof(self)

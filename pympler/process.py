@@ -12,24 +12,26 @@ Windows without the win32 module is not supported.
 
     >>> from pympler.process import ProcessMemoryInfo
     >>> pmi = ProcessMemoryInfo()
-    >>> print "Virtual size [Byte]:", pmi.vsz # doctest: +ELLIPSIS
+    >>> print ("Virtual size [Byte]: " + str(pmi.vsz)) # doctest: +ELLIPSIS
     Virtual size [Byte]: ...
 """
 
+import logging
 import threading
 
 try:
     from thread import get_ident
 except ImportError:
-    from _thread import get_ident
+    from _thread import get_ident  # NOQA
 
 from os import getpid
-from subprocess  import Popen, PIPE
+from subprocess import Popen, PIPE
 
 try:
     from resource import getpagesize as _getpagesize
 except ImportError:
-    _getpagesize = lambda : 4096
+    _getpagesize = lambda: 4096
+
 
 class _ProcessMemoryInfo(object):
     """Stores information about various process-level memory metrics. The
@@ -58,19 +60,20 @@ class _ProcessMemoryInfo(object):
 
         self.available = self.update()
 
-
     def __repr__(self):
-        return "<%s vsz=%d rss=%d>" % (self.__class__.__name__, self.vsz, self.rss)
-
+        return "<%s vsz=%d rss=%d>" % (self.__class__.__name__,
+                                       self.vsz, self.rss)
 
     def update(self):
         """
-        Refresh the information using platform instruments. Returns true if this
-        operation yields useful values on the current platform.
+        Refresh the information using platform instruments. Returns true if
+        this operation yields useful values on the current platform.
         """
-        return False # pragma: no cover
+        return False  # pragma: no cover
+
 
 ProcessMemoryInfo = _ProcessMemoryInfo
+
 
 def is_available():
     """
@@ -78,6 +81,7 @@ def is_available():
     module.
     """
     return ProcessMemoryInfo().update()
+
 
 class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
     def update(self):
@@ -89,30 +93,30 @@ class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
         try:
             p = Popen(['/bin/ps', '-p%s' % self.pid, '-o', 'rss,vsz'],
                       stdout=PIPE, stderr=PIPE)
-        except OSError: # pragma: no cover
+        except OSError:  # pragma: no cover
             pass
         else:
             s = p.communicate()[0].split()
-            if p.returncode == 0 and len(s) >= 2: # pragma: no branch
+            if p.returncode == 0 and len(s) >= 2:  # pragma: no branch
                 self.vsz = int(s[-1]) * 1024
                 self.rss = int(s[-2]) * 1024
                 return True
-        return False # pragma: no cover
+        return False  # pragma: no cover
 
 
 class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
 
     key_map = {
-        'VmPeak'       : 'Peak virtual memory size',
-        'VmSize'       : 'Virtual memory size',
-        'VmLck'        : 'Locked memory size',
-        'VmHWM'        : 'Peak resident set size',
-        'VmRSS'        : 'Resident set size',
-        'VmStk'        : 'Size of stack segment',
-        'VmData'       : 'Size of data segment',
-        'VmExe'        : 'Size of code segment',
-        'VmLib'        : 'Shared library code size',
-        'VmPTE'        : 'Page table entries size',
+        'VmPeak': 'Peak virtual memory size',
+        'VmSize': 'Virtual memory size',
+        'VmLck':  'Locked memory size',
+        'VmHWM':  'Peak resident set size',
+        'VmRSS':  'Resident set size',
+        'VmStk':  'Size of stack segment',
+        'VmData': 'Size of data segment',
+        'VmExe':  'Size of code segment',
+        'VmLib':  'Shared library code size',
+        'VmPTE':  'Page table entries size',
     }
 
     def update(self):
@@ -123,13 +127,13 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
         try:
             stat = open('/proc/self/stat')
             status = open('/proc/self/status')
-        except IOError: # pragma: no cover
+        except IOError:  # pragma: no cover
             return False
         else:
             stats = stat.read().split()
-            self.vsz = int( stats[22] )
-            self.rss = int( stats[23] ) * self.pagesize
-            self.pagefaults = int( stats[11] )
+            self.vsz = int(stats[22])
+            self.rss = int(stats[23]) * self.pagesize
+            self.pagefaults = int(stats[11])
 
             for entry in status.readlines():
                 key, value = entry.split(':')
@@ -145,7 +149,6 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                 key = self.key_map.get(key)
                 if key:
                     self.os_specific.append((key, value.strip()))
-
 
             stat.close()
             status.close()
@@ -169,20 +172,20 @@ try:
             """
             usage = getrusage(RUSAGE_SELF)
             self.rss = usage.ru_maxrss * 1024
-            self.data_segment = usage.ru_idrss * 1024 # TODO: ticks?
-            self.shared_segment = usage.ru_ixrss * 1024 # TODO: ticks?
-            self.stack_segment = usage.ru_isrss * 1024 # TODO: ticks?
-            self.vsz = self.data_segment + self.shared_segment + \
-                       self.stack_segment
+            self.data_segment = usage.ru_idrss * 1024  # TODO: ticks?
+            self.shared_segment = usage.ru_ixrss * 1024  # TODO: ticks?
+            self.stack_segment = usage.ru_isrss * 1024  # TODO: ticks?
+            self.vsz = (self.data_segment + self.shared_segment +
+                        self.stack_segment)
 
             self.pagefaults = usage.ru_majflt
             return self.rss != 0
 
-    if _ProcessMemoryInfoProc().update(): # pragma: no branch
+    if _ProcessMemoryInfoProc().update():  # pragma: no branch
         ProcessMemoryInfo = _ProcessMemoryInfoProc
-    elif _ProcessMemoryInfoPS().update(): # pragma: no cover
+    elif _ProcessMemoryInfoPS().update():  # pragma: no cover
         ProcessMemoryInfo = _ProcessMemoryInfoPS
-    elif _ProcessMemoryInfoResource().update(): # pragma: no cover
+    elif _ProcessMemoryInfoResource().update():  # pragma: no cover
         ProcessMemoryInfo = _ProcessMemoryInfoResource
 
 except ImportError:
@@ -191,16 +194,15 @@ except ImportError:
         from win32process import GetProcessMemoryInfo
         from win32api import GetCurrentProcess, GlobalMemoryStatusEx
     except ImportError:
-        # TODO Emit Warning:
-        #print "It is recommended to install pywin32 when running pympler on Microsoft Windows."
-        pass
+        logging.warn("Please install pywin32 when using pympler on Windows.")
     else:
         class _ProcessMemoryInfoWin32(_ProcessMemoryInfo):
             def update(self):
                 process_handle = GetCurrentProcess()
                 meminfo = GetProcessMemoryInfo(process_handle)
                 memstatus = GlobalMemoryStatusEx()
-                self.vsz = memstatus['TotalVirtual'] - memstatus['AvailVirtual']
+                self.vsz = (memstatus['TotalVirtual'] -
+                            memstatus['AvailVirtual'])
                 self.rss = meminfo['WorkingSetSize']
                 self.pagefaults = meminfo['PageFaultCount']
                 return True
@@ -215,10 +217,10 @@ class ThreadInfo(object):
         self.ident = 0
         try:
             self.ident = thread.ident
-        except AttributeError: # Python 2.5
+        except AttributeError:  # Python 2.5
             pass
 
-        if not self.ident: # Python 2.5; http://bugs.python.org/issue5632
+        if not self.ident:  # Python 2.5; http://bugs.python.org/issue5632
             # Thread.ident was introduced in Python 2.6. On Python 2.5 use the
             # undocumented `_active` dictionary to map thread objects to thread
             # IDs.
@@ -228,11 +230,11 @@ class ThreadInfo(object):
                     break
         try:
             self.name = thread.name
-        except AttributeError: # Python 2.5
+        except AttributeError:  # Python 2.5
             self.name = thread.getName()
         try:
             self.daemon = thread.daemon
-        except AttributeError: # Python 2.5
+        except AttributeError:  # Python 2.5
             self.daemon = thread.isDaemon()
 
 
@@ -244,4 +246,3 @@ def get_current_threads():
 def get_current_thread_id():
     """Get the ID of the current thread."""
     return get_ident()
-

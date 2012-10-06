@@ -5,11 +5,11 @@ information which was gathered. Often it is sufficient to work with aggregated
 data instead of handling the entire set of existing objects. For example can a
 memory leak identified simple based on the number and size of existing objects.
 
-A summary contains information about objects in a table-like manner. Technically,
-it is a list of lists. Each of these lists represents a row, whereas the first
-column reflects the object type, the second column the number of objects, and
-the third column the size of all these objects. This allows a simple table-like
-output like the	following:
+A summary contains information about objects in a table-like manner.
+Technically, it is a list of lists. Each of these lists represents a row,
+whereas the first column reflects the object type, the second column the number
+of objects, and the third column the size of all these objects. This allows a
+simple table-like output like the	following:
 
 =============  ============  =============
        types     # objects     total size
@@ -37,8 +37,8 @@ defined in summary.representations the default str() representation will be
 used.
 
 Per default, summaries will use the verbosity level 1 for any encountered type.
-The reason is that several computations are done with summaries and rows have to
-remain comparable. Therefore information which reflect an objects state,
+The reason is that several computations are done with summaries and rows have
+to remain comparable. Therefore information which reflect an objects state,
 e.g. the current line number of a frame, should not be included. You may add
 more detailed information at higher verbosity levels than 1.
 """
@@ -56,6 +56,8 @@ except ImportError:
     _getsizeof = flatsize
 
 representations = {}
+
+
 def _init_representations():
     global representations
     if sys.hexversion < 0x2040000:
@@ -68,20 +70,18 @@ def _init_representations():
         ]
         representations[types.InstanceType] = instance
         instancemethod = [
-            lambda i: "instancemethod (%s)" %\
-                                      (repr(i.im_func)),
-            lambda i: "instancemethod (%s, %s)" %\
-                                      (repr(i.im_class), repr(i.im_func)),
+            lambda i: "instancemethod (%s)" % (repr(i.im_func)),
+            lambda i: "instancemethod (%s, %s)" % (repr(i.im_class),
+                                                   repr(i.im_func)),
         ]
         representations[types.MethodType] = instancemethod
     frame = [
-        lambda f: "frame (codename: %s)" %\
-                   (f.f_code.co_name),
-        lambda f: "frame (codename: %s, codeline: %s)" %\
-                   (f.f_code.co_name, f.f_code.co_firstlineno),
-        lambda f: "frame (codename: %s, filename: %s, codeline: %s)" %\
-                   (f.f_code.co_name, f.f_code.co_filename,\
-                    f.f_code.co_firstlineno)
+        lambda f: "frame (codename: %s)" % (f.f_code.co_name),
+        lambda f: "frame (codename: %s, codeline: %s)" %
+                  (f.f_code.co_name, f.f_code.co_firstlineno),
+        lambda f: "frame (codename: %s, filename: %s, codeline: %s)" %
+                  (f.f_code.co_name, f.f_code.co_filename,
+                   f.f_code.co_firstlineno)
     ]
     representations[types.FrameType] = frame
     _dict = [
@@ -99,7 +99,7 @@ def _init_representations():
         lambda l: "list, len=%s" % len(l)
     ]
     representations[list] = _list
-    module = [ lambda m: "module(%s)" % m.__name__ ]
+    module = [lambda m: "module(%s)" % m.__name__]
     representations[types.ModuleType] = module
     _set = [
         lambda s: str(type(s)),
@@ -108,6 +108,7 @@ def _init_representations():
     representations[set] = _set
 
 _init_representations()
+
 
 def summarize(objects):
     """Summarize an objects list.
@@ -133,6 +134,7 @@ def summarize(objects):
         rows.append([otype, count[otype], total_size[otype]])
     return rows
 
+
 def get_diff(left, right):
     """Get the difference of two summaries.
 
@@ -150,7 +152,8 @@ def get_diff(left, right):
         found = False
         for row_l in left:
             if row_r[0] == row_l[0]:
-                res.append([row_r[0], row_r[1] - row_l[1], row_r[2] - row_l[2]])
+                res.append([row_r[0], row_r[1] - row_l[1],
+                            row_r[2] - row_l[2]])
                 found = True
         if not found:
             res.append(row_r)
@@ -163,6 +166,7 @@ def get_diff(left, right):
         if not found:
             res.append([row_l[0], -row_l[1], -row_l[2]])
     return res
+
 
 def print_(rows, limit=15, sort='size', order='descending'):
     """Print the rows as a summary.
@@ -198,8 +202,9 @@ def print_(rows, limit=15, sort='size', order='descending'):
     for row in localrows:
         row[2] = stringutils.pp(row[2])
     # print rows
-    localrows.insert(0,["types", "# objects", "total size"])
+    localrows.insert(0, ["types", "# objects", "total size"])
     _print_table(localrows)
+
 
 def _print_table(rows, header=True):
     """Print a list of lists as a pretty table.
@@ -217,25 +222,28 @@ def _print_table(rows, header=True):
     padding = 1
     # may be left,center,right
     justify = 'right'
-    justify = {'left'   : str.ljust,
-               'center' : str.center,
-               'right'  : str.rjust}[justify.lower()]
+    justify = {'left': str.ljust,
+               'center': str.center,
+               'right': str.rjust}[justify.lower()]
     # calculate column widths (longest item in each col
     # plus "padding" nr of spaces on both sides)
     cols = zip(*rows)
-    colWidths = [max([len(str(item))+2*padding for item in col]) for col in cols]
-    borderline = vdelim.join([w*border for w in colWidths])
+    colWidths = [max([len(str(item)) + 2 * padding for item in col])
+                 for col in cols]
+    borderline = vdelim.join([w * border for w in colWidths])
     for row in rows:
-        print(vdelim.join([justify(str(item),width) for (item,width) in zip(row,colWidths)]))
+        print(vdelim.join([justify(str(item), width)
+                           for (item, width) in zip(row, colWidths)]))
         if header:
             print(borderline)
-            header=False
+            header = False
 
 
 # regular expressions used by _repr to replace default type representations
 type_prefix = re.compile(r"^<type '")
 address = re.compile(r' at 0x[0-9a-f]+')
 type_suffix = re.compile(r"'>$")
+
 
 def _repr(o, verbosity=1):
     """Get meaning object representation.
@@ -265,6 +273,7 @@ def _repr(o, verbosity=1):
 
     return res
 
+
 def _traverse(summary, function, *args):
     """Traverse all objects of a summary and call function with each as a
     parameter.
@@ -280,6 +289,7 @@ def _traverse(summary, function, *args):
         for item in row:
             function(item, *args)
 
+
 def _subtract(summary, o):
     """Remove object o from the summary by subtracting it's size."""
     found = False
@@ -292,11 +302,10 @@ def _subtract(summary, o):
         summary.append([row[0], -row[1], -row[2]])
     return summary
 
+
 def _sweep(summary):
     """Remove all rows in which the total size and the total number of
     objects is zero.
 
     """
     return [row for row in summary if ((row[2] != 0) or (row[1] != 0))]
-
-
