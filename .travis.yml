@@ -7,9 +7,11 @@ python:
   - "3.2"
   - "3.3"
 install:
-  - pip install flake8 --use-mirrors
+  - pip install pep8 --use-mirrors
+  - pip install pyflakes --use-mirrors
 before_script:
-  - '[ "$TRAVIS_PYTHON_VERSION" \> 3 ] || flake8 pympler'
+  - 'pep8 --exclude=metadata.py,bottle*.py --max-line-length=80 pympler'
+  - '[ "$TRAVIS_PYTHON_VERSION" \> 3 ] || pyflakes -x W'
 script:
   - python setup.py try
   - python setup.py install

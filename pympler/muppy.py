@@ -10,7 +10,7 @@ try:
     from sys import getsizeof as _getsizeof
 except ImportError:
     from pympler.asizeof import flatsize
-    _getsizeof = flatsize # NOQA
+    _getsizeof = flatsize
 
 __TPFLAGS_HAVE_GC = 1 << 14
 

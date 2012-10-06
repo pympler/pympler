@@ -175,8 +175,8 @@ try:
             self.data_segment = usage.ru_idrss * 1024  # TODO: ticks?
             self.shared_segment = usage.ru_ixrss * 1024  # TODO: ticks?
             self.stack_segment = usage.ru_isrss * 1024  # TODO: ticks?
-            self.vsz = self.data_segment + self.shared_segment + \
-                       self.stack_segment
+            self.vsz = (self.data_segment + self.shared_segment +
+                        self.stack_segment)
 
             self.pagefaults = usage.ru_majflt
             return self.rss != 0
