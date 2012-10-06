@@ -11,10 +11,8 @@ before_install:
 install:
   - pip install Sphinx --use-mirrors
   - pip install pep8 --use-mirrors
-  - pip install pyflakes --use-mirrors
 before_script:
   - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
-  - [ "$TRAVIS_PYTHON_VERSION" \> 3 ] || pyflakes --exclude=W --exclude-files=pympler/asizeof.py pympler
 script:
   - python setup.py try
   - python setup.py install
