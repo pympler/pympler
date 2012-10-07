@@ -155,6 +155,12 @@ class TypesTest(unittest.TestCase):
         ref_names = set([name for name, _ in refs])
         self.assertTrue(set(['__doc__']) <= ref_names, ref_names)
 
+    def test_array(self):
+        from array import array
+        arr = array('i', [0] * 100)
+        arr_size = asizeof.asizeof(arr)
+        self.assertGreaterEqual(arr_size, arr.buffer_info()[1] * arr.itemsize)
+
     def test_weakref(self):
         '''Test sizing weak references.
         '''

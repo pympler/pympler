@@ -281,6 +281,20 @@ except ImportError:
  # sys.getsizeof() new in Python 2.6
 _getsizeof = getattr(sys, 'getsizeof', None)
 
+version = sys.version_info
+_getsizeof_bugs = (getattr(sys, 'getsizeof', None) and
+                   (version[0] == 2 and version < (2, 7, 4) or
+                    version[0] == 3 and version < (3, 2, 4)))
+
+def _getsizeof_exclude(getsizeof, exclude):
+    def _getsizeof_wrapper(obj, default):
+        if isinstance(obj, exclude):
+            return default
+        else:
+            return getsizeof(obj, default)
+    return _getsizeof_wrapper
+
+
 try:  # str intern()
     _intern = intern
 except NameError:  # no intern() in Python 3.0
@@ -1134,6 +1148,8 @@ except AttributeError:  # missing
 try:
     from array import array  # array type
     _typedef_both(array, leng=_len_array, item=_sizeof_Cbyte)
+    if _getsizeof_bugs:
+        _getsizeof = _getsizeof_exclude(_getsizeof, array)
 except ImportError:  # missing
     pass
 
