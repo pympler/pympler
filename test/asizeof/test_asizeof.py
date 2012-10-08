@@ -159,7 +159,8 @@ class TypesTest(unittest.TestCase):
         from array import array
         arr = array('i', [0] * 100)
         arr_size = asizeof.asizeof(arr)
-        self.assertGreaterEqual(arr_size, arr.buffer_info()[1] * arr.itemsize)
+        buf_size = arr.buffer_info()[1] * arr.itemsize
+        self.assertTrue(arr_size >= buf_size, (arr_size, buf_size))
 
     def test_weakref(self):
         '''Test sizing weak references.
