@@ -39,14 +39,6 @@ except ImportError:  # Python 3.0
     from urllib.request import Request, urlopen
     from urllib.error import URLError
 
-try:
-    import pympler.util.bottle2 as bottle
-except (SyntaxError, ImportError):
-    try:
-        import pympler.util.bottle3 as bottle
-    except (SyntaxError, ImportError):  # Python 2.4
-        bottle = None
-
 # Helper functions
 
 # Python 2.x expects strings when calling communicate and passing data via a

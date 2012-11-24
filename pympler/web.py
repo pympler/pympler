@@ -39,7 +39,7 @@ from pympler import asizeof
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
-from pympler.util.compat import bottle
+from pympler.util import bottle
 from pympler.util.stringutils import safe_repr
 
 
