@@ -2255,17 +2255,16 @@ def test_flatsize(failf=None, stdf=None):
             a = flatsize(o)
             s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
             if a != s:
-                if set(type(o).mro()).intersection((dict, list, set, frozenset, tuple, bytes)):
+                if isinstance(o, (dict, list, set, frozenset, tuple, bytes)):
                     # flatsize() approximates length of sequences
                     x = ', expected failure'
-                elif type(o) in (bool,) and sys.version_info[0] == 3:
-                    # (sys.getsizeof(bool) on 3.0b3 is not correct)
+                elif type(o) in (type, bool) and sys.version_info[0] == 3:
                     x = ', expected failure'
                 else:
                     x = ', %r' % _typedefof(o)
                     e += 1
                     if failf:  # report failure
-                       failf('%s vs %s for %s: %s',
+                        failf('%s vs %s for %s: %s',
                               a, s, _nameof(type(o)), _repr(o))
                 if stdf:
                    _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s%s',
