@@ -1,3 +1,13 @@
+Release 0.2.2
+=============
+
+  * Work around array sizing bug in Python 2.6-3.2
+    Issue 46 reported by Matt
+
+  * Fix import when python is run with optimization `-OO`
+    Issue 47 reported by Kunal Parmar
+
+
 Release 0.2.1
 =============
 

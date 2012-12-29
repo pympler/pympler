@@ -39,7 +39,7 @@ from pympler import asizeof
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
-from pympler.util.compat import bottle
+from pympler.util import bottle
 from pympler.util.stringutils import safe_repr
 
 
@@ -199,7 +199,7 @@ def get_obj_referents(oid):
 @bottle.route('/static/:filename')
 def static_file(filename):
     """Get static files (CSS-files)."""
-    bottle.send_file(filename, root=static_files)
+    bottle.static_file(filename, root=static_files)
 
 
 def _compute_garbage_graphs():
@@ -256,7 +256,7 @@ def garbage_graph(index):
     filename = 'garbage%so%s.png' % (index, reduce_graph)
     rendered_file = _get_graph(graph, filename)
     if rendered_file:
-        bottle.send_file(rendered_file, root=server.tmpdir)
+        bottle.static_file(rendered_file, root=server.tmpdir)
     else:
         return None
 

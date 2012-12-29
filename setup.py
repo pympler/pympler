@@ -55,11 +55,6 @@ class BuildPyModule(build_py):
                 if line.startswith("DATA_PATH = "):
                     line = "DATA_PATH = '%s'\n" % data_path
                 sys.stdout.write(line)
-        # TODO: Cannot build bottle2 at Python3 and vice versa.
-        if sys.hexversion >= 0x3000000 and module == 'bottle2':
-            return
-        elif sys.hexversion < 0x3000000 and module == 'bottle3':
-            return
         build_py.build_module(self, module, module_file, package)
 
 
