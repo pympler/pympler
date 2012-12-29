@@ -47,6 +47,24 @@ added through an interface.
 
 URL: http://guppy-pe.sourceforge.net
 
+Meliae
+------
+
+"This project is similar to heapy (in the 'guppy' project), in its attempt to
+understand how memory has been allocated.
+
+Currently, its main difference is that it splits the task of computing summary
+statistics, etc of memory consumption from the actual scanning of memory
+consumption. It does this, because I often want to figure out what is going on
+in my process, while my process is consuming huge amounts of memory (1GB, etc).
+It also allows dramatically simplifying the scanner, as I don't allocate python
+objects while trying to analyze python object memory consumption."
+
+Meliae is being developed by John A Meinel since 2009. It is well suited for
+offline analysis of full memory dumps.
+
+URL: https://launchpad.net/meliae
+
 muppy
 -----
 "Muppy [..] enables the tracking of memory usage during runtime and the
