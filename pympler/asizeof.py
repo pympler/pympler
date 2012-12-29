@@ -237,6 +237,12 @@ if hasattr(sys, 'gettotalrefcount'): # pragma: no coverage
 else:
     _sizeof_Crefcounts =  0
 
+try:
+    from abc import ABCMeta
+except ImportError:
+    class ABCMeta(type):
+        pass
+
  # some flags from .../Include/object.h
 _Py_TPFLAGS_HEAPTYPE = 1 <<  9  # Py_TPFLAGS_HEAPTYPE
 _Py_TPFLAGS_HAVE_GC  = 1 << 14  # Py_TPFLAGS_HAVE_GC
@@ -2257,7 +2263,10 @@ def test_flatsize(failf=None, stdf=None):
                 if isinstance(o, (dict, list, set, frozenset, tuple, bytes)):
                     # flatsize() approximates length of sequences
                     x = ', expected failure'
-                elif type(o) in (type, bool) and sys.version_info[0] == 3:
+                elif (isinstance(o, (type, bool, ABCMeta)) and
+                      sys.version_info >= (3, 0)):
+                    x = ', expected failure'
+                elif isinstance(o, str) and sys.version_info >= (3, 3):
                     x = ', expected failure'
                 else:
                     x = ', %r' % _typedefof(o)
