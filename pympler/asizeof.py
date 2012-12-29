@@ -212,6 +212,7 @@ except NameError:  # no long in Python 3.0
 if _sizeof_Cdigit < 2: # pragma: no coverage
     raise AssertionError('sizeof(%s) bad: %d' % ('digit', _sizeof_Cdigit))
 
+# Get character size for internal unicode representation in Python < 3.3
 try:  # sizeof(unicode_char)
     u = unicode('\0')
 except NameError:  # no unicode() in Python 3.0
@@ -219,8 +220,6 @@ except NameError:  # no unicode() in Python 3.0
 u = u.encode('unicode-internal')  # see .../Lib/test/test_sys.py
 _sizeof_Cunicode = len(u)
 del u
-if sys.maxunicode >= (1 << (_sizeof_Cunicode << 3)): # pragma: no coverage
-    raise AssertionError('sizeof(%s) bad: %d' % ('unicode', _sizeof_Cunicode))
 
 try:  # size of GC header, sizeof(PyGC_Head)
     import _testcapi as t
