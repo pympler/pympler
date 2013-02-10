@@ -28,6 +28,7 @@ import os
 import threading
 
 from inspect import getouterframes
+from json import dumps
 from shutil import rmtree
 from tempfile import mkdtemp
 from threading import Thread
@@ -142,6 +143,7 @@ def tracker_index():
             series = [s.total - s.tracked_total - s.overhead
                       for s in stats.snapshots]
             timeseries.append(("Other", series))
+        timeseries = [(label, dumps(series)) for label, series in timeseries]
         return dict(snapshots=stats.snapshots, timeseries=timeseries)
     else:
         return dict(snapshots=[])
