@@ -291,6 +291,13 @@ def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
     garbage profiling data is requested and are simply retransmitted upon later
     requests.
 
+    The web server can display profiling data from previously taken snapshots
+    when `tracker` or `stats` is specified. The former is useful for profiling
+    a running application, the latter for off-line analysis. Requires existing
+    snapshots taken with
+    :py:meth:`~pympler.classtracker.ClassTracker.create_snapshot` or
+    :py:meth:`~pympler.classtracker.ClassTracker.start_periodic_snapshots`.
+
     :param host: the host where the server shall run, default is localhost
     :param port: server listens on the specified port, default is 8090 to allow
         coexistance with common web applications
