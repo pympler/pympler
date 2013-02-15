@@ -28,7 +28,6 @@ import os
 import threading
 
 from inspect import getouterframes
-from json import dumps
 from shutil import rmtree
 from tempfile import mkdtemp
 from threading import Thread
@@ -41,6 +40,7 @@ from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
 from pympler.util import bottle
+from pympler.util.compat import dumps
 from pympler.util.stringutils import safe_repr
 
 
