@@ -147,7 +147,7 @@ class GarbageTestCase(unittest.TestCase):
 
         self.assertEqual(gb1.count, gb2.count)
         self.assertTrue(gb1.count > gb2.num_in_cycles)
-        self.assertEqual(gb1.count, 3)
+        # Only foo and foo's __dict__ should be in the cycle
         self.assertEqual(gb2.num_in_cycles, 2)
 
         gbar = [x for x in gb1.metadata if x.id == idb]
