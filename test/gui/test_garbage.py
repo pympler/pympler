@@ -7,25 +7,28 @@ import unittest
 
 from pympler.garbagegraph import GarbageGraph, start_debug_garbage, end_debug_garbage
 from pympler.refgraph import _Edge
-from pympler.util.compat import StringIO
 
 
 class Foo:
     def __init__(self):
         self.foo = 'foo'
 
+
 class Bar(Foo):
     def __init__(self):
         Foo.__init__(self)
         self.bar = 'bar'
 
+
 class FooNew(object):
     def __init__(self):
         self.foo = 'foo'
 
+
 class BarNew(FooNew):
     def __init__(self):
         super(BarNew, self).__init__()
+
 
 class Enemy(object):
     def __del__(self):
@@ -81,8 +84,6 @@ class GarbageTestCase(unittest.TestCase):
         self.assertEqual(gbar.type, 'Bar')
         self.assert_(gbar.size > 0, gbar.size)
         self.assertNotEqual(gbar.str, '')
-
-
 
     def test_split(self):
         """Test splitting into subgraphs.
@@ -145,27 +146,14 @@ class GarbageTestCase(unittest.TestCase):
         gb2 = GarbageGraph(reduce=True)
 
         self.assertEqual(gb1.count, gb2.count)
-        self.assert_(len(gb1.metadata) > len(gb2.metadata))
+        self.assertTrue(gb1.count > gb2.num_in_cycles)
+        self.assertEqual(gb1.count, 3)
+        self.assertEqual(gb2.num_in_cycles, 2)
 
         gbar = [x for x in gb1.metadata if x.id == idb]
         self.assertEqual(len(gbar), 1)
         gbar = [x for x in gb2.metadata if x.id == idb]
         self.assertEqual(len(gbar), 0)
-
-        full = StringIO()
-        gb1.print_stats(stream=full)
-        reduced = StringIO()
-        gb2.print_stats(stream=reduced)
-        lazy_reduce = StringIO()
-        gb1_pruned = gb1.reduce_to_cycles()
-        self.assertTrue(gb1_pruned is gb1.reduce_to_cycles())
-        gb1_pruned.print_stats(stream=lazy_reduce)
-        self.assertEqual(lazy_reduce.getvalue(), reduced.getvalue())
-
-        self.assertTrue('Foo' in reduced.getvalue())
-        self.assertFalse('Bar' in reduced.getvalue())
-        self.assertTrue('Foo' in full.getvalue())
-        self.assertTrue('Bar' in full.getvalue())
 
     def test_edges_old(self):
         """Test referent identification for old-style classes.
@@ -277,7 +265,7 @@ class GarbageTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    tclasses = [GarbageTestCase,]
+    tclasses = [GarbageTestCase]
     for tclass in tclasses:
         names = unittest.getTestCaseNames(tclass, 'test_')
         suite.addTests(map(tclass, names))
