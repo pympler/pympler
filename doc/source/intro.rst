@@ -32,15 +32,14 @@ distributions (32bit and 64bit), Windows XP, Windows 7 and MacOS X.
 Download
 --------
 
-If you have *SetupTools* installed, the easiest way to get Pympler is
-to use *easy_install*::
+If you have *pip* installed, the easiest way to get Pympler is::
 
-    easy_install pympler    
+    pip install pympler
 
 Alternately, download Pympler releases from the `Python Package Index
-<http://pypi.python.org/pypi/Pympler>`_ or `check out the latest
+<https://pypi.python.org/pypi/Pympler>`_ or `check out the latest
 development revision
-<http://code.google.com/p/pympler/source/checkout>`_ with svn. Please
+<https://github.com/pympler/pympler>`_ with git. Please
 see the README file for installation instructions.
 
 

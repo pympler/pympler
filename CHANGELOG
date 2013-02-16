@@ -1,3 +1,15 @@
+Release 0.3.1
+=============
+
+  * Fix class tracker graph data formatting
+    Issue 48 reported by Berwyn Hoyt
+
+  * Improve web class tracker documentation
+    Issue 49 reported by Berwyn Hoyt
+
+  * Update links to GitHub and PyPi
+
+
 Release 0.3.0
 =============
 
