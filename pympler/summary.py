@@ -169,7 +169,7 @@ def get_diff(left, right):
 
 
 def format_(rows, limit=15, sort='size', order='descending'):
-    """Print the rows as a summary.
+    """Format the rows as a summary.
 
     Keyword arguments:
     limit -- the maximum number of elements to be listed
@@ -207,7 +207,7 @@ def format_(rows, limit=15, sort='size', order='descending'):
 
 
 def _format_table(rows, header=True):
-    """Print a list of lists as a pretty table.
+    """Format a list of lists as a pretty table.
 
     Keyword arguments:
     header -- if True the first row is treated as a table header
