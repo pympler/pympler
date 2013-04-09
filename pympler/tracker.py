@@ -137,6 +137,17 @@ class SummaryTracker(object):
         """
         summary.print_(self.diff(summary1=summary1, summary2=summary2))
 
+    def format_diff(self, summary1=None, summary2=None):
+        """Compute diff between to summaries and return a list of formatted
+        lines.
+
+        If no summary is provided, the diff from the last to the current
+        summary is used. If summary1 is provided the diff from summary1
+        to the current summary is used. If summary1 and summary2 are
+        provided, the diff between these two is used.
+        """
+        return summary.format_(self.diff(summary1=summary1, summary2=summary2))
+
     def store_summary(self, key):
         """Store a current summary in self.summaries."""
         self.summaries[key] = self.create_summary()
@@ -246,5 +257,23 @@ class ObjectTracker(object):
         summary.print_(summary.summarize(diff['+']))
         print("Removed objects:")
         summary.print_(summary.summarize(diff['-']))
+        # manual cleanup, see comment above
+        del ignore[:]
+
+    def format_diff(self, ignore=[]):
+        """Format the diff to the last time the state of objects was measured.
+
+        keyword arguments
+        ignore -- list of objects to ignore
+        """
+        # ignore this and the caller frame
+        ignore.append(inspect.currentframe())  # PYCHOK change ignore
+        diff = self.get_diff(ignore)
+        yield "Added objects:"
+        for line in summary.format_(summary.summarize(diff['+'])):
+            yield line
+        yield "Removed objects:"
+        for line in summary.format_(summary.summarize(diff['-'])):
+            yield line
         # manual cleanup, see comment above
         del ignore[:]

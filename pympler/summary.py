@@ -168,8 +168,8 @@ def get_diff(left, right):
     return res
 
 
-def print_(rows, limit=15, sort='size', order='descending'):
-    """Print the rows as a summary.
+def format_(rows, limit=15, sort='size', order='descending'):
+    """Format the rows as a summary.
 
     Keyword arguments:
     limit -- the maximum number of elements to be listed
@@ -203,11 +203,11 @@ def print_(rows, limit=15, sort='size', order='descending'):
         row[2] = stringutils.pp(row[2])
     # print rows
     localrows.insert(0, ["types", "# objects", "total size"])
-    _print_table(localrows)
+    return _format_table(localrows)
 
 
-def _print_table(rows, header=True):
-    """Print a list of lists as a pretty table.
+def _format_table(rows, header=True):
+    """Format a list of lists as a pretty table.
 
     Keyword arguments:
     header -- if True the first row is treated as a table header
@@ -232,11 +232,24 @@ def _print_table(rows, header=True):
                  for col in cols]
     borderline = vdelim.join([w * border for w in colWidths])
     for row in rows:
-        print(vdelim.join([justify(str(item), width)
-                           for (item, width) in zip(row, colWidths)]))
+        yield vdelim.join([justify(str(item), width)
+                           for (item, width) in zip(row, colWidths)])
         if header:
-            print(borderline)
+            yield borderline
             header = False
+
+
+def print_(rows, limit=15, sort='size', order='descending'):
+    """Print the rows as a summary.
+
+    Keyword arguments:
+    limit -- the maximum number of elements to be listed
+    sort  -- sort elements by 'size', 'type', or '#'
+    order -- sort 'ascending' or 'descending'
+
+    """
+    for line in format_(rows, limit=limit, sort=sort, order=order):
+        print(line)
 
 
 # regular expressions used by _repr to replace default type representations
