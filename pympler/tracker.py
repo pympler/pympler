@@ -138,7 +138,8 @@ class SummaryTracker(object):
         summary.print_(self.diff(summary1=summary1, summary2=summary2))
 
     def format_diff(self, summary1=None, summary2=None):
-        """Compute diff between to summaries and return a list of formatted lines.
+        """Compute diff between to summaries and return a list of formatted
+        lines.
 
         If no summary is provided, the diff from the last to the current
         summary is used. If summary1 is provided the diff from summary1
