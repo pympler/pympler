@@ -24,6 +24,8 @@ import sys
 from pympler import muppy
 from pympler import summary
 
+from pympler.util.compat import tkinter
+
 
 class _Node(object):
     """A node as it is used in the tree structure.
@@ -241,7 +243,6 @@ class FileBrowser(StreamBrowser):
 # remains outside this block. If you try to instantiate it without having
 # Tkinter installed, the import error will be raised.
 try:
-    import Tkinter as _Tkinter
     from idlelib import TreeWidget as _TreeWidget
 
     class _TreeNode(_TreeWidget.TreeNode):
@@ -270,7 +271,7 @@ try:
             """
             _TreeWidget.TreeNode.drawtext(self)
             # create a menu
-            menu = _Tkinter.Menu(self.canvas, tearoff=0)
+            menu = tkinter.Menu(self.canvas, tearoff=0)
             menu.add_command(label="reload referrers",
                              command=self.reload_referrers)
             menu.add_command(label="print", command=self.print_object)
@@ -296,7 +297,7 @@ try:
             def edit_cancel(self, event=None):
                 pass  # PYCHOK see comment above
 
-    class _ReferrerTreeItem(_TreeWidget.TreeItem, _Tkinter.Label):
+    class _ReferrerTreeItem(_TreeWidget.TreeItem, tkinter.Label):
         """Tree item wrapper around _Node object."""
 
         def __init__(self, parentwindow, node, reftree):  # PYCHOK constr calls
@@ -306,7 +307,7 @@ try:
 
             """
             _TreeWidget.TreeItem.__init__(self)
-            _Tkinter.Label.__init__(self, parentwindow)
+            tkinter.Label.__init__(self, parentwindow)
             self.node = node
             self.parentwindow = parentwindow
             self.reftree = reftree
@@ -370,7 +371,7 @@ try:
             return sublist
 
 except ImportError:
-    _Tkinter = _TreeWidget = None
+    _TreeWidget = None
 
 
 def gui_default_str_function(o):
@@ -398,7 +399,7 @@ class InteractiveBrowser(RefBrowser):
                   referred to existing nodes
 
         """
-        if _Tkinter is None:
+        if tkinter is None:
             raise ImportError(
                 "InteractiveBrowser requires Tkinter to be installed.")
         RefBrowser.__init__(self, rootobject, maxdepth, str_func, repeat)
@@ -411,7 +412,7 @@ class InteractiveBrowser(RefBrowser):
         windows
 
         """
-        window = _Tkinter.Tk()
+        window = tkinter.Tk()
         sc = _TreeWidget.ScrolledCanvas(window, bg="white",
                                         highlightthickness=0, takefocus=1)
         sc.frame.pack(expand=1, fill="both")

@@ -47,6 +47,15 @@ except ImportError:  # Python 2.5
     except ImportError:  # Python 2.5 without simplejson
         dumps = lambda s: unicode(s)
 
+try:
+    import Tkinter as tkinter
+except ImportError: # Python 3.0
+    try:
+        import tkinter
+    except ImportError:
+        tkinter = None
+
+
 # Helper functions
 
 # Python 2.x expects strings when calling communicate and passing data via a
