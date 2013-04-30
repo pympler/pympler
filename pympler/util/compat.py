@@ -49,7 +49,7 @@ except ImportError:  # Python 2.5
 
 try:
     import Tkinter as tkinter
-except ImportError: # Python 3.0
+except ImportError:  # Python 3.0
     try:
         import tkinter
     except ImportError:
