@@ -71,6 +71,11 @@ class _ProcessMemoryInfo(object):
         """
         return False  # pragma: no cover
 
+    def __sub__(self, other):
+        diff = [('rss (delta)', self.rss - other.rss),
+                ('vsz (delta)', self.vsz - other.vsz),]
+        return diff
+
 
 ProcessMemoryInfo = _ProcessMemoryInfo
 
