@@ -1,6 +1,6 @@
 import os
 
-DATA_PATH = '/home/lha/.virtualenvs/ableton.com_master/share/pympler'
+DATA_PATH = ''
 
 # DATA_PATH will be initialized from distutils when installing. If Pympler is
 # installed via setuptools/easy_install, the data will be installed alongside
