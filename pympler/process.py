@@ -27,6 +27,8 @@ except ImportError:
 from os import getpid
 from subprocess import Popen, PIPE
 
+from pympler.util.stringutils import pp
+
 try:
     from resource import getpagesize as _getpagesize
 except ImportError:
@@ -72,8 +74,9 @@ class _ProcessMemoryInfo(object):
         return False  # pragma: no cover
 
     def __sub__(self, other):
-        diff = [('rss (delta)', self.rss - other.rss),
-                ('vsz (delta)', self.vsz - other.vsz),]
+        diff = [('Resident set size (delta)', self.rss - other.rss),
+                ('Virtual size (delta)', self.vsz - other.vsz),
+                ]
         return diff
 
 
@@ -153,7 +156,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                     self.stack_segment = size_in_bytes(value)
                 key = self.key_map.get(key)
                 if key:
-                    self.os_specific.append((key, value.strip()))
+                    self.os_specific.append((key, pp(size_in_bytes(value))))
 
             stat.close()
             status.close()

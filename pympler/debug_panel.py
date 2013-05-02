@@ -6,7 +6,7 @@ Requires Django and Django Debug toolbar:
 https://github.com/django-debug-toolbar/django-debug-toolbar
 
 This memory panel is a third party addon (not included by default)
-that can be added by overriding `DEBUG_TOOLBAR_PANELS` setting:
+that can be added by overriding the `DEBUG_TOOLBAR_PANELS` setting:
 
     DEBUG_TOOLBAR_PANELS = (
         'debug_toolbar.panels.version.VersionDebugPanel',
@@ -17,6 +17,7 @@ that can be added by overriding `DEBUG_TOOLBAR_PANELS` setting:
 """
 
 from pympler.process import ProcessMemoryInfo
+from pympler.util.stringutils import pp
 
 try:
     from debug_toolbar.panels import DebugPanel
@@ -54,6 +55,11 @@ class MemoryProfilerPanel(DebugPanel):
 
     def content(self):
         context = self.context.copy()
-        rows = self._after - self._before
+        rows = [('Resident set size', self._after.rss),
+                ('Virtual size', self._after.vsz),
+                ]
+        rows.extend(self._after - self._before)
+        rows = [(key, pp(value)) for key, value in rows]
+        rows.extend(self._after.os_specific)
         context.update({'rows': rows})
         return render_to_string(self.template, context)
