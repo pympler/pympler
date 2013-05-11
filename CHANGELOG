@@ -1,3 +1,16 @@
+Release 0.4.0
+=============
+
+  * Format tracker statistics without printing
+    GitHub issue #2 reported and implemented by Andrei Sosnin
+
+  * Fix tkinter import on Python 3
+    GitHub issue #4 reported by pedru-de-huere
+
+  * Fix `StreamBrowser.print_tree` when called without arguments
+    GitHub issue #5 reported by pedru-de-huere
+
+
 Release 0.3.1
 =============
 

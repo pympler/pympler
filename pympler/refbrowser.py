@@ -150,9 +150,8 @@ class StreamBrowser(RefBrowser):
 
         """
         if tree is None:
-            self._print(self.root, '', '')
-        else:
-            self._print(tree, '', '')
+            tree = self.get_tree()
+        self._print(tree, '', '')
 
     def _print(self, tree, prefix, carryon):
         """Compute and print a new line of the tree.
