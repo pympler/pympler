@@ -151,6 +151,8 @@ class StreamBrowser(RefBrowser):
         """
         if tree is None:
             tree = self.get_tree()
+        else:
+            tree = self._get_tree(tree, self.maxdepth)
         self._print(tree, '', '')
 
     def _print(self, tree, prefix, carryon):
