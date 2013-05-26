@@ -104,18 +104,18 @@ class RefBrowser(object):
         should be build.
 
         """
-        self.ignore.append(inspect.currentframe())
-        res = _Node(root, self.str_func)  # PYCHOK use root parameter
-        self.already_included.add(id(root))  # PYCHOK use root parameter
+        objects = gc.get_referrers(root)
+        res = _Node(root, self.str_func)
+        self.already_included.add(id(root))
         if maxdepth == 0:
             return res
-        objects = gc.get_referrers(root)  # PYCHOK use root parameter
+        self.ignore.append(inspect.currentframe())
         self.ignore.append(objects)
         for o in objects:
-            # XXX: find a better way to ignore dict of _Node objects
+            # Ignore dict of _Node and RefBrowser objects
             if isinstance(o, dict):
-                sampleNode = _Node(1)
-                if list(sampleNode.__dict__.keys()) == list(o.keys()):
+                if any(isinstance(ref, (_Node, RefBrowser))
+                       for ref in gc.get_referrers(o)):
                     continue
             _id = id(o)
             if not self.repeat and (_id in self.already_included):
@@ -151,8 +151,6 @@ class StreamBrowser(RefBrowser):
         """
         if tree is None:
             tree = self.get_tree()
-        else:
-            tree = self._get_tree(tree, self.maxdepth)
         self._print(tree, '', '')
 
     def _print(self, tree, prefix, carryon):

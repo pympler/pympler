@@ -1,4 +1,5 @@
 
+import copy
 import doctest
 import gc
 import os
@@ -190,11 +191,11 @@ root-+-branch1-+-a
     def test_print_tree(self):
         """Test reference browser prints root object by default."""
         out1 = StringIO()
-        crb = refbrowser.StreamBrowser(None, maxdepth=1, stream=out1)
-        crb.print_tree(self.sample_tree)
+        crb = refbrowser.StreamBrowser(copy.copy(self.sample_tree), maxdepth=1, stream=out1)
+        crb.print_tree(crb.get_tree())
 
         out2 = StringIO()
-        crb = refbrowser.StreamBrowser(self.sample_tree, maxdepth=1, stream=out2)
+        crb = refbrowser.StreamBrowser(copy.copy(self.sample_tree), maxdepth=1, stream=out2)
         crb.print_tree()
 
         self.assertEqual(out1.getvalue(), out2.getvalue())
