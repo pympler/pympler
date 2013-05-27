@@ -54,6 +54,11 @@ class MemoryPanel(DebugPanel):
     def nav_title(self):
         return 'Memory'
 
+    def nav_subtitle(self):
+        vsz = self._after.vsz
+        delta = vsz - self._before.vsz
+        return "VSZ: %s (+%s)" % (pp(vsz), pp(delta))
+
     def url(self):
         return ''
 
@@ -63,6 +68,7 @@ class MemoryPanel(DebugPanel):
     def content(self):
         stats = self._tracker.stats
         stats.annotate()
+        self._tracker.clear()
         context = self.context.copy()
         rows = [('Resident set size', self._after.rss),
                 ('Virtual size', self._after.vsz),
@@ -70,9 +76,10 @@ class MemoryPanel(DebugPanel):
         rows.extend(self._after - self._before)
         rows = [(key, pp(value)) for key, value in rows]
         rows.extend(self._after.os_specific)
-        snapshot = stats.snapshot[-1]
+        snapshot = stats.snapshots[-1]
         for model in stats.tracked_classes:
+            cnt = snapshot.classes.get(model, {}).get('active', 0)
             size = snapshot.classes.get(model, {}).get('sum', 0)
-            rows.append((model.__name__, size))
+            rows.append((model, "%s (%d)" % (pp(size), cnt)))
         context.update({'rows': rows})
         return render_to_string(self.template, context)
