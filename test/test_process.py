@@ -34,7 +34,21 @@ class ProcessMemoryTests(unittest.TestCase):
                     if delta > pi1.pagesize * 2:
                         self.fail("%s mismatch: %d != %d" % (arg, size1, size2))
             if pi1.pagefaults and pi2.pagefaults:
-                self.assertEqual(pi1.pagefaults, pi2.pagefaults)
+                # If both records report pagefaults compare the reported
+                # number. If a pagefault happens after taking the first
+                # snapshot and before taking the second the latter will show a
+                # higher pagefault number. In that case take another snapshot
+                # with the first variant and check it's now reporting a higher
+                # number as well. We assume pagefaults statistics are
+                # monotonic.
+                if pi1.pagefaults < pi2.pagefaults:
+                    pi1.update()
+                    if pi1.pagefaults < pi2.pagefaults:
+                        pf1 = pi1.pagefaults
+                        pf2 = pi2.pagefaults
+                        self.fail("Pagefault mismatch: %d != %d" % (pf1, pf2))
+                else:
+                    self.assertEqual(pi1.pagefaults, pi2.pagefaults)
             if pi1.pagesize and pi2.pagesize:
                 self.assertEqual(pi1.pagesize, pi2.pagesize)
 
