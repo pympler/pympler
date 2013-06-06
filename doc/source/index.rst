@@ -19,6 +19,7 @@ Table of Content
 * :ref:`asizeof` - A description of the `asizeof` module.
 * :ref:`classtracker` - A description of the `ClassTracker` facility.
 * :ref:`muppy` - A description of the `muppy` modules.
+* :ref:`django` - How to use the Django debug toolbar memory panel.
 * :ref:`pympler_library` - The library reference guide.
 * :ref:`tutorials` - Pympler tutorials and usage examples.
 * :ref:`related_work` - Other projects which deal which memory profiling in

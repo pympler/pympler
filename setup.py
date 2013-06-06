@@ -118,6 +118,8 @@ def run_setup(include_tests=0):
 
           packages=['pympler', 'pympler.util'] + tests,
 
+          package_data={'pympler': ['templates/*.html']},
+
           data_files=[('templates', glob('templates/*.tpl') + \
                                     glob('templates/*.js') + \
                                     glob('templates/*.css'))],
