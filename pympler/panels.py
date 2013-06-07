@@ -34,8 +34,10 @@ try:
 except ImportError:
     class DebugPanel(object):
         pass
+
     class Template(object):
         pass
+
     class Context(object):
         pass
 
