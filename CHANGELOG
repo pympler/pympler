@@ -10,6 +10,8 @@ Release 0.4.0
   * Fix `StreamBrowser.print_tree` when called without arguments
     GitHub issue #5 reported by pedru-de-huere
 
+  * Add memory panel for django-debug-toolbar
+
 
 Release 0.3.1
 =============

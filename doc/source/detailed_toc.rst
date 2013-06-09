@@ -9,6 +9,7 @@ Below you can find a complete overview of all pages of this documentation.
    asizeof
    classtracker
    muppy
+   django
    library/library
    tutorials/tutorials
    related
