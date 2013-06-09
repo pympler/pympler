@@ -12,6 +12,8 @@ Release 0.4.0
 
   * Add memory panel for django-debug-toolbar
 
+  * Add light-weight time series for tracked classes
+
 
 Release 0.3.1
 =============
