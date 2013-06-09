@@ -8,7 +8,6 @@ virtual memory size).
 """
 
 import sys
-import time
 import unittest
 
 from pympler import process
@@ -19,8 +18,7 @@ class ProcessMemoryTests(unittest.TestCase):
     def _match_sizes(self, pi1, pi2, ignore=[]):
         """
         Match sizes by comparing each set field. Process size may change
-        inbetween two measurements. Allow for a difference of the size of two
-        pages.
+        inbetween two measurements.
         """
         if pi1.available and pi2.available:
             for arg in ('vsz', 'rss', 'data_segment', 'shared_segment',
@@ -31,7 +29,8 @@ class ProcessMemoryTests(unittest.TestCase):
                 size2 = getattr(pi2, arg)
                 if size1 and size2:
                     delta = abs(size1 - size2)
-                    if delta > pi1.pagesize * 2:
+                    # Allow for a difference of the size of two pages or 5%
+                    if delta > pi1.pagesize * 2 and delta > size1 * 0.05:
                         self.fail("%s mismatch: %d != %d" % (arg, size1, size2))
             if pi1.pagefaults and pi2.pagefaults:
                 # If both records report pagefaults compare the reported
