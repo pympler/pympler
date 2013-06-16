@@ -327,6 +327,22 @@ class TrackClassTestCase(unittest.TestCase):
         self.assert_(self.tracker.objects[idfoo].ref() is not None)
         self.assert_(self.tracker.objects[idbar].ref() is None)
 
+    def test_class_history(self):
+        """Test instance history of tracked class.
+        """
+        self.tracker.track_class(Foo, name='Foo')
+        f1 = Foo()
+        f2 = Foo()
+        f3 = Foo()
+        del f1
+        del f2
+        f4 = Foo()
+        del f3
+        del f4
+
+        instances = [cnt for _, cnt in self.tracker.history['Foo']]
+        self.assertEqual(instances, [1, 2, 3, 2, 1, 2, 1, 0])
+
     def test_trace(self):
         """Test instantiation tracing of tracked objects.
         """
