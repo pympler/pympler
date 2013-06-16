@@ -1,6 +1,7 @@
 %include header category='Tracker', title='Tracked objects' 
 
 %from pympler.util.stringutils import pp, pp_timestamp
+%from pympler.util.compat import dumps
 
 <h1>Tracked objects</h1>
 
@@ -35,7 +36,7 @@
                     text: 'Process memory distribution per snapshot'
                 },
                 xAxis: {
-                    categories: {{[sn.label for sn in snapshots]}},
+                    categories: {{!dumps([sn.label for sn in snapshots])}},
                 },
                 yAxis: {
                     min: 0,

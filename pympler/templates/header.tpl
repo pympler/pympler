@@ -3,7 +3,7 @@
 <head>
     <title>Pympler - {{title}}</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <script src="http://code.jquery.com/jquery-1.4.2.min.js" type="text/javascript"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js" type="text/javascript"></script>
 </head>
 
 %navbar = [
