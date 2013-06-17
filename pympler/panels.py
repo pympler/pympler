@@ -73,7 +73,7 @@ class MemoryPanel(DebugPanel):
         rss = self._after.rss
         delta = rss - self._before.rss
         delta = ('(+%s)' % pp(delta)) if delta > 0 else ''
-        return "RSS: %s %s" % (pp(rss), delta)
+        return "%s %s" % (pp(rss), delta)
 
     def url(self):
         return ''

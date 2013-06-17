@@ -1,5 +1,5 @@
 {% load i18n %}
-<script type="text/javascript" src="/static/jquery.sparkline.min.js" />
+<script type="text/javascript" src="{{ STATIC_URL }}static/jquery.sparkline.min.js" />
 <table>
   <colgroup>
     <col style="width:20%"/>
@@ -41,9 +41,6 @@
         <td id="{{ cls|escape }}_history">{{ history|last }}</td>
         <td>{{ size|escape }}</td>
       </tr>
-      <script type="text/javascript">
-        $("#{{ cls|escape }}_history").sparkline(history, {type: 'line'});
-      </script>
     {% endfor %}
   </tbody>
 </table>

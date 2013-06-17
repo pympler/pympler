@@ -408,7 +408,6 @@ class ClassTracker(object):
         if keep:
             self._keepalive.append(instance)
 
-
     def track_class(self, cls, name=None, resolution_level=0, keep=False,
                     trace=False):
         """

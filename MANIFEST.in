@@ -7,6 +7,8 @@ include pympler/templates/*.tpl
 include pympler/templates/*.css
 include pympler/templates/*.js
 
+include pympler/static/*.js
+
 recursive-include doc *
 prune doc/source
 prune doc/build

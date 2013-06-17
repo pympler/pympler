@@ -100,7 +100,8 @@ def run_setup(include_tests=0):
           package_data={'pympler': ['templates/*.html',
                                     'templates/*.tpl',
                                     'templates/*.js',
-                                    'templates/*.css']},
+                                    'templates/*.css',
+                                    'static/*.js']},
 
           license=metadata.license,
           platforms=['any'],
