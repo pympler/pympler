@@ -138,7 +138,16 @@ def summarize(objects):
     
 
 def get_diff(left, right):
+    """Get the difference of two summaries.
 
+    Subtracts the values of the right summary from the values of the left
+    summary.
+    If similar rows appear on both sides, the are included in the summary with
+    0 for number of elements and total size.
+    If the number of elements of a row of the diff is 0, but the total size is
+    not, it means that objects likely have changed, but not there number, thus
+    resulting in a changed size.
+    """
     objects_key = lambda object_footprint: object_footprint[0]
     val_neg = lambda lval: [lval[0], -lval[1], -lval[2]]
     def next_safe(it):
