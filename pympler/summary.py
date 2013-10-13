@@ -158,6 +158,9 @@ def get_diff(left, right):
                 return val, False
             except StopIteration:
                 raise
+            except NameError:
+                val = it.next()
+                return val, False
 
         except StopIteration:
             return None, True
