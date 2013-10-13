@@ -135,38 +135,61 @@ def summarize(objects):
     return rows
 
 
+    
+
 def get_diff(left, right):
-    """Get the difference of two summaries.
 
-    Subtracts the values of the right summary from the values of the left
-    summary.
-    If similar rows appear on both sides, the are included in the summary with
-    0 for number of elements and total size.
-    If the number of elements of a row of the diff is 0, but the total size is
-    not, it means that objects likely have changed, but not there number, thus
-    resulting in a changed size.
+    objects_key = lambda object_footprint: object_footprint[0]
+    val_neg = lambda lval: [lval[0], -lval[1], -lval[2]]
+    def next_safe(it):
+        try:
+            val = it.next()
+            return val, False
+        except StopIteration:
+            return None, True
 
-    """
-    res = []
-    for row_r in right:
-        found = False
-        for row_l in left:
-            if row_r[0] == row_l[0]:
-                res.append([row_r[0], row_r[1] - row_l[1],
-                            row_r[2] - row_l[2]])
-                found = True
-        if not found:
-            res.append(row_r)
+    lsorted = sorted(left, key=objects_key)
+    rsorted = sorted(right, key=objects_key)
 
-    for row_l in left:
-        found = False
-        for row_r in right:
-            if row_l[0] == row_r[0]:
-                found = True
-        if not found:
-            res.append([row_l[0], -row_l[1], -row_l[2]])
-    return res
+    lit = iter(lsorted)
+    rit = iter(rsorted)
+    lval = None
+    rval = None
+    lend = False
+    rend = False
+    ret = []
+    while not lend or not rend:
+        if lval is None:
+            if lend:
+                if rval:
+                    ret.extend([rval] + [x for x in rit])
+                break
+            else:
+                lval, lend = next_safe(lit)
 
+        if rval is None:
+            if rend:
+                if lval:
+                    ret.extend([val_neg(lval)] + [val_neg(x) for x in lit])
+                break
+            else:
+                rval, rend = next_safe(rit)
+
+        if lval is None or rval is None:
+            continue
+                
+        if objects_key(lval) == objects_key(rval):
+            ret.append([rval[0], rval[1] - lval[1], rval[2] - lval[2]])
+            lval, lend = next_safe(lit)
+            rval, rend = next_safe(rit)
+        elif objects_key(lval) < objects_key(rval):
+            ret.append(val_neg(lval))
+            lval, lend = next_safe(lit)
+        else:
+            ret.append(rval)
+            rval, rend = next_safe(rit)
+            
+    return ret
 
 def format_(rows, limit=15, sort='size', order='descending'):
     """Format the rows as a summary.
