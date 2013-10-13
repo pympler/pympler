@@ -150,7 +150,17 @@ def get_diff(left, right):
     """
     objects_key = lambda object_footprint: object_footprint[0]
     val_neg = lambda lval: [lval[0], -lval[1], -lval[2]]
+
     def next_safe(it):
+        if not callable(next):
+            _sentinel = object()
+            def next(it, default=_sentinel):
+                try:
+                    return it.next()
+                except StopIteration:
+                    if default is _sentinel:
+                        raise
+                    return default
         try:
             val = it.next()
             return val, False
