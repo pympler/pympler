@@ -426,6 +426,16 @@ def _issubclass(sub, sup):
     return False
 
 
+# 'cell' is holding data used in closures
+closure = lambda x: (lambda: x)
+cell_type = type(closure(None).func_closure[0])
+
+
+def _iscell(obj):
+    '''Return True if obj is a cell as used in a closure.'''
+    return isinstance(obj, cell_type)
+
+
 def _itemsize(t, item=0):
     '''Get non-zero itemsize of type.
     '''
@@ -639,6 +649,10 @@ def _func_refs(obj, named):
                              pref='func_', excl=('func_globals',))
 
 
+def _cell_refs(obj, named):
+    return _refs(obj, named, 'cell_contents')
+
+
 def _gen_refs(obj, named):
     '''Return the referent(s) of a generator object.
     '''
@@ -721,11 +735,12 @@ def _weak_refs(obj, unused):  # named unused for PyChecker
     except:  # XXX ReferenceError
         return ()
 
-_all_refs = (None, _class_refs,   _co_refs,   _dict_refs,  _enum_refs,
-                   _exc_refs,     _file_refs, _frame_refs, _func_refs,
-                   _gen_refs,     _im_refs,   _inst_refs,  _iter_refs,
-                   _module_refs,  _prop_refs, _seq_refs,   _stat_refs,
-                   _statvfs_refs, _tb_refs,   _type_refs,  _weak_refs)
+
+_all_refs = (None, _cell_refs, _class_refs, _co_refs, _dict_refs, _enum_refs,
+             _exc_refs, _file_refs, _frame_refs, _func_refs, _gen_refs,
+             _im_refs, _inst_refs, _iter_refs, _module_refs, _prop_refs,
+             _seq_refs, _stat_refs, _statvfs_refs, _tb_refs, _type_refs,
+             _weak_refs)
 
 
  # type-specific length functions
@@ -1354,6 +1369,7 @@ try:  # <type 'KeyedRef'>
 except AttributeError:  # missing
     pass
 
+
 try:  # <type 'weakproxy'>
     _typedef_both(Weakref.ProxyType)
 except AttributeError:  # missing
@@ -1469,6 +1485,8 @@ def _typedef(obj, derive=False, infer=False):
         v.dup(kind=_kind_derived)
     elif _isdictclass(obj) or (infer and _infer_dict(obj)):
         v.dup(kind=_kind_inferred)
+    elif _iscell(obj):
+        v.set(item=_itemsize(t), refs=_cell_refs)
     elif getattr(obj, '__module__', None) in _builtin_modules:
         v.set(kind=_kind_ignored)
     else:  # assume an instance of some class
@@ -1565,7 +1583,8 @@ class Asized(object):
 
     def __str__(self):
         return 'size %r, flat %r, refs[%d], name %r' % (
-                self.size, self.flat, len(self.refs), self.name)
+            self.size, self.flat, len(self.refs), self.name)
+
 
 class Asizer(object):
     '''Sizer state and options.
