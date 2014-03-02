@@ -231,6 +231,20 @@ class TypesTest(unittest.TestCase):
         self.assertEqual(gc.collect(), 0)
         gc.enable()
 
+    def test_closure(self):
+        '''Test sizing closures.
+        '''
+        def outer(x):
+            def inner():
+                return x
+            return inner
+
+        data = [1] * 1000
+        closure = outer(data)
+        size_closure = asizeof.asizeof(closure, code=True)
+        size_data = asizeof.asizeof(data)
+        self.assertTrue(size_closure >= size_data, (size_closure, size_data))
+
 
 class FunctionTest(unittest.TestCase):
     '''Test exposed functions and parameters.
