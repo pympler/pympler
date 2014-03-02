@@ -8,7 +8,11 @@
 
 '''
 This module exposes 9 functions and 2 classes to obtain lengths and
-sizes of Python objects (for Python 2.2 or later [#test]_).
+sizes of Python objects (for Python 2.5 or later).
+
+Earlier versions of this module supported Python versions down to
+Python 2.2. If you are running Python < 2.5 please consider
+downgrading Pympler to version 0.3.x.
 
 **Public Functions** [#unsafe]_
 
@@ -149,12 +153,6 @@ sizes of Python objects (for Python 2.2 or later [#test]_).
 
 .. [#bi] Types and classes are considered built-in if the ``__module__``
      of the type or class is listed in ``_builtin_modules`` below.
-
-.. [#test] Tested with Python 2.2.3, 2.3.7, 2.4.5, 2.5.1, 2.5.2, 2.6 or
-     3.0 on CentOS 4.6, SuSE 9.3, MacOS X 10.4.11 Tiger (Intel) and
-     Panther 10.3.9 (PPC), Solaris 10 and Windows XP all 32-bit Python
-     and on RHEL 3u7 and Solaris 10 both 64-bit Python.
-
 '''
 
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction, ismethod,
@@ -166,7 +164,6 @@ import sys
 import types as Types
 import weakref as Weakref
 
-__version__ = '5.10 (Dec 04, 2008)'
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
@@ -309,32 +306,6 @@ except NameError:  # no intern() in Python 3.0
         return val
 
 
-def _kwds(**kwds):  # no dict(key=value, ...) in Python 2.2
-    '''Return name=value pairs as keywords dict.
-    '''
-    return kwds
-
-try:  # sorted() builtin
-    _sorted = sorted
-except NameError:  # no sorted() in Python 2.2
-    def _sorted(vals, reverse=False):
-        '''Partial substitute for missing sorted().'''
-        vals.sort()
-        if reverse:
-            vals.reverse()
-        return vals
-
-try:  # sum() builtin
-    _sum = sum
-except NameError:  # no sum() in Python 2.2
-    def _sum(vals):
-        '''Partial substitute for missing sum().'''
-        s = 0
-        for v in vals:
-            s += v
-        return s
-
-
  # private functions
 
 def _basicsize(t, base=0, heap=False, obj=None):
@@ -446,7 +417,7 @@ def _itemsize(t, item=0):
 def _kwdstr(**kwds):
     '''Keyword arguments as a string.
     '''
-    return ', '.join(_sorted(['%s=%r' % kv for kv in _items(kwds)]))  # [] for Python 2.2
+    return ', '.join(sorted('%s=%r' % kv for kv in _items(kwds)))
 
 
 def _lengstr(obj):
@@ -1102,16 +1073,15 @@ class _Typedef(object):
             c = ' (code only)'
         if self.leng:
             n = ' (%s)' % _nameof(self.leng)
-        return _kwds(base=self.base, item=self.item, leng=n,
-                     code=c,         kind=self.kind)
+        return dict(base=self.base, item=self.item, leng=n,
+                    code=c,         kind=self.kind)
 
     def kwds(self):
         '''Return all attributes as keywords dict.
         '''
-         # no dict(refs=self.refs, ..., kind=self.kind) in Python 2.0
-        return _kwds(base=self.base, item=self.item,
-                     leng=self.leng, refs=self.refs,
-                     both=self.both, kind=self.kind, type=self.type)
+        return dict(base=self.base, item=self.item,
+                    leng=self.leng, refs=self.refs,
+                    both=self.both, kind=self.kind, type=self.type)
 
     def save(self, t, base=0, heap=False):
         '''Save this typedef plus its class typedef.
@@ -1207,9 +1177,9 @@ _typedef_both(type(None))
 
  # _Slots is a special tuple, see _Slots.__doc__
 _typedef_both(_Slots, item=_sizeof_Cvoidp,
-                      leng=_len_slots,  # length less one
-                      refs=None,  # but no referents
-                      heap=True)  # plus head
+              leng=_len_slots,  # length less one
+              refs=None,  # but no referents
+              heap=True)  # plus head
 
  # dict, dictproxy, dict_proxy and other dict-like types
 _dict_typedef = _typedef_both(dict,        item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
@@ -1262,7 +1232,7 @@ except NameError:  # missing
     pass
 try:
     if type(bytes) is not type(str):  # bytes is str in 2.6 #PYCHOK bytes new in 2.6, 3.0
-      _typedef_both(bytes, item=_sizeof_Cbyte, leng=_len)  #PYCHOK bytes new in 2.6, 3.0
+        _typedef_both(bytes, item=_sizeof_Cbyte, leng=_len)  #PYCHOK bytes new in 2.6, 3.0
 except NameError:  # missing
     pass
 try:  # XXX like bytes
@@ -1336,14 +1306,14 @@ except NameError:  # missing
 
 try:
     from os import stat
-    _typedef_both(type(stat(   curdir)), refs=_stat_refs)     # stat_result
+    _typedef_both(type(stat(curdir)), refs=_stat_refs)     # stat_result
 except ImportError:  # missing
     pass
 
 try:
     from os import statvfs
     _typedef_both(type(statvfs(curdir)), refs=_statvfs_refs,  # statvfs_result
-                                         item=_sizeof_Cvoidp, leng=_len)
+                  item=_sizeof_Cvoidp, leng=_len)
 except ImportError:  # missing
     pass
 
@@ -1544,9 +1514,9 @@ class _Prof(object):
         t = _SI2(self.total)
         if grand:
             t += ' (%s)' % _p100(self.total, grand, prec=0)
-        return _kwds(avg=_SI2(a),         high=_SI2(self.high),
-                     lengstr=_lengstr(o), obj=_repr(o, clip=clip),
-                     plural=p,            total=t)
+        return dict(avg=_SI2(a),         high=_SI2(self.high),
+                    lengstr=_lengstr(o), obj=_repr(o, clip=clip),
+                    plural=p,            total=t)
 
     def update(self, obj, size):
         '''Update this profile.
@@ -1735,9 +1705,9 @@ class Asizer(object):
                 s[i] = self._sizer(o, 0, sized)
             t.append(s[i])
         if sized:
-            s = _sum([i.size for i in _values(s)])  # [] for Python 2.2
+            s = sum(i.size for i in _values(s))
         else:
-            s = _sum(_values(s))
+            s = sum(_values(s))
         self._total += s  # accumulate
         return s, tuple(t)
 
@@ -1820,7 +1790,7 @@ class Asizer(object):
             self._printf('%s%*d profile%s:  total%s, average, and largest flat size%s:  largest object',
                          linesep, w, len(t), _plural(len(t)), s, self._incl, **print3opts)
             r = len(t)
-            for v, k in _sorted(t, reverse=True):
+            for v, k in sorted(t, reverse=True):
                 s = 'object%(plural)s:  %(total)s, %(avg)s, %(high)s:  %(obj)s%(lengstr)s' % v.format(self._clip_, self._total)
                 self._printf('%*d %s %s', w, v.number, self._prepr(k), s, **print3opts)
                 r -= 1
@@ -1851,7 +1821,7 @@ class Asizer(object):
         '''
         s = min(opts.get('stats', stats) or 0, self._stats_)
         if s > 0:  # print stats
-            t = self._total + self._missed + _sum(_values(self._seen))
+            t = self._total + self._missed + sum(_values(self._seen))
             w = len(str(t)) + 1
             t = c = ''
             o = _kwdstr(**opts)
@@ -1901,12 +1871,12 @@ class Asizer(object):
             if d:
                 d = ', %d duplicate' % self._duplicate
             self._printf('%*d object%s given%s', w, n, _plural(n), d, **print3opts)
-        t = _sum([1 for t in _values(self._seen) if t != 0])  # [] for Python 2.2
+        t = sum(1 for t in _values(self._seen) if t != 0)
         self._printf('%*d object%s sized', w, t, _plural(t), **print3opts)
         if self._excl_d:
-            t = _sum(_values(self._excl_d))
+            t = sum(_values(self._excl_d))
             self._printf('%*d object%s excluded', w, t, _plural(t), **print3opts)
-        t = _sum(_values(self._seen))
+        t = sum(_values(self._seen))
         self._printf('%*d object%s seen', w, t, _plural(t), **print3opts)
         if self._missed > 0:
             self._printf('%*d object%s missed', w, self._missed, _plural(self._missed), **print3opts)
@@ -1926,10 +1896,10 @@ class Asizer(object):
             if t:
                 self._printf('%s%*d %s type%s:  basicsize, itemsize, _len_(), _refs()',
                              linesep, w, len(t), k, _plural(len(t)), **print3opts)
-                for a, v in _sorted(t):
+                for a, v in sorted(t):
                     self._printf('%*s %s:  %s', w, '', a, v, **print3opts)
          # dict and dict-like classes
-        t = _sum([len(v) for v in _values(_dict_classes)])  # [] for Python 2.2
+        t = sum(len(v) for v in _values(_dict_classes))
         if t:
             self._printf('%s%*d dict/-like classes:', linesep, w, t, **print3opts)
             for m, v in _items(_dict_classes):
@@ -1993,9 +1963,9 @@ class Asizer(object):
         return self._total
     total = property(_get_total, doc=_get_total.__doc__)
 
-    def reset(self, align=8,  clip=80,      code=False,  derive=False,
-                    detail=0, ignored=True, infer=False, limit=100,  stats=0,
-                    stream=None):
+    def reset(self, align=8, clip=80, code=False, derive=False,
+              detail=0, ignored=True, infer=False, limit=100, stats=0,
+              stream=None):
         '''Reset options, state, etc.
 
         The available options and default values are:
@@ -2105,7 +2075,7 @@ def asized(*objs, **opts):
 
 
 def asizeof(*objs, **opts):
-    '''Return the combined size in bytes of all objects passed as positional argments.
+    '''Return the combined size in bytes of all objects passed as positional arguments.
 
     The available options and defaults are the following.
 
@@ -2471,8 +2441,8 @@ if __name__ == '__main__':
              '-test':              'test flatsize() vs sys.getsizeof()',
              '-type[def]s':        'type definitions',
              '- | --':             'all examples'}
-        w = -max([len(o) for o in _keys(d)])  # [] for Python 2.2
-        t = _sorted(['%*s -- %s' % (w, o, t) for o, t in _items(d)])  # [] for Python 2.2
+        w = -max(len(o) for o in _keys(d))
+        t = sorted('%*s -- %s' % (w, o, t) for o, t in _items(d))
         t = '\n     '.join([''] + t)
         _printf('usage: %s <option> ...\n%s\n', argv[0], t)
 
@@ -2522,7 +2492,7 @@ if __name__ == '__main__':
         _sizeof_Cssize_t = _calcsize('z')  #PYCHOK OK
         t = [t for t in locals().items() if t[0].startswith('_sizeof_')]
         _printf('%s%d C sizes: (bytes) ... -C', linesep, len(t))
-        for n, v in _sorted(t):
+        for n, v in sorted(t):
             _printf(' sizeof(%s): %r', n[len('_sizeof_'):], v)
 
     if _opts('-class'):  # class and instance examples
@@ -2573,6 +2543,7 @@ if __name__ == '__main__':
 
     if _opts('-gen', '-generator'):  # generator examples
         _printf('%sasizeof(%s, code=%s) ... %s', linesep, '<generator>', True, '-gen[erator]')
+
         def gen(x):
             i = 0
             while i < x:
@@ -2651,14 +2622,18 @@ if __name__ == '__main__':
 
     if _opts('-slots'):  # slots examples
         _printf('%sasizeof(%s, code=%s) ... %s', linesep, '<__slots__>', False, '-slots')
+
         class Old:
             pass  # m = None
+
         class New(object):
             __slots__ = ('n',)
+
         class Sub(New):  #PYCHOK OK
             __slots__ = {'s': ''}  # duplicate!
             def __init__(self):  #PYCHOK OK
                 New.__init__(self)
+
          # basic instance sizes
         o, n, s = Old(), New(), Sub()
         asizesof(o, n, s, limit=MAX, code=False, stats=1)
@@ -2695,7 +2670,7 @@ if __name__ == '__main__':
         t = len(_typedefs)
         w = len(str(t)) * ' '
         _printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', linesep, t, '-type[def]s')
-        for k, v in _sorted([(_prepr(k), v) for k, v in _items(_typedefs)]):  # [] for Python 2.2
+        for k, v in sorted((_prepr(k), v) for k, v in _items(_typedefs)):
             s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
             _printf('%s %s: %s', w, k, s)
 

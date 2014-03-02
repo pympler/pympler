@@ -1,6 +1,9 @@
 Release 0.4.0
 =============
 
+  * Include size of closure variables
+    GitHub issue #8 reported and implemented by Craig Silverstein
+  
   * Format tracker statistics without printing
     GitHub issue #2 reported and implemented by Andrei Sosnin
 
