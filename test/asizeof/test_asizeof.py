@@ -9,43 +9,96 @@ import pympler.asizeof as asizeof
 
 from inspect import stack
 
+
+def test_flatsize(failf=None, stdf=None):
+    '''Compare the results of **flatsize()** without using ``sys.getsizeof()``
+       with the accurate sizes returned by ``sys.getsizeof()``.
+
+       Return the total number of tests and number of unexpected failures.
+
+       Expect differences for sequences as dicts, lists, sets, tuples, etc.
+       While this is no proof for the accuracy of **flatsize()** on Python
+       builds without ``sys.getsizeof()``, it does provide some evidence that
+       function **flatsize()** produces reasonable and usable results.
+    '''
+    t, g, e = [], asizeof._getsizeof, 0
+    if g:
+        for v in asizeof._values(asizeof._typedefs):
+            t.append(v.type)
+            try:  # creating one instance
+                if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
+                    t.append(v.type())
+            except Exception:  # ignore errors
+                pass
+        t.extend(({1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+                  [1, 2, 3, 4, 5, 6, 7, 8], ['1', '2', '3'], [0] * 100,
+                  '12345678', 'x' * 1001,
+                  (1, 2, 3, 4, 5, 6, 7, 8), ('1', '2', '3'), (0,) * 100,
+                  asizeof._Slots((1, 2, 3, 4, 5, 6, 7, 8)),
+                  asizeof._Slots(('1', '2', '3')),
+                  asizeof._Slots((0,) * 100),
+                  0, 1 << 8, 1 << 16, 1 << 32, 1 << 64, 1 << 128,
+                  complex(0, 1), True, False))
+        asizeof._getsizeof = None  # zap _getsizeof for flatsize()
+        for o in t:
+            a = asizeof.flatsize(o)
+            s = sys.getsizeof(o, 0)  # 0 as default
+            if a != s:
+                if isinstance(o, (dict, list, set, frozenset, tuple, bytes)):
+                    # flatsize() approximates length of sequences
+                    x = ', expected failure'
+                elif (isinstance(o, (type, bool, asizeof.ABCMeta)) and
+                      sys.version_info >= (3, 0)):
+                    x = ', expected failure'
+                elif isinstance(o, str) and sys.version_info >= (3, 3):
+                    x = ', expected failure'
+                else:
+                    x = ', %r' % asizeof._typedefof(o)
+                    e += 1
+                    if failf:  # report failure
+                        failf('%s vs %s for %s: %s',
+                              a, s, asizeof._nameof(type(o)), _repr(o))
+                if stdf:
+                    asizeof._printf('flatsize() %s vs sys.getsizeof() %s for %s: %s%s',
+                        a, s, asizeof._nameof(type(o)), _repr(o), x, file=stdf)
+        asizeof._getsizeof = g  # restore
+    return len(t), e
+
+
 if hasattr(sys, 'getsizeof'):
 
-  class AsizeofTest(unittest.TestCase):
+    class AsizeofTest(unittest.TestCase):
 
-    def _failf(self, fmt, *args):
-        self.fail(fmt % args)
+        def _failf(self, fmt, *args):
+            self.fail(fmt % args)
 
-    def test_flatsize_vs_getsizeof(self):
-        '''Test asizeof.flatsize() vs sys.getsizeof()
-        '''
-         # make sure test function exists
-        f = getattr(asizeof, 'test_flatsize')
-        self.assert_(f, msg='no asizeof.test_flatsize')
-         # run all the tests, report failures
-        n, e = f(failf=self._failf)  # stdf=sys.stderr)
-         # no tests ran?
-        self.assert_(n, msg='zero tests ran in %r' % f)
-         # no unexpected failures?
-        self.assert_(not e, msg='%s failures in %s tests' % (e, n))
+        def test_flatsize_vs_getsizeof(self):
+            '''Test asizeof.flatsize() vs sys.getsizeof()
+            '''
+             # run all the tests, report failures
+            n, e = test_flatsize(failf=self._failf)  # stdf=sys.stderr)
+             # no tests ran?
+            self.assert_(n, msg='zero tests ran in %r' % test_flatsize)
+             # no unexpected failures?
+            self.assert_(not e, msg='%s failures in %s tests' % (e, n))
 
 else:
 
-  class AsizeofTest(unittest.TestCase):
+    class AsizeofTest(unittest.TestCase):
 
-    def test_flatsize(self):
-        '''Test asizeof.flatsize()
-        '''
-        l = ["spam",2,3,4,"eggs",6,7,8]
-        for _type in (list, tuple, set, frozenset):
-            data = _type(l)
-            bsz = asizeof.basicsize(data)
-            isz = asizeof.itemsize(data)
-            lng = asizeof.leng(data)
-            fsz = asizeof.flatsize(data)
-            self.assertEqual(fsz, bsz + (lng*isz), (fsz, bsz, lng, isz))
+        def test_flatsize(self):
+            '''Test asizeof.flatsize()
+            '''
+            l = ["spam", 2, 3, 4, "eggs", 6, 7, 8]
+            for _type in (list, tuple, set, frozenset):
+                data = _type(l)
+                bsz = asizeof.basicsize(data)
+                isz = asizeof.itemsize(data)
+                lng = asizeof.leng(data)
+                fsz = asizeof.flatsize(data)
+                self.assertEqual(fsz, bsz + (lng * isz), (fsz, bsz, lng, isz))
 
-        self.assertRaises(ValueError, asizeof.flatsize, l, **{'align': 3})
+            self.assertRaises(ValueError, asizeof.flatsize, l, **{'align': 3})
 
 
 class Foo(object):
@@ -416,6 +469,7 @@ class FunctionTest(unittest.TestCase):
 def _repr(o):
     return repr(o)
 
+
 class AsizeofDemos(unittest.TestCase):
     '''
     Test consisting of asizeof demos (usage examples).
@@ -683,7 +737,7 @@ class AsizeofDemos(unittest.TestCase):
         t = len(asizeof._typedefs)
         w = len(str(t)) * ' '
         self._printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', os.linesep, t, '-type[def]s')
-        for k, v in sorted([(asizeof._prepr(k), v) for k, v in asizeof._items(asizeof._typedefs)]):  # [] for Python 2.2
+        for k, v in sorted((asizeof._prepr(k), v) for k, v in asizeof._items(asizeof._typedefs)):
             s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
             self._printf('%s %s: %s', w, k, s)
 

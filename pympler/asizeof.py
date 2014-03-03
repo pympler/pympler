@@ -315,7 +315,7 @@ def _basicsize(t, base=0, heap=False, obj=None):
     s = max(getattr(t, '__basicsize__', 0), base)
      # include gc header size
     if t != _Type_type:
-        h = getattr(t,   '__flags__', 0) & _Py_TPFLAGS_HAVE_GC
+        h = getattr(t, '__flags__', 0) & _Py_TPFLAGS_HAVE_GC
     elif heap:  # type, allocated on heap
         h = True
     else:  # None has no __flags__ attr
@@ -369,12 +369,9 @@ def _dir2(obj, pref='', excl=(), slots=None, itor=''):
 def _infer_dict(obj):
     '''Return True for likely dict object.
     '''
-    for ats in (('__len__', 'get', 'has_key',     'items',     'keys',     'values'),
+    for ats in (('__len__', 'get', 'has_key', 'items', 'keys', 'values'),
                 ('__len__', 'get', 'has_key', 'iteritems', 'iterkeys', 'itervalues')):
-        for a in ats:  # no all(<generator_expression>) in Python 2.2
-            if not _callable(getattr(obj, a, None)):
-                break
-        else:  # all True
+        if all(_callable(getattr(obj, a, None)) for a in ats):
             return True
     return False
 
@@ -457,7 +454,7 @@ def _objs_opts(objs, all=None, **opts):
             globals(), stack(sys.getrecursionlimit())[2:])
     else:
         raise ValueError('invalid option: %s=%r' % ('all', all))
-    return t, opts  #PYCHOK OK
+    return t, opts
 
 
 def _p100(part, total, prec=1):
@@ -567,8 +564,8 @@ def _SI2(size, **kwds):
 def _class_refs(obj, named):
     '''Return specific referents of a class object.
     '''
-    return _refs(obj, named, '__class__', '__dict__',  '__doc__', '__mro__',
-                             '__name__',  '__slots__', '__weakref__')
+    return _refs(obj, named, '__class__', '__dict__', '__doc__', '__mro__',
+                             '__name__', '__slots__', '__weakref__')
 
 
 def _co_refs(obj, named):
@@ -857,11 +854,9 @@ def _len_unicode(obj):
     return len(obj) + 1
 
 
-_all_lengs = (None, _len,        _len_array,  _len_bytearray,
-                    _len_code,   _len_dict,   _len_frame,
-                    _len_int,    _len_iter,   _len_list,
-                    _len_module, _len_set,    _len_slice,
-                    _len_slots,  _len_struct, _len_unicode)
+_all_lengs = (None, _len, _len_array, _len_bytearray, _len_code, _len_dict,
+              _len_frame, _len_int, _len_iter, _len_list, _len_module,
+              _len_set, _len_slice, _len_slots, _len_struct, _len_unicode)
 
 
 # more private functions and classes
@@ -906,7 +901,7 @@ _claskeys = {}  # [id(obj)] = _Claskey()
 def _claskey(obj, style):
     '''Wrap an old- or new-style class object.
     '''
-    i =  id(obj)
+    i = id(obj)
     k = _claskeys.get(i, None)
     if not k:
         _claskeys[i] = k = _Claskey(obj, style)
@@ -945,7 +940,7 @@ try:  # no Class- and InstanceType in Python 3.0
         t = type(obj)
         if t is _Types_InstanceType:
             t = obj.__class__
-            return _claskey(t,   _old_style), _instkey(t)
+            return _claskey(t, _old_style), _instkey(t)
         elif t is _Types_ClassType:
             return _claskey(obj, _old_style), _instkey(obj)
         elif t is _Type_type:
@@ -1001,10 +996,11 @@ class _Slots(tuple):
     '''
     pass
 
+
  # kinds of _Typedefs
 _i = _intern
 _all_kinds = (_kind_static, _kind_dynamic, _kind_derived, _kind_ignored, _kind_inferred) = (
-                _i('static'), _i('dynamic'), _i('derived'), _i('ignored'), _i('inferred'))
+    _i('static'), _i('dynamic'), _i('derived'), _i('ignored'), _i('inferred'))
 del _i
 
 
@@ -1076,8 +1072,8 @@ class _Typedef(object):
             c = ' (code only)'
         if self.leng:
             n = ' (%s)' % _nameof(self.leng)
-        return dict(base=self.base, item=self.item, leng=n,
-                    code=c,         kind=self.kind)
+        return dict(base=self.base, item=self.item, leng=n, code=c,
+                    kind=self.kind)
 
     def kwds(self):
         '''Return all attributes as keywords dict.
@@ -1172,8 +1168,8 @@ def _typedef_code(t, base=0, refs=None, kind=_kind_static, heap=False):
  # static typedefs for data and code types
 _typedef_both(complex)
 _typedef_both(float)
-_typedef_both(list,     refs=_seq_refs, leng=_len_list, item=_sizeof_Cvoidp)  # sizeof(PyObject*)
-_typedef_both(tuple,    refs=_seq_refs, leng=_len,      item=_sizeof_Cvoidp)  # sizeof(PyObject*)
+_typedef_both(list, refs=_seq_refs, leng=_len_list, item=_sizeof_Cvoidp)  # sizeof(PyObject*)
+_typedef_both(tuple, refs=_seq_refs, leng=_len, item=_sizeof_Cvoidp)  # sizeof(PyObject*)
 _typedef_both(property, refs=_prop_refs)
 _typedef_both(type(Ellipsis))
 _typedef_both(type(None))
@@ -1185,20 +1181,20 @@ _typedef_both(_Slots, item=_sizeof_Cvoidp,
               heap=True)  # plus head
 
  # dict, dictproxy, dict_proxy and other dict-like types
-_dict_typedef = _typedef_both(dict,        item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
+_dict_typedef = _typedef_both(dict, item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
 try:  # <type dictproxy> only in Python 2.x
-    _typedef_both(Types.DictProxyType,     item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
+    _typedef_both(Types.DictProxyType, item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
 except AttributeError:  # XXX any class __dict__ is <type dict_proxy> in Python 3.0?
     _typedef_both(type(_Typedef.__dict__), item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
  # other dict-like classes and types may be derived or inferred,
  # provided the module and class name is listed here (see functions
  # adict, _isdictclass and _infer_dict for further details)
-_dict_classes = {'UserDict': ('IterableUserDict',  'UserDict'),
-                 'weakref' : ('WeakKeyDictionary', 'WeakValueDictionary')}
+_dict_classes = {'UserDict': ('IterableUserDict', 'UserDict'),
+                 'weakref': ('WeakKeyDictionary', 'WeakValueDictionary')}
 try:  # <type module> is essentially a dict
     _typedef_both(Types.ModuleType, base=_dict_typedef.base,
-                                    item=_dict_typedef.item + _sizeof_CPyModuleObject,
-                                    leng=_len_module, refs=_module_refs)
+                  item=_dict_typedef.item + _sizeof_CPyModuleObject,
+                  leng=_len_module, refs=_module_refs)
 except AttributeError:  # missing
     pass
 
@@ -1225,21 +1221,21 @@ try:
     if isbuiltin(buffer):  # Python 2.2
         _typedef_both(type(buffer('')), item=_sizeof_Cbyte, leng=_len)  # XXX len in bytes?
     else:
-        _typedef_both(buffer,           item=_sizeof_Cbyte, leng=_len)  # XXX len in bytes?
+        _typedef_both(buffer, item=_sizeof_Cbyte, leng=_len)  # XXX len in bytes?
 except NameError:  # missing
     pass
 
 try:
-    _typedef_both(bytearray, item=_sizeof_Cbyte, leng=_len_bytearray)  #PYCHOK bytearray new in 2.6, 3.0
-except NameError:  # missing
+    _typedef_both(bytearray, item=_sizeof_Cbyte, leng=_len_bytearray)
+except NameError:  # bytearray new in 2.6, 3.0
     pass
 try:
-    if type(bytes) is not type(str):  # bytes is str in 2.6 #PYCHOK bytes new in 2.6, 3.0
-        _typedef_both(bytes, item=_sizeof_Cbyte, leng=_len)  #PYCHOK bytes new in 2.6, 3.0
+    if type(bytes) is not type(str):  # bytes is str in 2.6, bytes new in 2.6, 3.0
+        _typedef_both(bytes, item=_sizeof_Cbyte, leng=_len)  # bytes new in 2.6, 3.0
 except NameError:  # missing
     pass
 try:  # XXX like bytes
-    _typedef_both(str8, item=_sizeof_Cbyte, leng=_len)  #PYCHOK str8 new in 2.6, 3.0
+    _typedef_both(str8, item=_sizeof_Cbyte, leng=_len)  # str8 new in 2.6, 3.0
 except NameError:  # missing
     pass
 
@@ -1251,7 +1247,7 @@ except NameError:  # missing
 try:  # Exception is type in Python 3.0
     _typedef_both(Exception, refs=_exc_refs)
 except:  # missing
-    pass  #PYCHOK OK
+    pass
 
 try:
     _typedef_both(file, refs=_file_refs)
@@ -1263,7 +1259,7 @@ try:
 except NameError:  # missing
     pass
 try:
-    _typedef_both(set,       item=_sizeof_Csetentry, leng=_len_set, refs=_seq_refs)
+    _typedef_both(set, item=_sizeof_Csetentry, leng=_len_set, refs=_seq_refs)
 except NameError:  # missing
     pass
 
@@ -1276,7 +1272,7 @@ try:  # if long exists, it is multi-precision ...
     _typedef_both(long, item=_sizeof_Cdigit, leng=_len_int)
     _typedef_both(int)  # ... and int is fixed size
 except NameError:  # no long, only multi-precision int in Python 3.0
-    _typedef_both(int,  item=_sizeof_Cdigit, leng=_len_int)
+    _typedef_both(int, item=_sizeof_Cdigit, leng=_len_int)
 
 try:  # not callable()
     _typedef_both(Types.MemberDescriptorType)
@@ -1333,9 +1329,9 @@ except AttributeError:  # missing
 
 try:
     _typedef_both(unicode, leng=_len_unicode, item=_sizeof_Cunicode)
-    _typedef_both(str,     leng=_len,         item=_sizeof_Cbyte)  # 1-byte char
+    _typedef_both(str, leng=_len, item=_sizeof_Cbyte)  # 1-byte char
 except NameError:  # str is unicode
-    _typedef_both(str,     leng=_len_unicode, item=_sizeof_Cunicode)
+    _typedef_both(str, leng=_len_unicode, item=_sizeof_Cunicode)
 
 try:  # <type 'KeyedRef'>
     _typedef_both(Weakref.KeyedRef, refs=_weak_refs, heap=True)  # plus head
@@ -1354,8 +1350,8 @@ except AttributeError:  # missing
     pass
 
  # some other, callable types
-_typedef_code(object,     kind=_kind_ignored)
-_typedef_code(super,      kind=_kind_ignored)
+_typedef_code(object, kind=_kind_ignored)
+_typedef_code(super, kind=_kind_ignored)
 _typedef_code(_Type_type, kind=_kind_ignored)
 
 try:
@@ -1414,7 +1410,7 @@ del i, s, t
 def _typedef(obj, derive=False, infer=False):
     '''Create a new typedef for an object.
     '''
-    t =  type(obj)
+    t = type(obj)
     v = _Typedef(base=_basicsize(t, obj=obj),
                  kind=_kind_dynamic, type=t)
   ##_printf('new %r %r/%r %s', t, _basicsize(t), _itemsize(t), _repr(dir(obj)))
@@ -1484,11 +1480,11 @@ def _typedef(obj, derive=False, infer=False):
 class _Prof(object):
     '''Internal type profile class.
     '''
-    total  = 0     # total size
-    high   = 0     # largest size
+    total = 0     # total size
+    high = 0     # largest size
     number = 0     # number of (unique) objects
     objref = None  # largest object (weakref)
-    weak   = False # objref is weakref(object)
+    weak = False # objref is weakref(object)
 
     def __cmp__(self, other):
         if self.total < other.total:
@@ -1517,9 +1513,9 @@ class _Prof(object):
         t = _SI2(self.total)
         if grand:
             t += ' (%s)' % _p100(self.total, grand, prec=0)
-        return dict(avg=_SI2(a),         high=_SI2(self.high),
+        return dict(avg=_SI2(a), high=_SI2(self.high),
                     lengstr=_lengstr(o), obj=_repr(o, clip=clip),
-                    plural=p,            total=t)
+                    plural=p, total=t)
 
     def update(self, obj, size):
         '''Update this profile.
@@ -1562,29 +1558,29 @@ class Asized(object):
 class Asizer(object):
     '''Sizer state and options.
     '''
-    _align_    = 8
-    _clip_     = 80
-    _code_     = False
-    _derive_   = False
-    _detail_   = 0  # for Asized only
-    _infer_    = False
-    _limit_    = 100
-    _stats_    = 0
+    _align_ = 8
+    _clip_ = 80
+    _code_ = False
+    _derive_ = False
+    _detail_ = 0  # for Asized only
+    _infer_ = False
+    _limit_ = 100
+    _stats_ = 0
 
-    _cutoff    = 0  # in percent
-    _depth     = 0  # recursion depth
+    _cutoff = 0  # in percent
+    _depth = 0  # recursion depth
     _duplicate = 0
-    _excl_d    = None  # {}
-    _ign_d     = _kind_ignored
-    _incl      = ''  # or ' (incl. code)'
-    _mask      = 7   # see _align_
-    _missed    = 0   # due to errors
-    _profile   = False
-    _profs     = None  # {}
-    _seen      = None  # {}
-    _total     = 0   # total size
+    _excl_d = None  # {}
+    _ign_d = _kind_ignored
+    _incl = ''  # or ' (incl. code)'
+    _mask = 7   # see _align_
+    _missed = 0   # due to errors
+    _profile = False
+    _profs = None  # {}
+    _seen = None  # {}
+    _total = 0   # total size
 
-    _stream    = None # IO stream for printing
+    _stream = None  # IO stream for printing
 
     def __init__(self, **opts):
         '''See method **reset** for the available options.
@@ -1603,14 +1599,14 @@ class Asizer(object):
     def _clear(self):
         '''Clear state.
         '''
-        self._depth     = 0   # recursion depth
+        self._depth = 0   # recursion depth
         self._duplicate = 0
-        self._incl      = ''  # or ' (incl. code)'
-        self._missed    = 0   # due to errors
-        self._profile   = False
-        self._profs     = {}
-        self._seen      = {}
-        self._total     = 0   # total size
+        self._incl = ''  # or ' (incl. code)'
+        self._missed = 0   # due to errors
+        self._profile = False
+        self._profs = {}
+        self._seen = {}
+        self._total = 0   # total size
         for k in _keys(self._excl_d):
             self._excl_d[k] = 0
 
@@ -1836,7 +1832,7 @@ class Asizer(object):
                 if n > 1:
                     self._printf('%sasized(...%s%s) ...', linesep, c, o, **print3opts)
                     for i in range(n):  # no enumerate in Python 2.2.3
-                        self._printf('%*d: %s', w-1, i, sized[i], **print3opts)
+                        self._printf('%*d: %s', w - 1, i, sized[i], **print3opts)
                 else:
                     self._printf('%sasized(%s): %s', linesep, o, sized, **print3opts)
             elif sizes and objs:
@@ -1996,15 +1992,15 @@ class Asizer(object):
         See function **asizeof** for a description of the options.
         '''
          # options
-        self._align_  = align
-        self._clip_   = clip
-        self._code_   = code
+        self._align_ = align
+        self._clip_ = clip
+        self._code_ = code
         self._derive_ = derive
         self._detail_ = detail  # for Asized only
-        self._infer_  = infer
-        self._limit_  = limit
-        self._stats_  = stats
-        self._stream  = stream
+        self._infer_ = infer
+        self._limit_ = limit
+        self._stats_ = stats
+        self._stream = stream
         if ignored:
             self._ign_d = _kind_ignored
         else:
@@ -2031,7 +2027,9 @@ def adict(*classes):
             a = False
     return a  # all installed if True
 
+
 _asizer = Asizer()
+
 
 def asized(*objs, **opts):
     '''Return a tuple containing an **Asized** instance for each
@@ -2292,400 +2290,6 @@ def named_refs(obj):
                 except AttributeError:
                     pass
     return refs
-
-
-def test_flatsize(failf=None, stdf=None):
-    '''Compare the results of **flatsize()** without using ``sys.getsizeof()``
-       with the accurate sizes returned by ``sys.getsizeof()``.
-
-       Return the total number of tests and number of unexpected failures.
-
-       Expect differences for sequences as dicts, lists, sets, tuples, etc.
-       While this is no proof for the accuracy of **flatsize()** on Python
-       builds without ``sys.getsizeof()``, it does provide some evidence that
-       function **flatsize()** produces reasonable and usable results.
-    '''
-    global _getsizeof
-    t, g, e = [], _getsizeof, 0
-    if g:
-        for v in _values(_typedefs):
-            t.append(v.type)
-            try:  # creating one instance
-                if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
-                    t.append(v.type())
-            except Exception:  # ignore errors
-                pass
-        t.extend(({1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8},
-                  [1,2,3,4,5,6,7,8], ['1', '2', '3'], [0] * 100,
-                  '12345678', 'x' * 1001,
-                  (1,2,3,4,5,6,7,8), ('1', '2', '3'), (0,) * 100,
-                  _Slots((1,2,3,4,5,6,7,8)), _Slots(('1', '2', '3')), _Slots((0,) * 100),
-                  0, 1 << 8, 1 << 16, 1 << 32, 1 << 64, 1 << 128,
-                  complex(0, 1), True, False))
-        _getsizeof = None  # zap _getsizeof for flatsize()
-        for o in t:
-            a = flatsize(o)
-            s = sys.getsizeof(o, 0)  # 0 as default #PYCHOK expected
-            if a != s:
-                if isinstance(o, (dict, list, set, frozenset, tuple, bytes)):
-                    # flatsize() approximates length of sequences
-                    x = ', expected failure'
-                elif (isinstance(o, (type, bool, ABCMeta)) and
-                      sys.version_info >= (3, 0)):
-                    x = ', expected failure'
-                elif isinstance(o, str) and sys.version_info >= (3, 3):
-                    x = ', expected failure'
-                else:
-                    x = ', %r' % _typedefof(o)
-                    e += 1
-                    if failf:  # report failure
-                        failf('%s vs %s for %s: %s',
-                              a, s, _nameof(type(o)), _repr(o))
-                if stdf:
-                    _printf('flatsize() %s vs sys.getsizeof() %s for %s: %s%s',
-                            a, s, _nameof(type(o)), _repr(o), x, file=stdf)
-        _getsizeof = g  # restore
-    return len(t), e
-
-
-if __name__ == '__main__':
-
-    argv, MAX = sys.argv, sys.getrecursionlimit()
-
-    def _print_asizeof(obj, infer=False, stats=0):
-        a = [_repr(obj),]
-        for d, c in ((0, False), (MAX, False), (MAX, True)):
-            a.append(asizeof(obj, limit=d, code=c, infer=infer, stats=stats))
-        _printf(" asizeof(%s) is %d, %d, %d", *a)
-
-    def _print_functions(obj, name=None, align=8, detail=MAX, code=False, limit=MAX,
-                              opt='', **unused):
-        if name:
-            _printf('%sasizeof functions for %s ... %s', linesep, name, opt)
-        _printf('%s(): %s', ' basicsize', basicsize(obj))
-        _printf('%s(): %s', ' itemsize',  itemsize(obj))
-        _printf('%s(): %r', ' leng',      leng(obj))
-        _printf('%s(): %s', ' refs',     _repr(refs(obj)))
-        _printf('%s(): %s', ' flatsize',  flatsize(obj, align=align))  # , code=code
-        _printf('%s(): %s', ' asized',           asized(obj, align=align, detail=detail, code=code, limit=limit))
-      ##_printf('%s(): %s', '.asized',   _asizer.asized(obj, align=align, detail=detail, code=code, limit=limit))
-
-    def _bool(arg):
-        a = arg.lower()
-        if a in ('1', 't', 'y', 'true', 'yes', 'on'):
-            return True
-        elif a in ('0', 'f', 'n', 'false', 'no', 'off'):
-            return False
-        else:
-            raise ValueError('bool option expected: %r' % arg)
-
-    def _opts(*_opts, **all):
-        for o in _opts:
-            if o in argv:
-                return True
-        o = all.get('all', None)
-        if o is None:
-            o = '-' in argv or '--' in argv
-        return o
-
-    if _opts('-im', '-import', all=False):
-         # import and size modules given as args
-
-        def _aopts(argv, **opts):
-            '''Get argv options as typed values.
-            '''
-            i = 1
-            while argv[i].startswith('-'):
-                k = argv[i].lstrip('-')
-                if 'import'.startswith(k):
-                    i += 1
-                elif k in opts:
-                    t = type(opts[k])
-                    if t is bool:
-                        t = _bool
-                    i += 1
-                    opts[k] = t(argv[i])
-                    i += 1
-                else:
-                    raise NameError('invalid option: %s' % argv[i])
-            return opts, i
-
-        opts, i = _aopts(argv, align=8, clip=80, code=False, derive=False, detail=MAX, limit=MAX, stats=0)
-        while i < len(argv):
-            m, i = argv[i], i + 1
-            if m == 'eval' and i < len(argv):
-                o, i = eval(argv[i]), i + 1
-            else:
-                o = __import__(m)
-            s = asizeof(o, **opts)
-            _printf("%sasizeof(%s) is %d", linesep, _repr(o, opts['clip']), s)
-            _print_functions(o, **opts)
-        argv = []
-
-    elif len(argv) < 2 or _opts('-h', '-help'):
-        d = {'-all':               'all=True example',
-             '-basic':             'basic examples',
-             '-C':                 'Csizeof values',
-             '-class':             'class and instance examples',
-             '-code':              'code examples',
-             '-dict':              'dict and UserDict examples',
-           ##'-gc':                'gc examples',
-             '-gen[erator]':       'generator examples',
-             '-glob[als]':         'globals examples, incl. asized()',
-             '-h[elp]':            'print this information',
-             '-im[port] <module>': 'imported module example',
-             '-int | -long':       'int and long examples',
-             '-iter[ator]':        'iterator examples',
-             '-loc[als]':          'locals examples',
-             '-pair[s]':           'key pair examples',
-             '-slots':             'slots examples',
-             '-stack':             'stack examples',
-             '-sys':               'sys.modules examples',
-             '-test':              'test flatsize() vs sys.getsizeof()',
-             '-type[def]s':        'type definitions',
-             '- | --':             'all examples'}
-        w = -max(len(o) for o in _keys(d))
-        t = sorted('%*s -- %s' % (w, o, t) for o, t in _items(d))
-        t = '\n     '.join([''] + t)
-        _printf('usage: %s <option> ...\n%s\n', argv[0], t)
-
-    class C: pass
-
-    class D(dict):
-        _attr1 = None
-        _attr2 = None
-
-    class E(D):
-        def __init__(self, a1=1, a2=2):  #PYCHOK OK
-            self._attr1 = a1  #PYCHOK OK
-            self._attr2 = a2  #PYCHOK OK
-
-    class P(object):
-        _p = None
-        def _get_p(self):
-            return self._p
-        p = property(_get_p)  #PYCHOK OK
-
-    class O:  # old style
-        a = None
-        b = None
-
-    class S(object):  # new style
-        __slots__ = ('a', 'b')
-
-    class T(object):
-        __slots__ = ('a', 'b')
-        def __init__(self):
-            self.a = self.b = 0
-
-    if _opts('-all'):  # all=True example
-        _printf('%sasizeof(limit=%s, code=%s, %s) ... %s', linesep, 'MAX', True, 'all=True', '-all')
-        asizeof(limit=MAX, code=True, stats=MAX, all=True)
-
-    if _opts('-basic'):  # basic examples
-        _printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<basic_objects>', '((0, False), (MAX, False), (MAX, True))', '-basic')
-        for o in (None, True, False,
-                  1.0, 1.0e100, 1024, 1000000000,
-                  '', 'a', 'abcdefg',
-                  {}, (), []):
-            _print_asizeof(o, infer=True)
-
-    if _opts('-C'):  # show all Csizeof values
-        _sizeof_Cdouble  = _calcsize('d')  #PYCHOK OK
-        _sizeof_Cssize_t = _calcsize('z')  #PYCHOK OK
-        t = [t for t in locals().items() if t[0].startswith('_sizeof_')]
-        _printf('%s%d C sizes: (bytes) ... -C', linesep, len(t))
-        for n, v in sorted(t):
-            _printf(' sizeof(%s): %r', n[len('_sizeof_'):], v)
-
-    if _opts('-class'):  # class and instance examples
-        _printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<non-callable>', '((0, False), (MAX, False), (MAX, True))', '-class')
-        for o in (C(), C.__dict__,
-                  D(), D.__dict__,
-                  E(), E.__dict__,
-                  P(), P.__dict__, P.p,
-                  O(), O.__dict__,
-                  S(), S.__dict__,
-                  S(), S.__dict__,
-                  T(), T.__dict__):
-            _print_asizeof(o, infer=True)
-
-    if _opts('-code'):  # code examples
-        _printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<callable>', '((0, False), (MAX, False), (MAX, True))', '-code')
-        for o in (C, D, E, P, S, T,  # classes are callable
-                  type,
-                 _co_refs, _dict_refs, _inst_refs, _len_int, _seq_refs, lambda x: x,
-                (_co_refs, _dict_refs, _inst_refs, _len_int, _seq_refs),
-                 _typedefs):
-            _print_asizeof(o)
-
-    if _opts('-dict'):  # dict and UserDict examples
-        _printf('%sasizeof(%s) for (limit, code) in %s ... %s', linesep, '<Dicts>', '((0, False), (MAX, False), (MAX, True))', '-dict')
-        try:
-            import UserDict  # no UserDict in 3.0
-            for o in (UserDict.IterableUserDict(), UserDict.UserDict()):
-                _print_asizeof(o)
-        except ImportError:
-            pass
-
-        class _Dict(dict):
-            pass
-
-        for o in (dict(), _Dict(),
-                  P.__dict__,  # dictproxy
-                  Weakref.WeakKeyDictionary(), Weakref.WeakValueDictionary(),
-                 _typedefs):
-            _print_asizeof(o, infer=True)
-
-  ##if _opts('-gc'):  # gc examples
-      ##_printf('%sasizeof(limit=%s, code=%s, *%s) ...', linesep, 'MAX', False, 'gc.garbage')
-      ##from gc import collect, garbage  # list()
-      ##asizeof(limit=MAX, code=False, stats=1, *garbage)
-      ##collect()
-      ##asizeof(limit=MAX, code=False, stats=2, *garbage)
-
-    if _opts('-gen', '-generator'):  # generator examples
-        _printf('%sasizeof(%s, code=%s) ... %s', linesep, '<generator>', True, '-gen[erator]')
-
-        def gen(x):
-            i = 0
-            while i < x:
-                yield i
-                i += 1
-        a = gen(5)
-        b = gen(50)
-        asizeof(a, code=True, stats=1)
-        asizeof(b, code=True, stats=1)
-        asizeof(a, code=True, stats=1)
-
-    if _opts('-glob', '-globals'):  # globals examples
-        _printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'globals()', 'MAX', False, '-glob[als]')
-        asizeof(globals(), limit=MAX, code=False, stats=1)
-        _print_functions(globals(), 'globals()', opt='-glob[als]')
-
-        _printf('%sasizesof(%s, limit=%s, code=%s) ... %s', linesep, 'globals(), locals()', 'MAX', False, '-glob[als]')
-        asizesof(globals(), locals(), limit=MAX, code=False, stats=1)
-        asized(globals(), align=0, detail=MAX, limit=MAX, code=False, stats=1)
-
-    if _opts('-int', '-long'):  # int and long examples
-        try:
-            _L5d  = long(1) << 64
-            _L17d = long(1) << 256
-            t = '<int>/<long>'
-        except NameError:
-            _L5d  = 1 << 64
-            _L17d = 1 << 256
-            t = '<int>'
-
-        _printf('%sasizeof(%s, align=%s, limit=%s) ... %s', linesep, t, 0, 0, '-int')
-        for o in (1024, 1000000000,
-                  1.0, 1.0e100, 1024, 1000000000,
-                  MAX, 1 << 32, _L5d, -_L5d, _L17d, -_L17d):
-            _printf(" asizeof(%s) is %s (%s + %s * %s)", _repr(o), asizeof(o, align=0, limit=0),
-                                                         basicsize(o), leng(o), itemsize(o))
-
-    if _opts('-iter', '-iterator'):  # iterator examples
-        _printf('%sasizeof(%s, code=%s) ... %s', linesep, '<iterator>', False, '-iter[ator]')
-        o = iter('0123456789')
-        e = iter('')
-        d = iter({})
-        i = iter(_items({1:1}))
-        k = iter(_keys({2:2, 3:3}))
-        v = iter(_values({4:4, 5:5, 6:6}))
-        l = iter([])
-        t = iter(())
-        asizesof(o, e, d, i, k, v, l, t, limit=0, code=False, stats=1)
-        asizesof(o, e, d, i, k, v, l, t, limit=9, code=False, stats=1)
-
-    if _opts('-loc', '-locals'):  # locals examples
-        _printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'locals()', 'MAX', False, '-loc[als]')
-        asizeof(locals(), limit=MAX, code=False, stats=1)
-        _print_functions(locals(), 'locals()', opt='-loc[als]')
-
-    if _opts('-pair', '-pairs'):  # key pair examples
-         # <http://jjinux.blogspot.com/2008/08/python-memory-conservation-tip.html>
-        _printf('%sasizeof(%s) vs asizeof(%s) ... %s', linesep, 'dict[i][j]', 'dict[(i,j)]', '-pair[s]')
-        n = m = 200
-
-        p = {}  # [i][j]
-        for i in range(n):
-            q = {}
-            for j in range(m):
-                q[j] = None
-            p[i] = q
-        p = asizeof(p, stats=1)
-
-        t = {}  # [(i,j)]
-        for i in range(n):
-            for j in range(m):
-                t[(i,j)] = None
-        t = asizeof(t, stats=1)
-
-        _printf('%sasizeof(dict[i][j]) is %s of asizeof(dict[(i,j)])', linesep, _p100(p, t))
-
-    if _opts('-slots'):  # slots examples
-        _printf('%sasizeof(%s, code=%s) ... %s', linesep, '<__slots__>', False, '-slots')
-
-        class Old:
-            pass  # m = None
-
-        class New(object):
-            __slots__ = ('n',)
-
-        class Sub(New):  #PYCHOK OK
-            __slots__ = {'s': ''}  # duplicate!
-            def __init__(self):  #PYCHOK OK
-                New.__init__(self)
-
-         # basic instance sizes
-        o, n, s = Old(), New(), Sub()
-        asizesof(o, n, s, limit=MAX, code=False, stats=1)
-         # with unique min attr size
-        o.o = 'o'
-        n.n = 'n'
-        s.n = 'S'
-        s.s = 's'
-        asizesof(o, n, s, limit=MAX, code=False, stats=1)
-         # with duplicate, intern'ed, 1-char string attrs
-        o.o = 'x'
-        n.n = 'x'
-        s.n = 'x'
-        s.s = 'x'
-        asizesof(o, n, s, 'x', limit=MAX, code=False, stats=1)
-         # with larger attr size
-        o.o = 'o'*1000
-        n.n = 'n'*1000
-        s.n = 'n'*1000
-        s.s = 's'*1000
-        asizesof(o, n, s, 'x'*1000, limit=MAX, code=False, stats=1)
-
-    if _opts('-stack'):  # stack examples
-        _printf('%sasizeof(%s, limit=%s, code=%s) ... %s', linesep, 'stack(MAX)', 'MAX', False, '')
-        asizeof(stack(MAX), limit=MAX, code=False, stats=1)
-        _print_functions(stack(MAX), 'stack(MAX)', opt='-stack')
-
-    if _opts('-sys'):  # sys.modules examples
-        _printf('%sasizeof(limit=%s, code=%s, *%s) ... %s', linesep, 'MAX', False, 'sys.modules.values()', '-sys')
-        asizeof(limit=MAX, code=False, stats=1, *sys.modules.values())
-        _print_functions(sys.modules, 'sys.modules', opt='-sys')
-
-    if _opts('-type', '-types', '-typedefs'):  # show all basic _typedefs
-        t = len(_typedefs)
-        w = len(str(t)) * ' '
-        _printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', linesep, t, '-type[def]s')
-        for k, v in sorted((_prepr(k), v) for k, v in _items(_typedefs)):
-            s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
-            _printf('%s %s: %s', w, k, s)
-
-    if _opts('-test'):
-        _printf('%sflatsize() vs sys.getsizeof() ... %s', linesep, '-test')
-        n, e = test_flatsize(stdf=sys.stdout)
-        if e:
-            _printf('%s%d of %d tests failed or %s', linesep, e, n, _p100(e, n))
-        elif _getsizeof:
-            _printf('no unexpected failures in %d tests', n)
-        else:
-            _printf('no sys.%s() in this python %s', 'getsizeof', sys.version.split()[0])
 
 
 # License file from an earlier version of this source file follows:
