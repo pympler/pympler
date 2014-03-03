@@ -1,6 +1,5 @@
 language: python
 python:
-  - "2.5"
   - "2.6"
   - "2.7"
   - "3.2"
@@ -10,11 +9,11 @@ before_install:
 install:
   - pip install Sphinx --use-mirrors
   - pip install pep8 --use-mirrors
-before_script:
-  - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
 script:
   - python setup.py try
   - python setup.py install
   - python setup.py test
   - python run.py --doctest
   - python run.py --html
+after_script:
+  - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
