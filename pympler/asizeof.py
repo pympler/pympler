@@ -398,8 +398,11 @@ def _issubclass(sub, sup):
 
 
 # 'cell' is holding data used in closures
-closure = lambda x: (lambda: x)
-cell_type = type(closure(None).func_closure[0])
+closure = (lambda x: (lambda: x))(None)
+try:
+    cell_type = type(closure.__closure__[0])
+except AttributeError:  # Python 2.5
+    cell_type = type(closure.func_closure[0])
 
 
 def _iscell(obj):
@@ -616,8 +619,8 @@ def _frame_refs(obj, named):
 def _func_refs(obj, named):
     '''Return specific referents of a function or lambda object.
     '''
-    return _refs(obj, named, '__doc__', '__name__', '__code__',
-                             pref='func_', excl=('func_globals',))
+    return _refs(obj, named, '__doc__', '__name__', '__code__', '__closure__',
+                 pref='func_', excl=('func_globals',))
 
 
 def _cell_refs(obj, named):
