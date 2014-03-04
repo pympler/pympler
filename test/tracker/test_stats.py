@@ -95,7 +95,7 @@ class LogTestCase(unittest.TestCase):
         self.assertEqual(len(stats.sorted), tolen)
         stats.print_summary()
         clsname = f3.getvalue().split('\n')[0]
-        self.assertNotEqual(re.search('\.Bar', clsname), None, clsname)
+        self.assertNotEqual(re.search('Bar', clsname), None, clsname)
 
         f1.close()
         f2.close()

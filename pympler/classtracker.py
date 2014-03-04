@@ -390,8 +390,7 @@ class ClassTracker(object):
                 self.objects[id(instance)].ref() is not None:
             return
 
-        if name is None:
-            name = instance.__class__.__name__
+        name = name if name else instance.__class__.__name__
 
         track_object_creation(self.history[name])
         on_delete = partial(track_object_deletion, self.history[name])
