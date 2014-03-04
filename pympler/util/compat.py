@@ -15,7 +15,7 @@ except ImportError:
 try:
     import cPickle as pickle
 except ImportError:
-    import pickle  # PYCHOK Python 3.0 module
+    import pickle  # Python 3.0 module
 
 try:
     from new import instancemethod

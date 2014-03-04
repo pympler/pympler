@@ -15,6 +15,12 @@ Release 0.4.0
 
   * Add memory panel for django-debug-toolbar
 
+  * Track instance counts of tracked classes without snapshots
+
+  * Upgrade to Highcharts 3 and jQuery 1.10
+
+  * Drop support for Python 2.4
+
 
 Release 0.3.1
 =============

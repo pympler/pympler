@@ -92,6 +92,7 @@ class Stats(object):
         if tracker:
             self.index = tracker.index
             self.snapshots = tracker.snapshots
+            self.history = tracker.history
         else:
             self.index = None
             self.snapshots = None

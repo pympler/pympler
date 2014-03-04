@@ -2,9 +2,12 @@ include LICENSE
 include NOTICE
 include README.md
 
-include templates/*.tpl
-include templates/*.css
-include templates/*.js
+include pympler/templates/*.html
+include pympler/templates/*.tpl
+include pympler/templates/*.css
+include pympler/templates/*.js
+
+include pympler/static/*.js
 
 recursive-include doc *
 prune doc/source

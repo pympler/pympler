@@ -7,6 +7,8 @@ sized recursively to provide an overview of memory distribution between the
 different tracked objects.
 """
 
+from collections import defaultdict
+from functools import partial
 from inspect import stack, isclass
 from threading import Thread, Lock
 from time import sleep, time
@@ -62,7 +64,8 @@ class TrackedObject(object):
     __slots__ = ("ref", "id", "repr", "name", "birth", "death", "trace",
                  "snapshots", "_resolution_level", "__dict__")
 
-    def __init__(self, instance, resolution_level=0, trace=False):
+    def __init__(self, instance, name, resolution_level=0, trace=False,
+                 on_delete=None):
         """
         Create a weak reference for 'instance' to observe an object but which
         won't prevent its deletion (which is monitored by the finalize
@@ -72,7 +75,7 @@ class TrackedObject(object):
         self.ref = weakref_ref(instance, self.finalize)
         self.id = id(instance)
         self.repr = ''
-        self.name = str(instance.__class__)
+        self.name = name
         self.birth = _get_time()
         self.death = None
         self._resolution_level = resolution_level
@@ -84,6 +87,7 @@ class TrackedObject(object):
         initial_size = asizeof.basicsize(instance) or 0
         size = asizeof.Asized(initial_size, initial_size)
         self.snapshots = [(self.birth, size)]
+        self.on_delete = on_delete
 
     def __getstate__(self):
         """
@@ -170,8 +174,20 @@ class TrackedObject(object):
         """
         try:
             self.death = _get_time()
+            if self.on_delete:
+                self.on_delete()
         except Exception:  # pragma: no cover
             pass
+
+
+def track_object_creation(time_series):
+    num_instances = time_series[-1][1] if time_series else 0
+    time_series.append((_get_time(), num_instances+1))
+
+
+def track_object_deletion(time_series):
+    num_instances = time_series[-1][1]
+    time_series.append((_get_time(), num_instances-1))
 
 
 class PeriodicThread(Thread):
@@ -246,7 +262,7 @@ class ClassTracker(object):
         # objects that are tracked. 'index' uses the class name as the key and
         # associates a list of tracked objects. It contains all TrackedObject
         # instances, including those of dead objects.
-        self.index = {}
+        self.index = defaultdict(list)
 
         # 'objects' uses the id (address) as the key and associates the tracked
         # object with it. TrackedObject's referring to dead objects are
@@ -256,6 +272,9 @@ class ClassTracker(object):
 
         # List of `Snapshot` objects.
         self.snapshots = []
+
+        # Time series of instance count for each tracked class.
+        self.history = defaultdict(list)
 
         # Keep objects alive by holding a strong reference.
         self._keepalive = []
@@ -371,14 +390,17 @@ class ClassTracker(object):
                 self.objects[id(instance)].ref() is not None:
             return
 
-        tobj = TrackedObject(instance,
-                             resolution_level=resolution_level,
-                             trace=trace)
+        name = name if name else instance.__class__.__name__
 
-        if name is None:
-            name = instance.__class__.__name__
-        if not name in self.index:
-            self.index[name] = []
+        track_object_creation(self.history[name])
+        on_delete = partial(track_object_deletion, self.history[name])
+
+        tobj = TrackedObject(instance,
+                             name,
+                             resolution_level=resolution_level,
+                             trace=trace,
+                             on_delete=on_delete)
+
         self.index[name].append(tobj)
         self.objects[id(instance)] = tobj
 

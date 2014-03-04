@@ -34,7 +34,6 @@ from threading import Thread
 from weakref import WeakValueDictionary
 from wsgiref.simple_server import make_server
 
-from pympler import DATA_PATH
 from pympler import asizeof
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
@@ -89,7 +88,8 @@ def get_obj(ref):
     return server.id2ref.get(oid) or server.id2obj[oid]
 
 
-static_files = os.path.join(DATA_PATH, 'templates')
+pympler_path = os.path.dirname(os.path.abspath(__file__))
+static_files = os.path.join(pympler_path, 'templates')
 
 bottle.TEMPLATE_PATH.append(static_files)
 
@@ -201,7 +201,7 @@ def get_obj_referents(oid):
 @bottle.route('/static/:filename')
 def static_file(filename):
     """Get static files (CSS-files)."""
-    bottle.static_file(filename, root=static_files)
+    return bottle.static_file(filename, root=static_files)
 
 
 def _compute_garbage_graphs():

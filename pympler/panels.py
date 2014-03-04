@@ -55,7 +55,7 @@ class MemoryPanel(DebugPanel):
     def process_request(self, request):
         self._tracker = ClassTracker()
         for cls in get_models() + self.classes:
-            self._tracker.track_class(cls, keep=True)
+            self._tracker.track_class(cls)
         self._tracker.create_snapshot('before')
         self._before = ProcessMemoryInfo()
 
@@ -73,7 +73,7 @@ class MemoryPanel(DebugPanel):
         rss = self._after.rss
         delta = rss - self._before.rss
         delta = ('(+%s)' % pp(delta)) if delta > 0 else ''
-        return "RSS: %s %s" % (pp(rss), delta)
+        return "%s %s" % (pp(rss), delta)
 
     def url(self):
         return ''
@@ -95,9 +95,9 @@ class MemoryPanel(DebugPanel):
         classes = []
         snapshot = stats.snapshots[-1]
         for model in stats.tracked_classes:
-            cnt = snapshot.classes.get(model, {}).get('active', 0)
+            history = [cnt for _, cnt in stats.history[model]]
             size = snapshot.classes.get(model, {}).get('sum', 0)
             if cnt > 0:
-                classes.append((model, cnt, pp(size)))
+                classes.append((model, history, pp(size)))
         context.update({'rows': rows, 'classes': classes})
         return render_to_string(self.template, context)
