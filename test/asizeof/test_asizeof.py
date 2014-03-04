@@ -450,15 +450,15 @@ class AsizeofDemos(unittest.TestCase):
         _attr2 = None
 
     class E(D):
-        def __init__(self, a1=1, a2=2):  #PYCHOK OK
-            self._attr1 = a1  #PYCHOK OK
-            self._attr2 = a2  #PYCHOK OK
+        def __init__(self, a1=1, a2=2):
+            self._attr1 = a1
+            self._attr2 = a2
 
     class P(object):
         _p = None
         def _get_p(self):
             return self._p
-        p = property(_get_p)  #PYCHOK OK
+        p = property(_get_p)
 
     class O:  # old style
         a = None
@@ -626,9 +626,9 @@ class AsizeofDemos(unittest.TestCase):
             pass  # m = None
         class New(object):
             __slots__ = ('n',)
-        class Sub(New):  #PYCHOK OK
+        class Sub(New):
             __slots__ = {'s': ''}  # duplicate!
-            def __init__(self):  #PYCHOK OK
+            def __init__(self):
                 New.__init__(self)
          # basic instance sizes
         o, n, s = Old(), New(), Sub()

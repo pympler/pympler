@@ -1,5 +1,7 @@
 #!/bin/bash
 
+version=0.4
+
 function check {
     status=$?
     if [ $status -eq 0 ]; then
@@ -12,12 +14,12 @@ function check {
 python setup.py sdist &> tmp/create_dist.log
 check "python setup.py sdist"
 
-for py in '2.4' '2.5' '2.6' '2.7' '3.1' '3.2' 
+for py in '2.5' '2.6' '2.7' '3.1' '3.2' '3.3'
 do
     python="python$py"
     echo "Testing with $python"
-    tar xzf dist/Pympler-0.2.0.tar.gz
-    cd Pympler-0.2.0
+    tar xzf dist/Pympler-$version.tar.gz
+    cd Pympler-$version
     $python setup.py try &> ../tmp/$python.pre_install.log
     check "$python setup.py try"
     $python setup.py install &> ../tmp/$python.install.log
@@ -25,5 +27,5 @@ do
     $python setup.py test &> ../tmp/$python.post_install.log
     check "$python setup.py test"
     cd ..
-    rm -rf Pympler-0.2.0
+    rm -rf Pympler-$version
 done

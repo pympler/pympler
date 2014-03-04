@@ -89,22 +89,6 @@ def run_dist(project_path, formats=[], upload=False):
                 'setup.py', 'sdist',
                 '--force-manifest', *f)
 
-def run_pychecker(project_path, dirs, OKd=False):
-    '''Run PyChecker against all specified source files and/or
-    directories.
-
-    PyChecker is invoked thru the  tools/pychok postprocessor
-    to suppresse all warnings OK'd in the source code.
-    '''
-    no_OKd = {False: '-no-OKd', True: '--'}[OKd]
-    sources = get_files(dirs, pattern='*.py')
-    for src in sources:
-        if _Verbose > 0:
-            print ("Checking %s ..." % src)
-        run_command(_Python_path,  # use this Python binary
-                    os.path.join(project_path, 'tools', 'pychok.py'),
-                    no_OKd, '--stdlib', '--quiet', src)
-
 def zip_docs(path, target):
     '''Zip the documentation to be uploaded to the Cheeseshop.
     Compress all files found in `path` recursively and strip the leading path
@@ -216,7 +200,6 @@ def main():
              '       %prog --html [--keep]',
              '       %prog --latex [--paper=letter|a4]',
              '       %prog --linkcheck',
-           ('       %%prog --pychecker [--OKd] [%s | %s/module] ...' % (_Src_dir, _Src_dir)),
              '       %prog --test [test | test/module | test/module/test_suite.py ...]')
     parser = OptionParser(os.linesep.join(usage))
     parser.add_option('-a', '--all', action='store_true', default=False,
@@ -237,10 +220,6 @@ def main():
                       dest='paper', help='select LaTeX paper size (letter)')
     parser.add_option('-i', '--linkcheck', action='store_true', default=False,
                       dest='linkcheck', help='check the documentation links')
-    parser.add_option('-p', '--pychecker', action='store_true', default=False,
-                      dest='pychecker', help='run static code analyzer PyChecker')
-    parser.add_option('--OKd', action='store_true', default=False,
-                      dest='OKd', help='include PyChecker warnings OKd in source')
     parser.add_option('-t', '--test', action='store_true', default=False,
                       dest='test', help='run all or specific unit tests')
     parser.add_option('--coverage', action='store_true', default=False,
@@ -271,10 +250,6 @@ def main():
 
     if options.clean or options.dist:  # remove all bytecodes, first
         run_clean(_Src_dir, 'test')
-
-    if options.pychecker:
-        print2('Running pychecker')
-        run_pychecker(project_path, args or [_Src_dir], options.OKd)
 
     if options.doctest:
         print2('Running doctest')

@@ -62,7 +62,7 @@ class MProfiler(object):
                 return True
         return False
 
-    def profile(self, frame, event, arg):  # PYCHOK arg req to match signature
+    def profile(self, frame, event, arg):  # arg req to match signature
         """Profiling method used to profile matching codepoints and events."""
         if (self.events is None) or (event in self.events):
             frame_info = inspect.getframeinfo(frame)

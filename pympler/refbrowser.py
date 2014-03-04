@@ -288,18 +288,18 @@ try:
 
             # disable editing of TreeNodes
             def edit(self, event=None):
-                pass  # PYCHOK see comment above
+                pass  # see comment above
 
             def edit_finish(self, event=None):
-                pass  # PYCHOK see comment above
+                pass  # see comment above
 
             def edit_cancel(self, event=None):
-                pass  # PYCHOK see comment above
+                pass  # see comment above
 
     class _ReferrerTreeItem(_TreeWidget.TreeItem, tkinter.Label):
         """Tree item wrapper around _Node object."""
 
-        def __init__(self, parentwindow, node, reftree):  # PYCHOK constr calls
+        def __init__(self, parentwindow, node, reftree):  # constr calls
             """You need to provide the parent window, the node this TreeItem
             represents, as well as the tree (_Node) which the node
             belongs to.
