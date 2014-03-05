@@ -1,5 +1,5 @@
-{% load i18n %}
-<script type="text/javascript" src="{{ STATIC_URL }}static/jquery.sparkline.min.js"></script>
+{% load i18n %}{% load staticfiles %}
+<script type="text/javascript" src="{% static 'jquery.sparkline.min.js' %}"></script>
 <table>
   <colgroup>
     <col style="width:20%"/>
@@ -38,7 +38,7 @@
     {% for cls, history, size in classes %}
       <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
         <td>{{ cls|escape }}</td>
-        <td id="{{ cls|escape|cut:'.' }}_history">{{ history|join:',' }}</td>
+        <td id="{{ cls|escape|cut:'.' }}_history" values="{{ history|join:',' }}"></td>
         <td>{{ size|escape }}</td>
       </tr>
     {% endfor %}
@@ -46,9 +46,9 @@
 </table>
 <script type="text/javascript">
   $(function() {
-    $(".djDebugpymplerPanel").click(function() {
+    window.jQuery("#djDebugpymplerPanel").show(function() {
       {% for cls, _, _ in classes %}
-        $("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {type: 'line'});
+        window.jQuery("#{{ cls|escape|cut:'.' }}_history").sparkline();
       {% endfor %}
     });
   });
