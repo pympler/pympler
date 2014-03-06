@@ -532,7 +532,7 @@ def _repr(obj, clip=80):
     '''
     try:  # safe repr()
         r = repr(obj)
-    except TypeError:
+    except Exception:
         r = 'N/A'
     if 0 < clip < len(r):
         h = (clip // 2) - 2
