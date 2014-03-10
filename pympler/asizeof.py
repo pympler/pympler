@@ -1560,8 +1560,8 @@ class Asized(object):
                 return ref
         return None
 
-    def format(self, format='{name} size={size} flat={flat}', depth=-1,
-               order_by='name', indent=''):
+    def format(self, format='%(name)s size=%(size)d flat=%(flat)d', depth=-1,
+               order_by='size', indent=''):
         '''
         Format the size information of the object and of all sized referents as
         a string.
@@ -1572,9 +1572,9 @@ class Asized(object):
         :param order_by: Control sort order of referents. Valid options are
             'name', 'size' and 'flat'.
         '''
-        representation = indent + format.format(**self.__dict__)
+        representation = indent + (format % self.__dict__)
         if depth != 0:
-            indent = indent + '  '
+            indent = indent + '    '
             reverse = (order_by in ('size', 'flat'))
             refs = sorted(self.refs, key=lambda x: getattr(x, order_by), reverse=reverse)
             refs = [ref.format(format, depth-1, order_by, indent)

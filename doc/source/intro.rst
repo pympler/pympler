@@ -54,19 +54,20 @@ facility in Pympler.
 Usage Examples
 --------------
 
-Aaron is curious how much memory certain Python objects consume.  He
-uses one of the :ref:`asizeof <asizeof>` functions to get the size of
-these objects and all associated referents::
+``pympler.asizeof`` can be used to investigate how much memory certain Python
+objects consume. You can use one of the :ref:`asizeof <asizeof>` functions to
+get the size of these objects and all associated referents::
 
-    >>> from pympler.asizeof import asizeof
+    >>> from pympler import asizeof
     >>> obj = [1, 2, (3, 4), 'text']
-    >>> asizeof(obj)
+    >>> asizeof.asizeof(obj)
     176
-
-Peter is trying to compare different implementations of a new parser
-module.  For each implementation, he uses the :ref:`asizeof <asizeof>`
-module to print simple statistics like size and number of objects
-summarized by type.
+    >>> print asizeof.asized(obj, detail=1).format()
+    [1, 2, (3, 4), 'text'] size=176 flat=48
+        (3, 4) size=64 flat=32
+        'text' size=32 flat=32
+        1 size=16 flat=16
+        2 size=16 flat=16
 
 Graham has been notified that his Python script leaks memory. Looking at
 the garbage collector debug output does not reveal where the leaks come
