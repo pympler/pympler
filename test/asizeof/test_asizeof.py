@@ -105,10 +105,15 @@ class Foo(object):
     def __init__(self, content):
         self.data = content
 
+    def __repr__(self):
+        return 'Foo'
+
+
 class ThinFoo(object):
     __slots__ = ['tdata']
     def __init__(self, content):
         self.tdata = content
+
 
 class OldFoo:
     def __init__(self, content):
@@ -309,9 +314,11 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(list(asizeof.asized(detail=2)), [])
         self.assertRaises(KeyError, asizeof.asized, **{'all': True})
         sized = asizeof.asized(Foo(42), detail=2)
-        self.assert_("Foo" in sized.name, sized.name)
+        self.assertEqual(sized.name, 'Foo')
         refs = [ref for ref in sized.refs if ref.name == '__dict__']
         self.assertEqual(len(refs), 1)
+        self.assertEqual(refs[0], sized.get('__dict__'))
+
         refs = [ref for ref in refs[0].refs if ref.name == '[V] data: 42']
         self.assertEqual(len(refs), 1, refs)
         i = 42
@@ -320,6 +327,29 @@ class FunctionTest(unittest.TestCase):
         sizer = asizeof.Asizer()
         sized_objs = sizer.asized(Foo(3), Foo(4), detail=2)
         self.assertEqual(len(sized_objs), 2)
+
+    def test_asized_detail(self):
+        foo = Foo(42)
+        size1 = asizeof.asized(foo, detail=1)
+        size2 = asizeof.asized(foo, detail=2)
+        self.assertEqual(size1.size, size2.size)
+
+    def test_asized_format(self):
+        '''Test Asized.format(depth=x)
+        '''
+        foo = Foo(42)
+        sized1 = asizeof.asized(foo, detail=1)
+        sized2 = asizeof.asized(foo, detail=2)
+        sized1_no = sized1.format('{name}', order_by='name')
+        sized1_d1 = sized1.format('{name}', depth=1, order_by='name')
+        sized1_d2 = sized1.format('{name}', depth=2, order_by='name')
+        sized2_d1 = sized2.format('{name}', depth=1, order_by='name')
+        sized2_d2 = sized2.format('{name}', depth=2, order_by='name')
+        self.assertEqual(sized1_no, "Foo\n  __class__\n  __dict__")
+        self.assertEqual(sized1_no, sized1_d1)
+        self.assertEqual(sized1_no, sized1_d2)
+        self.assertEqual(sized1_d1, sized2_d1)
+        self.assertNotEqual(sized2_d1, sized2_d2)
 
     def test_asizesof(self):
         '''Test asizeof.asizesof()

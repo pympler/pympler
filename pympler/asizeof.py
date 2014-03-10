@@ -1554,6 +1554,34 @@ class Asized(object):
         return 'size %r, flat %r, refs[%d], name %r' % (
             self.size, self.flat, len(self.refs), self.name)
 
+    def get(self, name):
+        for ref in self.refs:
+            if name == ref.name:
+                return ref
+        return None
+
+    def format(self, format='{name} size={size} flat={flat}', depth=-1,
+               order_by='name', indent=''):
+        '''
+        Format the size information of the object and of all sized referents as
+        a string.
+
+        :param format: Specifies the format per instance with 'name', 'size'
+            and 'flat' as valid interpolation parameters.
+        :param depth: Up to which recursion level the referents are printed.
+        :param order_by: Control sort order of referents. Valid options are
+            'name', 'size' and 'flat'.
+        '''
+        representation = indent + format.format(**self.__dict__)
+        if depth != 0:
+            indent = indent + '  '
+            reverse = (order_by in ('size', 'flat'))
+            refs = sorted(self.refs, key=lambda x: getattr(x, order_by), reverse=reverse)
+            refs = [ref.format(format, depth-1, order_by, indent)
+                    for ref in refs]
+            representation = '\n'.join([representation] + refs)
+        return representation
+
 
 class Asizer(object):
     '''Sizer state and options.
