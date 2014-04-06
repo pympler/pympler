@@ -147,7 +147,7 @@ class TrackerTest(unittest.TestCase):
         res = compat.object_in_list(o, otracker._get_objects())
         self.assertTrue(res)
         # indicator object should not be in result set
-        res = compat.object_in_list(o, otracker._get_objects(ignore=[o]))
+        res = compat.object_in_list(o, otracker._get_objects(ignore=(o,)))
         self.assertFalse(res)
 
 
@@ -162,7 +162,7 @@ class TrackerTest(unittest.TestCase):
         self.assert_(o in diff['+'])
         # indicator should not be listed in diff, i.e. no new and no gone
         # indicator object
-        diff = otracker.get_diff(ignore=[inspect.currentframe()])
+        diff = otracker.get_diff(ignore=(inspect.currentframe(),))
         found = False
         tmp = self._get_indicator()
         for i in diff['+']:

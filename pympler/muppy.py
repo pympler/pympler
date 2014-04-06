@@ -255,13 +255,13 @@ def _remove_duplicates(objects):
     Inspired by http://www.peterbe.com/plog/uniqifiers-benchmark
 
     """
-    seen = {}
+    seen = set()
     result = []
     for item in objects:
         marker = id(item)
         if marker in seen:
             continue
-        seen[marker] = 1
+        seen.add(marker)
         result.append(item)
     return result
 

@@ -179,9 +179,9 @@ class ObjectTracker(object):
         Note that all objects which exist at this point in time will not be
         released until you destroy this ObjectTracker instance.
         """
-        self.o0 = self._get_objects(ignore=[inspect.currentframe()])
+        self.o0 = self._get_objects(ignore=(inspect.currentframe(),))
 
-    def _get_objects(self, ignore=[]):
+    def _get_objects(self, ignore=()):
         """Get all currently existing objects.
 
         XXX - ToDo: This method is a copy&paste from muppy.get_objects, but
@@ -191,7 +191,7 @@ class ObjectTracker(object):
         keyword arguments
         ignore -- list of objects to ignore
         """
-        def remove_ignore(objects, ignore=[]):
+        def remove_ignore(objects, ignore=()):
             # remove all objects listed in the ignore list
             res = []
             for o in objects:
@@ -200,14 +200,11 @@ class ObjectTracker(object):
             return res
 
         tmp = gc.get_objects()
-        ignore.append(inspect.currentframe())  # PYCHOK change ignore
-        ignore.append(self)  # PYCHOK change ignore
+        ignore += (inspect.currentframe(), self, ignore, remove_ignore)
         if hasattr(self, 'o0'):
-            ignore.append(self.o0)  # PYCHOK change ignore
+            ignore += (self.o0,)
         if hasattr(self, 'o1'):
-            ignore.append(self.o1)  # PYCHOK change ignore
-        ignore.append(ignore)  # PYCHOK change ignore
-        ignore.append(remove_ignore)  # PYCHOK change ignore
+            ignore += (self.o1,)
         # this implies that referenced objects are also ignored
         tmp = remove_ignore(tmp, ignore)
         res = []
@@ -226,54 +223,45 @@ class ObjectTracker(object):
             # repeat to filter out objects which may have been referenced
             res = remove_ignore(res, ignore)
         # manual cleanup, see comment above
-        del ignore[:]
+        del ignore
         return res
 
-    def get_diff(self, ignore=[]):
+    def get_diff(self, ignore=()):
         """Get the diff to the last time the  state of objects was measured.
 
         keyword arguments
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe())  # PYCHOK change ignore
-        self.o1 = self._get_objects(ignore)
+        self.o1 = self._get_objects(ignore+(inspect.currentframe(),))
         diff = muppy.get_diff(self.o0, self.o1)
         self.o0 = self.o1
         # manual cleanup, see comment above
-        del ignore[:]  # PYCHOK change ignore
         return diff
 
-    def print_diff(self, ignore=[]):
+    def print_diff(self, ignore=()):
         """Print the diff to the last time the state of objects was measured.
 
         keyword arguments
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe())  # PYCHOK change ignore
-        diff = self.get_diff(ignore)
-        print("Added objects:")
-        summary.print_(summary.summarize(diff['+']))
-        print("Removed objects:")
-        summary.print_(summary.summarize(diff['-']))
-        # manual cleanup, see comment above
-        del ignore[:]
+        for line in self.format_diff(ignore+(inspect.currentframe(),)):
+            print(line)
 
-    def format_diff(self, ignore=[]):
+    def format_diff(self, ignore=()):
         """Format the diff to the last time the state of objects was measured.
 
         keyword arguments
         ignore -- list of objects to ignore
         """
         # ignore this and the caller frame
-        ignore.append(inspect.currentframe())  # PYCHOK change ignore
-        diff = self.get_diff(ignore)
-        yield "Added objects:"
+        lines = []
+        diff = self.get_diff(ignore+(inspect.currentframe(),))
+        lines.append("Added objects:")
         for line in summary.format_(summary.summarize(diff['+'])):
-            yield line
-        yield "Removed objects:"
+            lines.append(line)
+        lines.append("Removed objects:")
         for line in summary.format_(summary.summarize(diff['-'])):
-            yield line
-        # manual cleanup, see comment above
-        del ignore[:]
+            lines.append(line)
+        return lines
