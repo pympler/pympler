@@ -48,7 +48,7 @@
   $(function() {
     window.jQuery("#djDebugpymplerPanel").show(function() {
       {% for cls, _, _ in classes %}
-        window.jQuery("#{{ cls|escape|cut:'.' }}_history").sparkline();
+        window.jQuery("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {width: '200px'});
       {% endfor %}
     });
   });

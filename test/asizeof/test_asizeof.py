@@ -7,6 +7,7 @@ import weakref
 
 import pympler.asizeof as asizeof
 
+from collections import deque
 from inspect import stack
 
 
@@ -51,6 +52,8 @@ def test_flatsize(failf=None, stdf=None):
                       sys.version_info >= (3, 0)):
                     x = ', expected failure'
                 elif isinstance(o, str) and sys.version_info >= (3, 3):
+                    x = ', expected failure'
+                elif isinstance(o, deque) and sys.version_info >= (3, 4):
                     x = ', expected failure'
                 else:
                     x = ', %r' % asizeof._typedefof(o)

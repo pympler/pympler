@@ -205,6 +205,8 @@ class GarbageTestCase(unittest.TestCase):
 
     def test_uncollectable(self):
         """Test uncollectable object tracking.
+
+        This is fixed in Python 3.4 (PEP 442).
         """
         foo = Foo()
         foo.parent = foo
@@ -223,7 +225,8 @@ class GarbageTestCase(unittest.TestCase):
         gfoo = [x for x in gb.metadata if x.id == idfoo]
         self.assertEqual(len(gfoo), 0)
         genemy = [x for x in gb.metadata if x.id == idenemy]
-        self.assertEqual(len(genemy), 1)
+        if sys.version_info < (3, 4):
+            self.assertEqual(len(genemy), 1)
 
         self.assertEqual(gb.reduce_to_cycles(), None)
 
