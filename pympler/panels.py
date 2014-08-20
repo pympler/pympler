@@ -27,12 +27,12 @@ from pympler.process import ProcessMemoryInfo
 from pympler.util.stringutils import pp
 
 try:
-    from debug_toolbar.panels import DebugPanel
+    from debug_toolbar.panels import Panel
     from django.db.models import get_models
     from django.template import Context, Template
     from django.template.loader import render_to_string
 except ImportError:
-    class DebugPanel(object):
+    class Panel(object):
         pass
 
     class Template(object):
@@ -42,11 +42,11 @@ except ImportError:
         pass
 
 
-class MemoryPanel(DebugPanel):
+class MemoryPanel(Panel):
 
     name = 'pympler'
 
-    has_content = True
+    title = 'Memory'
 
     template = 'memory_panel.html'
 
@@ -63,28 +63,17 @@ class MemoryPanel(DebugPanel):
         self._after = ProcessMemoryInfo()
         self._tracker.create_snapshot('after')
 
-    def title(self):
-        return 'Memory'
-
-    def nav_title(self):
-        return 'Memory'
-
     def nav_subtitle(self):
         rss = self._after.rss
         delta = rss - self._before.rss
         delta = ('(+%s)' % pp(delta)) if delta > 0 else ''
         return "%s %s" % (pp(rss), delta)
 
-    def url(self):
-        return ''
-
-    def get_stats(self):
-        pass
-
+    @property
     def content(self):
         stats = self._tracker.stats
         stats.annotate()
-        context = self.context.copy()
+        context = self.get_stats()
         rows = [('Resident set size', self._after.rss),
                 ('Virtual size', self._after.vsz),
                 ]
