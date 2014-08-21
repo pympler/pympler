@@ -17,9 +17,11 @@ Release 0.4.0
 
   * Track instance counts of tracked classes without snapshots
 
+  * Add close method to ClassTracker
+
   * Upgrade to Highcharts 3 and jQuery 1.10
 
-  * Drop support for Python 2.4
+  * Add support for Python 3.4, drop support for Python 2.4
 
 
 Release 0.3.1
