@@ -30,7 +30,7 @@
   <thead>
     <tr>
       <th>{% trans "Class" %}</th>
-      <th>{% trans "Number of instances" %}</th>
+      <th>{% trans "Number of instances" %} <a class="show_sparkline" href="#">Show sparklines</a></th>
       <th>{% trans "Total size" %}</th>
     </tr>
   </thead>
@@ -39,7 +39,7 @@
       <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
         <td>{{ cls|escape }}</td>
         <td id="{{ cls|escape|cut:'.' }}_history" values="{{ history|join:',' }}">
-          <a class="show_sparkline" href="#">Show sparkline TODO</a>
+          {{ history|safeseq|join:', ' }}
         </td>
         <td>{{ size|escape }}</td>
       </tr>
@@ -53,5 +53,5 @@
         $("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {width: '200px'});
       {% endfor %}
     });
-  })(djdt.jQuery);
+  })(jQuery);
 </script>
