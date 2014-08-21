@@ -28,7 +28,6 @@ from distutils.core import setup
 from distutils.dist import Distribution
 from distutils.errors import DistutilsExecError
 from distutils.spawn import spawn  # raises DistutilsExecError
-from setuptools import setup
 
 from shutil import rmtree
 
