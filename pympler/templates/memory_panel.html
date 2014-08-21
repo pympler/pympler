@@ -1,4 +1,4 @@
-{% load i18n %}{% load staticfiles %}
+{% load i18n %}{% load static from staticfiles %}
 <script type="text/javascript" src="{% static 'jquery.sparkline.min.js' %}"></script>
 <table>
   <colgroup>
@@ -30,7 +30,7 @@
   <thead>
     <tr>
       <th>{% trans "Class" %}</th>
-      <th>{% trans "Number of instances" %}</th>
+      <th>{% trans "Number of instances" %} <a class="show_sparkline" href="#">Show sparklines</a></th>
       <th>{% trans "Total size" %}</th>
     </tr>
   </thead>
@@ -38,18 +38,20 @@
     {% for cls, history, size in classes %}
       <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
         <td>{{ cls|escape }}</td>
-        <td id="{{ cls|escape|cut:'.' }}_history" values="{{ history|join:',' }}"></td>
+        <td id="{{ cls|escape|cut:'.' }}_history" values="{{ history|join:',' }}">
+          {{ history|safeseq|join:', ' }}
+        </td>
         <td>{{ size|escape }}</td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
 <script type="text/javascript">
-  $(function() {
-    window.jQuery("#djDebugpymplerPanel").show(function() {
+  (function ($) {
+    $("#MemoryPanel .show_sparkline").on('click', function() {
       {% for cls, _, _ in classes %}
-        window.jQuery("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {width: '200px'});
+        $("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {width: '200px'});
       {% endfor %}
     });
-  });
+  })(jQuery);
 </script>
