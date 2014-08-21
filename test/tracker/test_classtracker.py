@@ -1,4 +1,3 @@
-
 import sys
 import time
 import unittest
@@ -404,11 +403,22 @@ class TrackClassTestCase(unittest.TestCase):
         self.assertEqual(self.tracker.index['Baz'][0].ref(),foo)
 
 
+class TrackerTestCase(unittest.TestCase):
+
+    def test_detach_on_close(self):
+        original_constructor = Foo.__init__
+        tracker = ClassTracker()
+        tracker.track_class(Foo)
+        tracker.close()
+        self.assertEqual(Foo.__init__, original_constructor)
+
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    tclasses = [ TrackObjectTestCase,
-                 TrackClassTestCase,
-                 SnapshotTestCase
+    tclasses = [TrackObjectTestCase,
+                TrackClassTestCase,
+                SnapshotTestCase,
+                TrackerTestCase
                ]
     for tclass in tclasses:
         names = unittest.getTestCaseNames(tclass, 'test_')

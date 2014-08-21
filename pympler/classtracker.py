@@ -471,6 +471,19 @@ class ClassTracker(object):
         self.detach_all()
         self.snapshots[:] = []
 
+    def close(self):
+        """
+        Detach from tracked classes by removing injected constructors. Makes it
+        possible to use ClassTracker in `contextlib.closing` to safely remove
+        profiling hooks when the tracker goes out of scope::
+
+            import contextlib
+            with contextlib.closing(ClassTracker()) as tracker:
+                tracker.track_class(Foo)
+
+        """
+        self.detach_all_classes()
+
 #
 # Background Monitoring
 #
