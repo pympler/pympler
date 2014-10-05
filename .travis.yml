@@ -5,11 +5,13 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
+  - "pypy"
+  - "pypy3"
 before_install:
   - sudo apt-get install graphviz python-tk
 install:
-  - pip install Sphinx --use-mirrors
-  - pip install pep8 --use-mirrors
+  - travis_retry pip install Sphinx
+  - travis_retry pip install pep8
 script:
   - python setup.py try
   - python setup.py install
