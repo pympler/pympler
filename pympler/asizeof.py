@@ -407,6 +407,13 @@ def _iscell(obj):
     return isinstance(obj, cell_type)
 
 
+def _isnamedtuple(obj):
+    '''Named tuples are identified via duck typing:
+    http://www.gossamer-threads.com/lists/python/dev/1142178
+    '''
+    return isinstance(obj, tuple) and hasattr(obj, '_fields')
+
+
 def _itemsize(t, item=0):
     '''Get non-zero itemsize of type.
     '''
@@ -624,6 +631,12 @@ def _cell_refs(obj, named):
     return _refs(obj, named, 'cell_contents')
 
 
+def _namedtuple_refs(obj, named):
+    '''Return slots but exclude dict
+    '''
+    return _refs(obj, named, '__class__', slots='__slots__')
+
+
 def _gen_refs(obj, named):
     '''Return the referent(s) of a generator object.
     '''
@@ -709,9 +722,9 @@ def _weak_refs(obj, unused):  # named unused for PyChecker
 
 _all_refs = (None, _cell_refs, _class_refs, _co_refs, _dict_refs, _enum_refs,
              _exc_refs, _file_refs, _frame_refs, _func_refs, _gen_refs,
-             _im_refs, _inst_refs, _iter_refs, _module_refs, _prop_refs,
-             _seq_refs, _stat_refs, _statvfs_refs, _tb_refs, _type_refs,
-             _weak_refs)
+             _im_refs, _inst_refs, _iter_refs, _module_refs, _namedtuple_refs,
+             _prop_refs, _seq_refs, _stat_refs, _statvfs_refs, _tb_refs,
+             _type_refs, _weak_refs)
 
 
  # type-specific length functions
@@ -1456,6 +1469,8 @@ def _typedef(obj, derive=False, infer=False):
         v.dup(kind=_kind_inferred)
     elif _iscell(obj):
         v.set(item=_itemsize(t), refs=_cell_refs)
+    elif _isnamedtuple(obj):
+        v.set(refs=_namedtuple_refs)
     elif getattr(obj, '__module__', None) in _builtin_modules:
         v.set(kind=_kind_ignored)
     else:  # assume an instance of some class
