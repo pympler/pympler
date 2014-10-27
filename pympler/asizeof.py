@@ -1446,7 +1446,7 @@ def _typedef(obj, derive=False, infer=False):
         if isclass(obj):  # class or type
             v.set(refs=_class_refs,
                   both=False)  # code only
-            if obj.__module__ in _builtin_modules:
+            if getattr(obj, '__module__', None) in _builtin_modules:
                 v.set(kind=_kind_ignored)
         elif isbuiltin(obj):  # function or method
             v.set(both=False,  # code only
