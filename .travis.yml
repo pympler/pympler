@@ -8,7 +8,7 @@ python:
   - "pypy"
   - "pypy3"
 before_install:
-  - sudo apt-get install graphviz python-tk
+  - sudo apt-get install python-tk
 install:
   - travis_retry pip install Sphinx
   - travis_retry pip install pep8
