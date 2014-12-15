@@ -252,7 +252,10 @@ _Type_type = type(type)  # == type and new-style class type
 def _items(obj):  # dict only
     '''Return iter-/generator, preferably.
     '''
-    return getattr(obj, 'iteritems', obj.items)()
+    try:
+        return getattr(obj, 'iteritems', obj.items)()
+    except ReferenceError:
+        raise Exception("DEBUG: Can't iterate over '{}' ({})".format(obj, type(obj)))
 
 
 def _keys(obj):  # dict only
