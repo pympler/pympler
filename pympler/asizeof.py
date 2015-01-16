@@ -595,7 +595,7 @@ def _dict_refs(obj, named):
                 yield k
                 yield v
         except ReferenceError:
-            raise Exception("DEBUG: Can't iterate over '{}'".format(obj.__class__))
+            warnings.warn("Reference error while iterating over '%s'" % str(obj.__class__))
 
 
 def _enum_refs(obj, named):

@@ -316,6 +316,24 @@ class TypesTest(unittest.TestCase):
         refs = [ref.name for ref in size.refs]
         self.assertTrue('__dict__' not in refs, refs)
 
+    def test_ordereddict(self):
+        try:
+            from collections import OrderedDict
+            gc.disable()
+            odict = OrderedDict()
+            odict['a'] = [1,2,3]
+            size = asizeof.asizeof(odict)
+            asizeof.asizeof(all=True, code=True)
+            for key in odict:
+                del odict[key]
+            size = asizeof.asizeof(odict)
+            del odict
+            del OrderedDict
+            gc.collect()
+            asizeof.asizeof(all=True, code=True)
+            gc.enable()
+        except ImportError:
+            pass
 
 class FunctionTest(unittest.TestCase):
     '''Test exposed functions and parameters.
