@@ -162,6 +162,7 @@ from os import curdir, linesep
 from struct import calcsize  # type/class Struct only in Python 2.5+
 import sys
 import types as Types
+import warnings
 import weakref as Weakref
 
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
