@@ -13,9 +13,10 @@ install:
   - travis_retry pip install coverage
   - travis_retry pip install coveralls
 script:
-  - coverage run setup.py try
+  - python setup.py try
   - python setup.py install
   - python setup.py test
+  - coverage run test/runtest.py
   - python run.py --doctest
   - python run.py --html
 after_script:
