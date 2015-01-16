@@ -1,6 +1,10 @@
 README for pympler
 ==================
 
+[![Latest Version](https://pypip.in/version/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+[![Supported Python versions](https://pypip.in/py_versions/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+[![License](https://pypip.in/license/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+
 
 Before installing Pympler, try it with your Python version:
 
@@ -17,21 +21,13 @@ Installation
 
     python setup.py build
 
-2.a) For a system-wide installation run:
+2. For a system-wide installation run:
 
     python setup.py install
 
-2.b) For a user-specific** installation run:
-
-    python setup.py --user install
-
-3) Test the installed Pympler package:
+3. Test the installed Pympler package:
 
     python setup.py test
-
-
-**) Note, the user-specific installation requires
-    Python 2.6 or higher.
 
 
 Usage
