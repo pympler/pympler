@@ -13,7 +13,7 @@ install:
   - travis_retry pip install coverage
   - travis_retry pip install coveralls
 script:
-  - coverage run --rcfile=.coveragerc setup.py try
+  - coverage run setup.py try
   - python setup.py install
   - python setup.py test
   - python run.py --doctest
@@ -21,4 +21,4 @@ script:
 after_script:
   - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
 after_success:
-  - coveralls --config_file=.coveragerc
+  - coveralls
