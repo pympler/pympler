@@ -10,11 +10,15 @@ before_install:
 install:
   - travis_retry pip install Sphinx
   - travis_retry pip install pep8
+  - travis_retry pip install coverage
+  - travis_retry pip install coveralls
 script:
-  - python setup.py try
+  - coverage run --rcfile=.coveragerc setup.py try
   - python setup.py install
   - python setup.py test
   - python run.py --doctest
   - python run.py --html
 after_script:
   - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
+after_success:
+  - coveralls --config_file=.coveragerc
