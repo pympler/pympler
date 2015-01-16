@@ -162,6 +162,7 @@ from os import curdir, linesep
 from struct import calcsize  # type/class Struct only in Python 2.5+
 import sys
 import types as Types
+import warnings
 import weakref as Weakref
 
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
@@ -590,9 +591,12 @@ def _dict_refs(obj, named):
             yield _NamedRef('[K] ' + s, k)
             yield _NamedRef('[V] ' + s + ': ' + _repr(v), v)
     else:
-        for k, v in _items(obj):
-            yield k
-            yield v
+        try:
+            for k, v in _items(obj):
+                yield k
+                yield v
+        except ReferenceError:
+            warnings.warn("Reference error while iterating over '%s'" % str(obj.__class__))
 
 
 def _enum_refs(obj, named):
