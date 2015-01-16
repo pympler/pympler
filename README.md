@@ -2,7 +2,6 @@ README for pympler
 ==================
 
 [![Latest Version](https://pypip.in/version/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
-[![Supported Python versions](https://pypip.in/py_versions/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
 [![License](https://pypip.in/license/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
 
 
@@ -16,22 +15,20 @@ Python, with no dependencies other than standard Python modules and
 libraries. Pympler works with Python 2.5, 2.6, 2.7, 3.1, 3.2, 3.3 and 3.4.
 
 Installation
+------------
 
-1. Build the Pympler package:
-
-    python setup.py build
-
-2. For a system-wide installation run:
+For a system-wide installation run:
 
     python setup.py install
 
-3. Test the installed Pympler package:
+Test the installed Pympler package:
 
     python setup.py test
 
 
 Usage
 -----
+
 The usage of pympler is described in the documentation.  It is
 available either in this distribution at *doc/index.html* or
 you can [read it online](http://packages.python.org/Pympler/).
@@ -39,6 +36,7 @@ you can [read it online](http://packages.python.org/Pympler/).
 
 Contributing
 ------------
+
 You can post wishes, bug reports or patches at our
 [issue tracker](https://github.com/pympler/pympler/issues) or
 write an email to *pympler-dev@googlegroups.com*.
