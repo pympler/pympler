@@ -4,11 +4,19 @@
 ==                        Pympler distribution.                        ==
 =========================================================================
 
-Copyright 2008 Jean Brouwser
-Copyright 2008 Ludwig Haehne
+Copyright 2008 Jean Brouwers
+Copyright 2008 Ludwig Hähne
 Copyright 2008 Robert Schuppenies
 
 
 The asizeof module is based on code Copyright (c) 2002-2008 -- ProphICy
 Semiconductor, Inc. (BSD). The copyright notice is attached to the end of the
 asizeof module.
+
+
+Pympler ships with Highcharts JS that is only free for non-profit projects.
+Please see http://shop.highsoft.com/highcharts.html for more information.
+
+
+Pympler includes Bottle which is covered by the MIT license:
+http://bottlepy.org/docs/dev/index.html#license
