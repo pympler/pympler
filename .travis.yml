@@ -12,7 +12,6 @@ install:
   - travis_retry pip install pep8
   - travis_retry pip install coverage
   - travis_retry pip install coveralls
-  - travis_retry pip install matplotlib
 script:
   - python -Wall setup.py try
   - python setup.py install
