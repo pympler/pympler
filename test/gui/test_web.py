@@ -135,7 +135,7 @@ class WebGuiTest(unittest.TestCase):
 
     def test_static_files(self):
         """Test if static files are served."""
-        for filename in ['style.css', 'highcharts.js']:
+        for filename in ['style.css', 'jquery.flot.min.js']:
             self.get('/static/%s' % filename, status=200)
 
 

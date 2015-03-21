@@ -13,6 +13,7 @@
 
     <script type="text/javascript" src="/static/jquery.flot.min.js"></script>
     <script type="text/javascript" src="/static/jquery.flot.stack.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.flot.tooltip.min.js"></script>
     <script type="text/javascript">
         function format_size(value) {
             var val = Math.round(value / (1000*1000));
@@ -23,13 +24,17 @@
             var timeseries = {{!timeseries}};
             var options = {
                     xaxis: {
-                        minTickSize: 1
+                        show: false,
                     },
                     yaxis: {
                         tickFormatter: format_size
                     },
                     grid: {
                         hoverable: true
+                    },
+                    tooltip: true,
+                    tooltipOpts: {
+                        content: "%s | %y"
                     },
                     legend: {
                         position: "nw"
@@ -38,7 +43,7 @@
                         bars: {
                             show: true,
                             barWidth: .9,
-                            fillColor: { colors: [ { opacity: 0.8 }, { opacity: 0.8 } ] },
+                            fillColor: { colors: [ { opacity: 0.9 }, { opacity: 0.9 } ] },
                             align: "center"
                         },
                         stack: true
