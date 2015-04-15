@@ -1,5 +1,10 @@
-Release 0.4.0
+Release 0.4.1
 =============
+
+  * Replace Highcharts with Flot (#17)
+
+Release 0.4
+===========
 
   * Include size of closure variables
     GitHub issue #8 reported and implemented by Craig Silverstein
