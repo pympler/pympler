@@ -351,6 +351,8 @@ def _dir2(obj, pref='', excl=(), slots=None, itor=''):
             s = {}
             for c in type(obj).mro():
                 for a in getattr(c, slots, ()):
+                    if a.startswith('__'):
+                        a = '_' + c.__name__ + a
                     if hasattr(obj, a):
                         s.setdefault(a, getattr(obj, a))
              # assume __slots__ tuple/list

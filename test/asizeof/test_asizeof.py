@@ -508,6 +508,18 @@ class FunctionTest(unittest.TestCase):
         # TODO: come up with useful assertions
         self.assertEqual(size1, size2)
 
+    def test_private_slots(self):
+        class PrivateSlot(object):
+            __slots__ = ('__data',)
+            def __init__(self, data):
+                self.__data = data
+
+        data = [42] * 100
+        container = PrivateSlot(data)
+        size1 = asizeof.asizeof(container)
+        size2 = asizeof.asizeof(data)
+        self.assertTrue(size1 > size2, (size1, size2))
+
 
 def _repr(o):
     return repr(o)
