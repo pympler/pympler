@@ -1,3 +1,9 @@
+Release 0.5 (not yet released)
+==============================
+
+  * Include private variables within slots when sizing recursively
+    GitHub issue #20 report and fix by ddodt
+
 Release 0.4.1
 =============
 
