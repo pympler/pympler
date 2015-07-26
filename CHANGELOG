@@ -1,8 +1,11 @@
-Release 0.5 (not yet released)
-==============================
+Release 0.4.2
+=============
 
   * Include private variables within slots when sizing recursively
     GitHub issue #20 report and fix by ddodt
+
+  * Fix NameError in memory panel
+    GitHub issue #21 reported by relekang
 
 Release 0.4.1
 =============
