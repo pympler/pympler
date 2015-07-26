@@ -101,7 +101,7 @@ class MemoryPanel(Panel):
         for model in stats.tracked_classes:
             history = [cnt for _, cnt in stats.history[model]]
             size = snapshot.classes.get(model, {}).get('sum', 0)
-            if cnt > 0:
+            if history and history[-1] > 0:
                 classes.append((model, history, pp(size)))
         context.update({'rows': rows, 'classes': classes})
         return render_to_string(self.template, context)
