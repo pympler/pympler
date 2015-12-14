@@ -12,7 +12,7 @@ except ImportError:
     from pympler.asizeof import flatsize
     _getsizeof = flatsize
 
-__TPFLAGS_HAVE_GC = 1 << 14
+from pympler.asizeof import _Py_TPFLAGS_HAVE_GC
 
 
 def get_objects(remove_dups=True, include_frames=False):
@@ -243,10 +243,7 @@ def _get_usage(function, *args):
 
 def _is_containerobject(o):
     """Is the passed object a container object."""
-    if type(o).__flags__ & __TPFLAGS_HAVE_GC == 0:
-        return False
-    else:
-        return True
+    return bool(getattr(type(o), '__flags__', 0) & _Py_TPFLAGS_HAVE_GC)
 
 
 def _remove_duplicates(objects):
