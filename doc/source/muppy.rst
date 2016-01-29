@@ -26,10 +26,10 @@ Muppy allows you to get hold of all objects,
 or filter out certain types of objects.
 
 >>> import types
->>> types = muppy.filter(all_objects, Type=types.ClassType)
->>> len(types)                                    # doctest: +SKIP
+>>> my_types = muppy.filter(all_objects, Type=types.ClassType)
+>>> len(my_types)                                    # doctest: +SKIP
 72
->>> for t in types:
+>>> for t in my_types:
 ...     print t
 ...                                               # doctest: +SKIP
 UserDict.IterableUserDict
