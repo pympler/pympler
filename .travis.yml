@@ -5,8 +5,10 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
+  - "3.5"
 before_install:
-  - sudo apt-get install graphviz python-tk
+  - sudo apt-get -qq update
+  - sudo apt-get install -y graphviz python-tk
 install:
   - travis_retry pip install Sphinx
   - travis_retry pip install pep8
