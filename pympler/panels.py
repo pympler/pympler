@@ -28,7 +28,7 @@ from pympler.util.stringutils import pp
 
 try:
     from debug_toolbar.panels import Panel
-    from django.db.models import get_models
+    from django.apps import apps
     from django.template import Context, Template
     from django.template.loader import render_to_string
 except ImportError:
@@ -54,7 +54,7 @@ class MemoryPanel(Panel):
 
     def process_request(self, request):
         self._tracker = ClassTracker()
-        for cls in get_models() + self.classes:
+        for cls in apps.get_models() + self.classes:
             self._tracker.track_class(cls)
         self._tracker.create_snapshot('before')
         self.record_stats({'before': ProcessMemoryInfo()})
@@ -68,7 +68,7 @@ class MemoryPanel(Panel):
 
     def enable_instrumentation(self):
         self._tracker = ClassTracker()
-        for cls in get_models() + self.classes:
+        for cls in apps.get_models() + self.classes:
             self._tracker.track_class(cls)
 
     def disable_instrumentation(self):
