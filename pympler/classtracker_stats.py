@@ -652,7 +652,7 @@ class HtmlStats(Stats):
         polys = []
         for cn in classlist:
             pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots]
-            if max(pct) > 3.0:
+            if pct and max(pct) > 3.0:
                 sz = [float(fp.classes[cn]['sum']) / (1024 * 1024)
                       for fp in self.snapshots]
                 sz = [sx + sy for sx, sy in zip(base, sz)]
