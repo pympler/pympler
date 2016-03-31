@@ -195,7 +195,7 @@ objects to the standard output::
     from pympler.classtracker_stats import ConsoleStats
 
     stats = ConsoleStats()
-    stats.load('profile.dat')
+    stats.load_stats('profile.dat')
     stats.sort_stats('size').print_stats(limit=10, clsname='Node')
 
 HTML Statistics
