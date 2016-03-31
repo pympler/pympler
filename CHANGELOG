@@ -1,3 +1,20 @@
+Release 0.4.3
+=============
+
+  * Add Django 1.9 support for DDT panel
+    By Benjy (#30)
+
+  * Handle untracked classes in tracker statistics
+    By gbtami (#33)
+
+  * Handle colons in process names gracefully
+    By Dariusz Suchojad (#26)
+
+  * Support types without __flags__ attribute in muppy (#24)
+
+  * Fix documentation errors (#32, #28, #25)
+    By gbtami, Matt, Lawrence Hudson
+
 Release 0.4.2
 =============
 
