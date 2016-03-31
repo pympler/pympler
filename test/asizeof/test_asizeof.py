@@ -24,7 +24,7 @@ def test_flatsize(failf=None, stdf=None):
     '''
     t, g, e = [], asizeof._getsizeof, 0
     if g:
-        for v in asizeof._values(asizeof._typedefs):
+        for v in asizeof._typedefs.copy().values():
             t.append(v.type)
             try:  # creating one instance
                 if v.type.__module__ not in ('io',):  # avoid 3.0 RuntimeWarning
