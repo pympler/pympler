@@ -12,7 +12,7 @@ before_install:
 install:
   - travis_retry pip install Sphinx
   - travis_retry pip install pep8
-  - travis_retry pip install coverage
+  - travis_retry pip install 'coverage<4'
   - travis_retry pip install coveralls
 script:
   - python -Wall setup.py try
