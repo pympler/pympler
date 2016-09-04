@@ -307,7 +307,7 @@ class TypesTest(unittest.TestCase):
         self.assertTrue(size_closure >= size_data, (size_closure, size_data))
 
     def test_namedtuple(self):
-        '''Test namedtuple __dict__ property isn't included
+        '''Test values are included but namedtuple __dict__ isn't.
         '''
         from collections import namedtuple
         Point = namedtuple('Point', ['x', 'y'])
@@ -315,6 +315,7 @@ class TypesTest(unittest.TestCase):
         size = asizeof.asized(point, detail=1)
         refs = [ref.name for ref in size.refs]
         self.assertTrue('__dict__' not in refs, refs)
+        self.assertTrue('11' in refs, refs)
 
 
 class FunctionTest(unittest.TestCase):

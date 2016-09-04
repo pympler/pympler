@@ -638,9 +638,12 @@ def _cell_refs(obj, named):
 
 
 def _namedtuple_refs(obj, named):
-    '''Return slots but exclude dict
+    '''Return specific referents of obj-as-sequence and slots but exclude dict.
     '''
-    return _refs(obj, named, '__class__', slots='__slots__')
+    for r in _refs(obj, named, '__class__', slots='__slots__'):
+        yield r
+    for r in obj:
+        yield r
 
 
 def _gen_refs(obj, named):
