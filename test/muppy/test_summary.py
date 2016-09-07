@@ -37,6 +37,18 @@ class SummaryTest(unittest.TestCase):
 
     def test_summary_diff(self):
         """Test summary diff. """
+
+        # base cases
+        res = summary.get_diff([], [])
+        self.assertEqual(res, [])
+
+        res = summary.get_diff([], [[str(str), 3, 3*_getsizeof('a')]])
+        self.assertEqual(res, [[str(str), 3, 3*_getsizeof('a')]])
+
+        res = summary.get_diff([[str(str), 3, 3*_getsizeof('a')]], [])
+        self.assertEqual(res, [[str(str), -3, -3*_getsizeof('a')]])
+
+        #interesting case
         left = [[str(str), 3, 3*_getsizeof('a')],\
                 [str(int), 2, 2*_getsizeof(1)],\
                 [str(list), 1, _getsizeof([])],\
