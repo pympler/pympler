@@ -8,7 +8,7 @@
 
 '''
 This module exposes 9 functions and 2 classes to obtain lengths and
-sizes of Python objects (for Python 2.5 or later).
+sizes of Python objects (for Python 2.6 or later).
 
 Earlier versions of this module supported Python versions down to
 Python 2.2. If you are running Python < 2.5 please consider
@@ -282,13 +282,11 @@ except ImportError:
     def _getreferents(unused):
         return ()  # sorry, no refs
 
- # sys.getsizeof() new in Python 2.6
-_getsizeof = getattr(sys, 'getsizeof', None)
+_getsizeof = sys.getsizeof
 
 version = sys.version_info
-_getsizeof_bugs = (getattr(sys, 'getsizeof', None) and
-                   (version[0] == 2 and version < (2, 7, 4) or
-                    version[0] == 3 and version < (3, 2, 4)))
+_getsizeof_bugs = (version[0] == 2 and version < (2, 7, 4) or
+                   version[0] == 3 and version < (3, 2, 4))
 
 
 def _getsizeof_exclude(getsizeof, exclude):
@@ -399,10 +397,7 @@ def _issubclass(sub, sup):
 
 # 'cell' is holding data used in closures
 closure = (lambda x: (lambda: x))(None)
-try:
-    cell_type = type(closure.__closure__[0])
-except AttributeError:  # Python 2.5
-    cell_type = type(closure.func_closure[0])
+cell_type = type(closure.__closure__[0])
 
 
 def _iscell(obj):
@@ -1080,8 +1075,7 @@ class _Typedef(object):
         s = self.base
         if self.leng and self.item > 0:  # include items
             s += self.leng(obj) * self.item
-        if _getsizeof:  # _getsizeof prevails
-            s = _getsizeof(obj, s)
+        s = _getsizeof(obj, s)
         if mask:  # align
             s = (s + mask) & ~mask
         return s

@@ -13,17 +13,9 @@ The web server can be invoked almost as easily as setting a breakpoint using
 Calling ``start_profiler`` suspends the current thread and executes the Pympler
 web server, exposing profiling data and various facilities of the Pympler
 library via a graphic interface.
-
-.. note::
-
-    This module requires Python 2.5 or newer.
 """
 
 import sys
-
-if sys.hexversion < 0x02050000:
-    raise ImportError("Web frontend requires Python 2.5 or newer.")
-
 import os
 import threading
 

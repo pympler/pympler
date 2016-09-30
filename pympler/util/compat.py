@@ -39,13 +39,7 @@ except ImportError:  # Python 3.0
     from urllib.request import Request, urlopen
     from urllib.error import URLError
 
-try:
-    from json import dumps
-except ImportError:  # Python 2.5
-    try:
-        from simplejson import dumps
-    except ImportError:  # Python 2.5 without simplejson
-        dumps = lambda s: unicode(s)
+from json import dumps
 
 try:
     import Tkinter as tkinter

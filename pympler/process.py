@@ -222,28 +222,9 @@ class ThreadInfo(object):
     """Collect information about an active thread."""
 
     def __init__(self, thread):
-        self.ident = 0
-        try:
-            self.ident = thread.ident
-        except AttributeError:  # Python 2.5
-            pass
-
-        if not self.ident:  # Python 2.5; http://bugs.python.org/issue5632
-            # Thread.ident was introduced in Python 2.6. On Python 2.5 use the
-            # undocumented `_active` dictionary to map thread objects to thread
-            # IDs.
-            for tid, athread in threading._active.items():
-                if athread is thread:
-                    self.ident = tid
-                    break
-        try:
-            self.name = thread.name
-        except AttributeError:  # Python 2.5
-            self.name = thread.getName()
-        try:
-            self.daemon = thread.daemon
-        except AttributeError:  # Python 2.5
-            self.daemon = thread.isDaemon()
+        self.ident = thread.ident
+        self.name = thread.name
+        self.daemon = thread.daemon
 
 
 def get_current_threads():

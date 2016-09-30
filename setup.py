@@ -18,8 +18,8 @@ def _not_supported(why):
     sys.exit(1)
 
 
-if sys.hexversion < 0x2050000:
-    _not_supported('Pympler requires Python 2.5 or newer')
+if sys.hexversion < 0x2060000:
+    _not_supported('Pympler requires Python 2.6 or newer')
 
 import os
 from distutils.command.install_lib import install_lib

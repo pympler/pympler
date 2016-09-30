@@ -5,12 +5,7 @@ from pympler.util import compat
 
 from inspect import isframe, stack
 
-# default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
-try:
-    from sys import getsizeof as _getsizeof
-except ImportError:
-    from pympler.asizeof import flatsize
-    _getsizeof = flatsize
+from sys import getsizeof
 
 from pympler.asizeof import _Py_TPFLAGS_HAVE_GC
 
@@ -61,7 +56,7 @@ def get_size(objects):
     res = 0
     for o in objects:
         try:
-            res += _getsizeof(o)
+            res += getsizeof(o)
         except AttributeError:
             print("IGNORING: type=%s; o=%s" % (str(type(o)), str(o)))
     return res
@@ -112,7 +107,7 @@ def get_diff(left, right):
 
 def sort(objects):
     """Sort objects by size in bytes."""
-    objects = sorted(objects, key=_getsizeof)
+    objects = sorted(objects, key=getsizeof)
     return objects
 
 
@@ -133,9 +128,9 @@ def filter(objects, Type=None, min=-1, max=-1):
     if Type is not None:
         res = [o for o in objects if isinstance(o, Type)]
     if min > -1:
-        res = [o for o in res if _getsizeof(o) < min]
+        res = [o for o in res if getsizeof(o) < min]
     if max > -1:
-        res = [o for o in res if _getsizeof(o) > max]
+        res = [o for o in res if getsizeof(o) > max]
     return res
 
 

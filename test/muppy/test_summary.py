@@ -2,14 +2,10 @@ import doctest
 import sys
 import unittest
 
+from sys import getsizeof
+
 from pympler import summary, muppy
 
-# default to asizeof if sys.getsizeof is not available (prior to Python 2.6)
-try:
-    from sys import getsizeof as _getsizeof
-except ImportError:
-    from pympler.asizeof import flatsize
-    _getsizeof = flatsize
 
 class SummaryTest(unittest.TestCase):
 
@@ -27,31 +23,31 @@ class SummaryTest(unittest.TestCase):
     def test_summarize(self):
         """Test summarize method. """
         objects = [1, 'a', 'b', 'a', 5, [], {}]
-        expected = [[summary._repr(''), 3, 3*_getsizeof('a')],\
-                    [summary._repr(1), 2, 2*_getsizeof(1)],\
-                    [summary._repr([]), 1, _getsizeof([])],\
-                    [summary._repr({}), 1, _getsizeof({})]]
+        expected = [[summary._repr(''), 3, 3*getsizeof('a')],\
+                    [summary._repr(1), 2, 2*getsizeof(1)],\
+                    [summary._repr([]), 1, getsizeof([])],\
+                    [summary._repr({}), 1, getsizeof({})]]
         res = summary.summarize(objects)
         for row_e in res:
             self.assert_(row_e in expected)
 
     def test_summary_diff(self):
         """Test summary diff. """
-        left = [[str(str), 3, 3*_getsizeof('a')],\
-                [str(int), 2, 2*_getsizeof(1)],\
-                [str(list), 1, _getsizeof([])],\
-                [str(dict), 1, _getsizeof({})]]
-        right = [[str(str), 2, 2*_getsizeof('a')],\
-                 [str(int), 3, 3*_getsizeof(1)],\
-                 [str(list), 1, _getsizeof([1,2,3])],\
-                 [str(dict), 1, _getsizeof({})],
-                 [str(tuple), 1, _getsizeof((1,2))]]
+        left = [[str(str), 3, 3*getsizeof('a')],\
+                [str(int), 2, 2*getsizeof(1)],\
+                [str(list), 1, getsizeof([])],\
+                [str(dict), 1, getsizeof({})]]
+        right = [[str(str), 2, 2*getsizeof('a')],\
+                 [str(int), 3, 3*getsizeof(1)],\
+                 [str(list), 1, getsizeof([1,2,3])],\
+                 [str(dict), 1, getsizeof({})],
+                 [str(tuple), 1, getsizeof((1,2))]]
 
-        expected = [[str(str), -1, -1*_getsizeof('a')],\
-                    [str(int), 1, +1*_getsizeof(1)],\
-                    [str(list), 0, _getsizeof([1,2,3]) - _getsizeof([])],\
+        expected = [[str(str), -1, -1*getsizeof('a')],\
+                    [str(int), 1, +1*getsizeof(1)],\
+                    [str(list), 0, getsizeof([1,2,3]) - getsizeof([])],\
                     [str(dict), 0, 0],
-                    [str(tuple), 1, _getsizeof((1,2))]]
+                    [str(tuple), 1, getsizeof((1,2))]]
         res = summary.get_diff(left, right)
         for row_e in res:
             self.assertTrue(row_e in expected)
@@ -86,8 +82,8 @@ class SummaryTest(unittest.TestCase):
         checked_str = checked_dict = checked_tuple = False
         for row in summ:
             if row[0] == summary._repr(''):
-                totalsize = _getsizeof('quick') + _getsizeof('brown') +\
-                            _getsizeof('fox')
+                totalsize = getsizeof('quick') + getsizeof('brown') +\
+                            getsizeof('fox')
                 self.assert_(row[1] == 3, "%s != %s" % (row[1], 3))
                 self.assert_(row[2] == totalsize, totalsize)
                 checked_str = True
@@ -97,7 +93,7 @@ class SummaryTest(unittest.TestCase):
                 checked_dict = True
             if row[0] == summary._repr((1,)):
                 self.assert_(row[1] == -1)
-                self.assert_(row[2] == -_getsizeof((1,)))
+                self.assert_(row[2] == -getsizeof((1,)))
                 checked_tuple = True
 
         self.assert_(checked_str, "no str found in summary")
@@ -110,7 +106,7 @@ class SummaryTest(unittest.TestCase):
         for row in summ:
             if row[0] == summary._repr(''):
                 self.assert_(row[1] == 1)
-                self.assert_(row[2] == _getsizeof('fox'))
+                self.assert_(row[2] == getsizeof('fox'))
                 checked_str = True
         self.assert_(checked_str, "no str found in summ")
 
@@ -143,7 +139,7 @@ class SummaryTest(unittest.TestCase):
             if row[0] == summary._repr(''):
                 found_string = True
                 self.assert_(row[1] == 0)
-                totalsize = _getsizeof('fox') - _getsizeof('42')
+                totalsize = getsizeof('fox') - getsizeof('42')
                 self.assert_(row[2] == totalsize)
         self.assert_(found_string == True)
 
