@@ -5,7 +5,7 @@ This information is used in setup.py as well as in doc/source/conf.py.
 """
 
 project_name = 'Pympler'
-version      = '0.4.3'
+version      = '0.5a1'
 url          = 'http://pythonhosted.org/Pympler/'
 license      = 'Apache License, Version 2.0'
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
