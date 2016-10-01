@@ -1,6 +1,7 @@
 [run]
 branch = True
 include = pympler/*
+omit = pympler/util/bottle.py
 
 [html]
 directory = coverage_html_report
