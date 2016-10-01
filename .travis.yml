@@ -14,6 +14,7 @@ install:
   - travis_retry pip install pep8
   - travis_retry pip install 'coverage<4'
   - travis_retry pip install coveralls
+  - travis_retry pip install numpy
 script:
   - python -Wall setup.py try
   - python setup.py install

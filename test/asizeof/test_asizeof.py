@@ -223,6 +223,18 @@ class TypesTest(unittest.TestCase):
         self.assertTrue('__dict__' not in refs, refs)
         self.assertTrue('11' in refs, refs)
 
+    def test_numpy_array(self):
+        '''Test sizing numpy arrays.
+        '''
+        try:
+            from numpy import arange
+        except ImportError:
+            pass
+        else:
+            x = arange(1000)
+            size = asizeof.asizeof(x)
+            self.assertTrue(size > 1000, size)
+
 
 class FunctionTest(unittest.TestCase):
     '''Test exposed functions and parameters.
