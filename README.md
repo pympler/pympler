@@ -1,8 +1,8 @@
 README for pympler
 ==================
 
-[![Latest Version](https://pypip.in/version/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
-[![License](https://pypip.in/license/Pympler/badge.svg)](https://pypi.python.org/pypi/Pympler/)
+[![Latest Version](https://img.shields.io/pypi/v/pympler.svg)](https://pypi.python.org/pypi/Pympler/)
+[![License](https://img.shields.io/pypi/l/pympler.svg)](https://pypi.python.org/pypi/Pympler/)
 
 
 Before installing Pympler, try it with your Python version:
