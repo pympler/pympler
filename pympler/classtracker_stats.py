@@ -544,10 +544,10 @@ class HtmlStats(Stats):
         if not basepath:
             return filepath
         if filepath.startswith(basepath):
-            rel = filepath[len(basepath):]
-        if rel and rel[0] == os.sep:
-            rel = rel[1:]
-        return rel
+            filepath = filepath[len(basepath):]
+        if filepath and filepath[0] == os.sep:
+            filepath = filepath[1:]
+        return filepath
 
     def create_title_page(self, filename, title=''):
         """

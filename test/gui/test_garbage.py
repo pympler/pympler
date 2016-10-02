@@ -252,7 +252,7 @@ class GarbageTestCase(unittest.TestCase):
 
         out = StringIO()
         GarbageGraph(reduce=True).print_stats(stream=out)
-        self.assertEqual('Foo' in out.getvalue(), out.getvalue())
+        self.assertTrue('Foo' in out.getvalue(), out.getvalue())
 
     def test_render(self):
         """Test rendering of graph.
