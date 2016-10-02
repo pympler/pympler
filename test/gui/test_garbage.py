@@ -7,6 +7,7 @@ import unittest
 
 from pympler.garbagegraph import GarbageGraph, start_debug_garbage, end_debug_garbage
 from pympler.refgraph import _Edge
+from pympler.util.compat import StringIO
 
 
 class Foo:
@@ -241,6 +242,17 @@ class GarbageTestCase(unittest.TestCase):
         g = GarbageGraph()
         g.write_graph('garbage.dot')
         os.unlink('garbage.dot')
+
+    def test_print_graph(self):
+        """Test writing graph as text.
+        """
+        foo = Foo()
+        foo.parent = foo
+        del foo
+
+        out = StringIO()
+        GarbageGraph(reduce=True).print_stats(stream=out)
+        self.assertEqual('Foo' in out.getvalue(), out.getvalue())
 
     def test_render(self):
         """Test rendering of graph.
