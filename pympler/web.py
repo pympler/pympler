@@ -30,9 +30,15 @@ from pympler import asizeof
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
-from pympler.util import bottle
 from pympler.util.compat import dumps
 from pympler.util.stringutils import safe_repr
+
+# Prefer the installed version of bottle.py. If bottle.py is not installed
+# fallback to the vendored version.
+try:
+    import bottle
+except ImportError:
+    from pympler.util import bottle
 
 
 class ServerState(threading.local):
