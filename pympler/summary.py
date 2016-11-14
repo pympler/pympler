@@ -143,25 +143,25 @@ def get_diff(left, right):
 
     """
     res = []
-    for row_r in right:
-        found = False
-        for row_l in left:
-            if row_r[0] == row_l[0]:
-                res.append([row_r[0], row_r[1] - row_l[1],
-                            row_r[2] - row_l[2]])
-                found = True
-        if not found:
-            res.append(row_r)
 
-    for row_l in left:
-        found = False
-        for row_r in right:
-            if row_l[0] == row_r[0]:
-                found = True
-        if not found:
-            res.append([row_l[0], -row_l[1], -row_l[2]])
+    right_by_key = {r[0]:r for r in right}
+    left_by_key  = {r[0]:r for r in left}
+
+    keys = set(right_by_key)
+    keys.update(left_by_key)
+
+    for key in keys:
+        r = right_by_key.get(key)
+        l = left_by_key.get(key)
+        if l and r:
+            res.append([key, r[1] - l[1], r[2] - l[2]])
+        elif r:
+            res.append(r)
+        elif l:
+            res.append([key, -l[1], -l[2]])
+        else:
+            continue # shouldn't happen
     return res
-
 
 def format_(rows, limit=15, sort='size', order='descending'):
     """Format the rows as a summary.
