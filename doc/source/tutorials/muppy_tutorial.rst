@@ -165,7 +165,7 @@ So what do we know so far? Every time a Path Browser is opened, a window is
 created, but not deleted when closed again. It has something to do with the
 `wakeup` method of the window. This method is wrapped as a Tcl command and then
 linked to the window list menu. Also, we have traced this wrapping back to
-Tkinter library, where names of the function wrappers are stored in a attribute
+Tkinter library, where names of the function wrappers are stored in an attribute
 called `_tclCommands`.
 
 This brings us to the third question. 

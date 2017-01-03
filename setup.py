@@ -3,7 +3,7 @@
 To build, install and test Pympler and to try Pympler
 before building and installing it.
 
-The HTML documention is in the doc/ directory.  Point
+The HTML documentation is in the doc/ directory.  Point
 your browser to the ./doc/html/index.html file.
 
 """

@@ -25,7 +25,7 @@ class TrackerTest(unittest.TestCase):
 
 
     def _get_indicator(self):
-        """Create an indicattor object to track changes between snashots."""
+        """Create an indicator object to track changes between snapshots."""
         class UniqueIndicator(object): pass
 
         return UniqueIndicator()

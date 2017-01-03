@@ -2,7 +2,7 @@
 time.
 
 Using the SummaryTracker, you can create summaries and compare them
-with each other. Stored summaries can be ignored during comparision,
+with each other. Stored summaries can be ignored during comparison,
 avoiding the observer effect.
 
 The ObjectTracker allows to monitor object creation. You create objects from
@@ -35,7 +35,7 @@ class SummaryTracker(object):
     def __init__(self, ignore_self=True):
         """Constructor.
 
-        The number of summaries managed by the tracker has an performance
+        The number of summaries managed by the tracker has a performance
         impact on new summaries, iff you decide to exclude them from further
         summaries. Therefore it is suggested to use them economically.
 
@@ -64,8 +64,8 @@ class SummaryTracker(object):
             # referenced by the summaries.
             # During this identification process, more objects are referenced,
             # namely int objects identifying referenced objects as well as the
-            # correspondind count.
-            # For all these objects it will be checked wether they are
+            # corresponding count.
+            # For all these objects it will be checked whether they are
             # referenced from outside the monitor's scope. If not, they will be
             # subtracted from the snapshot summary, otherwise they are
             # included (as this indicates that they are relevant to the

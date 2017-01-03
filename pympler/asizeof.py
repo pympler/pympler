@@ -2079,7 +2079,7 @@ _asizer = Asizer()
 
 def asized(*objs, **opts):
     '''Return a tuple containing an **Asized** instance for each
-       object passed as positional argment using the following
+       object passed as positional argument using the following
        options.
 
            *align=8*       -- size alignment
@@ -2195,7 +2195,7 @@ def asizeof(*objs, **opts):
 
 def asizesof(*objs, **opts):
     '''Return a tuple containing the size in bytes of all objects
-       passed as positional argments using the following options.
+       passed as positional arguments using the following options.
 
            *align=8*       -- size alignment
 
