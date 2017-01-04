@@ -97,7 +97,7 @@ class RefBrowser(object):
     def _get_tree(self, root, maxdepth):
         """Workhorse of the get_tree implementation.
 
-        This is an recursive method which is why we have a wrapper method.
+        This is a recursive method which is why we have a wrapper method.
         root is the current root object of the tree which should be returned.
         Note that root is not of the type _Node.
         maxdepth defines how much further down the from the root the tree

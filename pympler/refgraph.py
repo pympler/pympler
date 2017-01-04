@@ -309,7 +309,7 @@ class ReferenceGraph(object):
     def render(self, filename, cmd='dot', format='ps', unflatten=False):
         """
         Render the graph to `filename` using graphviz. The graphviz invocation
-        command may be overriden by specifying `cmd`. The `format` may be any
+        command may be overridden by specifying `cmd`. The `format` may be any
         specifier recognized by the graph renderer ('-Txxx' command).  The
         graph can be preprocessed by the *unflatten* tool if the `unflatten`
         parameter is True.  If there are no objects to illustrate, the method

@@ -256,15 +256,15 @@ def main():
         run_sphinx(project_path, ['doctest'])
 
     if options.html:
-        print2('Creating HTML documention')
+        print2('Creating HTML documentation')
         run_sphinx(project_path, ['html'], keep=options.keep)
 
     if options.latex:
-        print2('Creating LaTex (PDF) documention')
+        print2('Creating LaTex (PDF) documentation')
         run_sphinx(project_path, ['latex'], paper=options.paper)
 
     if options.linkcheck:
-        print2('Checking documention links')
+        print2('Checking documentation links')
         run_sphinx(project_path, ['linkcheck'])
 
     if options.test:
