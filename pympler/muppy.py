@@ -10,6 +10,13 @@ from sys import getsizeof
 from pympler.asizeof import _Py_TPFLAGS_HAVE_GC
 
 
+def ignore_object(obj):
+    try:
+        return isframe(obj)
+    except ReferenceError:
+        return True
+
+
 def get_objects(remove_dups=True, include_frames=False):
     """Return a list of all known objects excluding frame objects.
 
@@ -29,7 +36,7 @@ def get_objects(remove_dups=True, include_frames=False):
     # will be included in the list. Furthermore, ignore frame objects to
     # prevent reference cycles.
     tmp = gc.get_objects()
-    tmp = [o for o in tmp if not isframe(o)]
+    tmp = [o for o in tmp if not ignore_object(o)]
 
     res = []
     for o in tmp:
