@@ -1,11 +1,8 @@
 import gc
-import sys
 import unittest
 
 from pympler import summary, tracker
 from pympler.util import compat
-
-from testutils import disable
 
 
 class TrackerTest(unittest.TestCase):
@@ -151,7 +148,6 @@ class TrackerTest(unittest.TestCase):
         self.assertFalse(res)
 
 
-    @disable
     def test_otracker_diff(self):
         """Test object tracker diff."""
         import inspect
