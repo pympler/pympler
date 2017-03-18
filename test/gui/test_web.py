@@ -64,7 +64,7 @@ class WebGuiTest(unittest.TestCase):
         def follow(self, link):
             if link.startswith('http://'):
                 return
-            conn = HTTPConnection(WebGuiTest.defaulthost)
+            conn = HTTPConnection(WebGuiTest.defaulthost, timeout=5)
             conn.request("GET", link)
             response = conn.getresponse()
             body = response.read()
@@ -102,7 +102,7 @@ class WebGuiTest(unittest.TestCase):
 
 
     def get(self, url, status=200):
-        conn = HTTPConnection(self.defaulthost)
+        conn = HTTPConnection(self.defaulthost, timeout=5)
         conn.request("GET", url)
         response = conn.getresponse()
         body = response.read()
