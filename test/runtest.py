@@ -49,7 +49,7 @@ def get_tests(dir='.', clean=False):
         test = test[:-3].replace(os.sep, '.')
         test = test.lstrip('.')
         res.append(test)
-    res.sort(key=lambda s: -s.count('muppy'))
+    res.sort(key=lambda s: -s.count('test_tracker'))
     return res  # sorted(res)
 
 def suite(dirs=['.'], clean=False, pre=True, verbose=2):
