@@ -19,7 +19,7 @@ script:
   - python -Wall setup.py try
   - python setup.py install
   - python -Wall setup.py test
-  - coverage run test/runtest.py
+  - COVERAGE=1 coverage run test/runtest.py
   - python run.py --doctest
   - python run.py --html
 after_script:

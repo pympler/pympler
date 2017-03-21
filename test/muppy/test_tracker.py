@@ -1,4 +1,7 @@
 import gc
+import inspect
+import os
+import sys
 import unittest
 
 from pympler import summary, tracker
@@ -150,7 +153,10 @@ class TrackerTest(unittest.TestCase):
 
     def test_otracker_diff(self):
         """Test object tracker diff."""
-        import inspect
+        # This test regularly times out when run under coverage.
+        if os.environ.get('COVERAGE'):
+            sys.stderr.write("(disabled) ")
+            return
         # indicator object should be listed in diff
         otracker = tracker.ObjectTracker()
         o = self._get_indicator()
