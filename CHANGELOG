@@ -1,5 +1,5 @@
-Release 0.5.0
-=============
+Release 0.5
+===========
 
   * Improved runtime performance of summary differ
     By Matt Perpick (#42)
@@ -10,6 +10,8 @@ Release 0.5.0
   * Drop Python 2.5 and Python 3.1 support
 
   * Add support for Python 3.5 and Python 3.6
+
+  * Update bottle.py to 0.12.13
 
 Release 0.4.3
 =============

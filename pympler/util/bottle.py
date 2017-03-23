@@ -9,14 +9,14 @@ Python Standard Library.
 
 Homepage and documentation: http://bottlepy.org/
 
-Copyright (c) 2013, Marcel Hellkamp.
+Copyright (c) 2016, Marcel Hellkamp.
 License: MIT (see LICENSE for details)
 """
 
 from __future__ import with_statement
 
 __author__ = 'Marcel Hellkamp'
-__version__ = '0.12.9'
+__version__ = '0.12.13'
 __license__ = 'MIT'
 
 # The gevent server adapter needs to patch some modules before they are imported
@@ -1398,28 +1398,36 @@ class BaseRequest(object):
         self.environ['bottle.request.ext.%s'%name] = value
 
 
+def _hkey(key):
+    if '\n' in key or '\r' in key or '\0' in key:
+        raise ValueError("Header names must not contain control characters: %r" % key)
+    return key.title().replace('_', '-')
 
 
-def _hkey(s):
-    return s.title().replace('_','-')
+def _hval(value):
+    value = tonat(value)
+    if '\n' in value or '\r' in value or '\0' in value:
+        raise ValueError("Header value must not contain control characters: %r" % value)
+    return value
+
 
 
 class HeaderProperty(object):
-    def __init__(self, name, reader=None, writer=str, default=''):
+    def __init__(self, name, reader=None, writer=None, default=''):
         self.name, self.default = name, default
         self.reader, self.writer = reader, writer
         self.__doc__ = 'Current value of the %r header.' % name.title()
 
     def __get__(self, obj, cls):
         if obj is None: return self
-        value = obj.headers.get(self.name, self.default)
+        value = obj.get_header(self.name, self.default)
         return self.reader(value) if self.reader else value
 
     def __set__(self, obj, value):
-        obj.headers[self.name] = self.writer(value)
+        obj[self.name] = self.writer(value) if self.writer else value
 
     def __delete__(self, obj):
-        del obj.headers[self.name]
+        del obj[self.name]
 
 
 class BaseResponse(object):
@@ -1526,7 +1534,7 @@ class BaseResponse(object):
     def __contains__(self, name): return _hkey(name) in self._headers
     def __delitem__(self, name):  del self._headers[_hkey(name)]
     def __getitem__(self, name):  return self._headers[_hkey(name)][-1]
-    def __setitem__(self, name, value): self._headers[_hkey(name)] = [str(value)]
+    def __setitem__(self, name, value): self._headers[_hkey(name)] = [_hval(value)]
 
     def get_header(self, name, default=None):
         ''' Return the value of a previously defined header. If there is no
@@ -1536,11 +1544,11 @@ class BaseResponse(object):
     def set_header(self, name, value):
         ''' Create a new response header, replacing any previously defined
             headers with the same name. '''
-        self._headers[_hkey(name)] = [str(value)]
+        self._headers[_hkey(name)] = [_hval(value)]
 
     def add_header(self, name, value):
         ''' Add an additional response header, not removing duplicates. '''
-        self._headers.setdefault(_hkey(name), []).append(str(value))
+        self._headers.setdefault(_hkey(name), []).append(_hval(value))
 
     def iter_headers(self):
         ''' Yield (header, value) tuples, skipping headers that are not
@@ -1921,7 +1929,6 @@ class FormsDict(MultiDict):
             return super(FormsDict, self).__getattr__(name)
         return self.getunicode(name, default=default)
 
-
 class HeaderDict(MultiDict):
     """ A case-insensitive version of :class:`MultiDict` that defaults to
         replace the old value instead of appending it. """
@@ -1933,15 +1940,14 @@ class HeaderDict(MultiDict):
     def __contains__(self, key): return _hkey(key) in self.dict
     def __delitem__(self, key): del self.dict[_hkey(key)]
     def __getitem__(self, key): return self.dict[_hkey(key)][-1]
-    def __setitem__(self, key, value): self.dict[_hkey(key)] = [str(value)]
-    def append(self, key, value):
-        self.dict.setdefault(_hkey(key), []).append(str(value))
-    def replace(self, key, value): self.dict[_hkey(key)] = [str(value)]
+    def __setitem__(self, key, value): self.dict[_hkey(key)] = [_hval(value)]
+    def append(self, key, value): self.dict.setdefault(_hkey(key), []).append(_hval(value))
+    def replace(self, key, value): self.dict[_hkey(key)] = [_hval(value)]
     def getall(self, key): return self.dict.get(_hkey(key)) or []
     def get(self, key, default=None, index=-1):
         return MultiDict.get(self, _hkey(key), default, index)
     def filter(self, names):
-        for name in [_hkey(n) for n in names]:
+        for name in (_hkey(n) for n in names):
             if name in self.dict:
                 del self.dict[name]
 
@@ -2348,6 +2354,10 @@ class FileUpload(object):
 
     content_type = HeaderProperty('Content-Type')
     content_length = HeaderProperty('Content-Length', reader=int, default=-1)
+
+    def get_header(self, name, default=None):
+        """ Return the value of a header within the mulripart part. """
+        return self.headers.get(name, default)
 
     @cached_property
     def filename(self):
@@ -3424,7 +3434,7 @@ class StplParser(object):
     # 7: Our special 'end' keyword (but only if it stands alone)
     _re_tok += '|((?:^|;)[ \\t]*end[ \\t]*(?=(?:%(block_close)s[ \\t]*)?\\r?$|;|#))'
     # 8: A customizable end-of-code-block template token (only end of line)
-    _re_tok += '|(%(block_close)s[ \\t]*(?=$))'
+    _re_tok += '|(%(block_close)s[ \\t]*(?=\\r?$))'
     # 9: And finally, a single newline. The 10th token is 'everything else'
     _re_tok += '|(\\r?\\n)'
 
