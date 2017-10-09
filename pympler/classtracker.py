@@ -331,8 +331,10 @@ class ClassTracker(object):
                                               resolution_level,
                                               keep,
                                               trace)
+        observer = self._observers[cls]
         cls.__init__ = instancemethod(
-            lambda *args, **kwds: func(self._observers[cls], *args, **kwds),
+            lambda *args,
+            **kwds: func(observer, *args, **kwds),
             None,
             cls
         )
