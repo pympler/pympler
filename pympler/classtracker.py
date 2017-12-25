@@ -326,18 +326,17 @@ class ClassTracker(object):
         # constructor and the curried arguments of the injected constructor.
         # Therefore, the additional argument has a 'magic' name to make it less
         # likely that an argument name clash occurs.
-        self._observers[cls] = _ClassObserver(constructor,
-                                              name,
-                                              resolution_level,
-                                              keep,
-                                              trace)
-        observer = self._observers[cls]
-        cls.__init__ = instancemethod(
-            lambda *args,
-            **kwds: func(observer, *args, **kwds),
-            None,
-            cls
-        )
+        observer = _ClassObserver(constructor,
+                                  name,
+                                  resolution_level,
+                                  keep,
+                                  trace)
+        self._observers[cls] = observer
+
+        def new_constructor(*args, **kwargs):
+            return func(observer, *args, **kwargs)
+
+        cls.__init__ = instancemethod(new_constructor, None, cls)
 
     def _is_tracked(self, cls):
         """
