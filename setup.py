@@ -105,7 +105,7 @@ def run_setup(include_tests=0):
 
           license=metadata.license,
           platforms=['any'],
-          classifiers=['Development Status :: 3 - Alpha',
+          classifiers=['Development Status :: 4 - Beta',
                        'Environment :: Console',
                        'Intended Audience :: Developers',
                        'License :: OSI Approved :: Apache Software License',

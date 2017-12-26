@@ -1,3 +1,9 @@
+Release 0.5.1
+=============
+
+  * Fix KeyError when using Django memory panel in certain scenarios
+    Reported by Mark Davidoff (#55), fixed by Pedro Tacla Yamada
+
 Release 0.5
 ===========
 
