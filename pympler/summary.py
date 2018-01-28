@@ -94,7 +94,7 @@ def _init_representations():
         lambda l: "list, len=%s" % len(l)
     ]
     representations[list] = _list
-    module = [lambda m: "module(%s)" % m.__name__]
+    module = [lambda m: "module(%s)" % getattr(m, '__name__', getattr(m, '__file__', 'nameless, id: %d' % id(m)))]
     representations[types.ModuleType] = module
     _set = [
         lambda s: str(type(s)),
