@@ -31,7 +31,11 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest']
 templates_path = ['.templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
+
+source_parsers = {
+   '.md': 'recommonmark.parser.CommonMarkParser',
+}
 
 # The master toctree document.
 master_doc = 'index'
@@ -86,19 +90,6 @@ pygments_style = 'sphinx'
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
 html_theme = 'default'
-
-# Colors derived from palette "Dig My Olive Branch"
-# http://www.colourlovers.com/palette/728391/Dig_My_Olive_Branch
-html_theme_options = {
-    'headbgcolor'      : '#E5EDB8', #'#ADB85F',
-    'headtextcolor'    : '#000000',
-    'headlinkcolor'    : '#000000',
-    'sidebarbgcolor'   : '#837B47', #'#ADB85F',
-    'sidebarlinkcolor' : '#E5EDB8',
-    'bgcolor'          : '#FFFFFF',
-    'relbarbgcolor'    : '#5A3D31',
-    'codebgcolor'      : '#E5EDB8', #'#837B47',
-}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
