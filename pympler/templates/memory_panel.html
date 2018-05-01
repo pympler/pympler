@@ -48,10 +48,11 @@
 </table>
 <script type="text/javascript">
   (function ($) {
+    window.jQuery = $; // for jquery.sparkline
     $("#MemoryPanel .show_sparkline").on('click', function() {
       {% for cls, _, _ in classes %}
         $("#{{ cls|escape|cut:'.' }}_history").sparkline('html', {width: '200px'});
       {% endfor %}
     });
-  })(jQuery);
+  })(jQuery || djdt.jQuery);
 </script>
