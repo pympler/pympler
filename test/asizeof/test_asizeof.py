@@ -396,7 +396,10 @@ class FunctionTest(unittest.TestCase):
         refs = list(asizeof.refs(f))
         self.assert_(len(refs) >= 2, len(refs))
         self.assert_(42 in refs, refs)
-        self.assert_(('tdata',) in refs, refs) # slots
+        # __slots__ are no longer in refs(anInstance),
+        # only the value of the __slots__ attributes
+        # /mrJean1 2018-07-05
+        # self.assert_(('tdata',) in refs, refs)  # slots
 
     def test_exclude_types(self):
         '''Test Asizer.exclude_types().
@@ -715,10 +718,11 @@ class AsizeofDemos(unittest.TestCase):
             s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
             self._printf('%s %s: %s', w, k, s)
 
-
 if __name__ == '__main__':
 
-    suite = unittest.makeSuite([AsizeofTest, TypesTest, FunctionTest, AsizeofDemos], 'test')
+    # removed AsizeofTest /mrJean1 2018-07-05
+    suite = unittest.makeSuite([TypesTest, FunctionTest, AsizeofDemos], 'test')
   ##suite.addTest(doctest.DocTestSuite())
   ##suite.debug()
     unittest.TextTestRunner(verbosity=1).run(suite)
+
