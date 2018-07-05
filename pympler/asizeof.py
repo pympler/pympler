@@ -353,9 +353,9 @@ def _dir2(obj, pref='', excl=(), slots=None, itor=''):
                         a = '_' + c.__name__ + a
                     if hasattr(obj, a):
                         s.setdefault(a, getattr(obj, a))
-             # assume __slots__ tuple/list
-             # is holding the attr values
-            yield slots, _Slots(s)  # _keys(s)
+             # assume __slots__ tuple/list is holding the values
+             # yield slots, _Slots(s)  # _keys(s) ... REMOVED,
+             # see _Slots.__doc__ further below
             for t in _items(s):
                 yield t  # attr name, value
     elif itor:  # iterator referents
@@ -569,8 +569,9 @@ def _SI2(size, **kwds):
 def _class_refs(obj, named):
     '''Return specific referents of a class object.
     '''
-    return _refs(obj, named, '__class__', '__dict__', '__doc__', '__mro__',
-                             '__name__', '__slots__', '__weakref__')
+    return _refs(obj, named, '__class__', '__doc__', '__mro__',
+                             '__name__', '__slots__', '__weakref__',
+                             '__dict__')  # __dict__ last
 
 
 def _co_refs(obj, named):
@@ -850,10 +851,11 @@ def _len_slice(obj):
         return 0
 
 
-def _len_slots(obj):
-    '''Slots length.
-    '''
-    return len(obj) - 1
+# REMOVED, see _Slots.__doc__
+# def _len_slots(obj):
+#     '''Slots length.
+#     '''
+#     return len(obj) - 1
 
 
 def _len_struct(obj):
@@ -873,7 +875,7 @@ def _len_unicode(obj):
 
 _all_lengs = (None, _len, _len_array, _len_bytearray, _len_code, _len_dict,
               _len_frame, _len_int, _len_iter, _len_list, _len_module,
-              _len_set, _len_slice, _len_slots, _len_struct, _len_unicode)
+              _len_set, _len_slice, _len_struct, _len_unicode)  # _len_slots
 
 
 # more private functions and classes
@@ -1005,13 +1007,15 @@ class _NamedRef(object):
         self.ref = ref
 
 
-class _Slots(tuple):
-    '''Wrapper class for __slots__ attribute at
-       class instances to account for the size
-       of the __slots__ tuple/list containing
-       references to the attribute values.
-    '''
-    pass
+# class _Slots(tuple):
+#     '''Wrapper class for __slots__ attribute at class definition.
+#        The instance-specific __slots__ attributes are stored in
+#        a "tuple-like" space inside the instance, see Luciano
+#        Ramalho, "Fluent Python", page 274+, O'Reilly, 2016 or
+#        at <http://Books.Google.com/books>, then search for
+#        "Fluent Python" "Space Savings with the __slots__".
+#     '''
+#     pass
 
 
  # kinds of _Typedefs
@@ -1190,11 +1194,11 @@ _typedef_both(property, refs=_prop_refs)
 _typedef_both(type(Ellipsis))
 _typedef_both(type(None))
 
- # _Slots is a special tuple, see _Slots.__doc__
-_typedef_both(_Slots, item=_sizeof_Cvoidp,
-              leng=_len_slots,  # length less one
-              refs=None,  # but no referents
-              heap=True)  # plus head
+ # _Slots are "tuple-like", REMOVED see _Slots.__doc__
+# _typedef_both(_Slots, item=_sizeof_Cvoidp,
+#               leng=_len_slots,  # length less one
+#               refs=None,  # but no referents
+#               heap=True)  # plus head
 
  # dict, dictproxy, dict_proxy and other dict-like types
 _dict_typedef = _typedef_both(dict, item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
@@ -2341,7 +2345,7 @@ def named_refs(obj):
 # License file from an earlier version of this source file follows:
 
 #---------------------------------------------------------------------
-#       Copyright (c) 2002-2008 -- ProphICy Semiconductor, Inc.
+#       Copyright (c) 2002-2018 -- ProphICy Semiconductor, Inc.
 #                        All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
