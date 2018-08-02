@@ -1,6 +1,6 @@
-
 import gc
 import os
+import pprint
 import sys
 import unittest
 import weakref
@@ -30,15 +30,15 @@ class OldFoo:
 
 
 class PseudoDict(object):
-    '''Dict-like object for inferring dictionaries.'''
+    '''Dict-like object for inferring dictionaries'''
 
     def __len__(self):
         return 0
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwds):
         return None
 
-    def has_key(self, *args, **kwargs):
+    def has_key(self, *args):
         return False
 
     def items(self):
@@ -54,8 +54,7 @@ class PseudoDict(object):
 class TypesTest(unittest.TestCase):
 
     def test_generator(self):
-        '''Test integrity of sized generator
-        '''
+        '''Test integrity of sized generator'''
         def infinite_gen():
             i = 1
             while True:
@@ -79,8 +78,7 @@ class TypesTest(unittest.TestCase):
         self.assertEqual(s3, 0)
 
     def test_methods(self):
-        '''Test sizing methods and functions
-        '''
+        '''Test sizing methods and functions'''
         def foo():
             pass
 
@@ -90,25 +88,23 @@ class TypesTest(unittest.TestCase):
         # TODO asserts?
 
     def test_classes(self):
-        '''Test sizing class objects and instances
-        '''
-        self.assert_(asizeof.asizeof(Foo, code=True) > 0)
-        self.assert_(asizeof.asizeof(ThinFoo, code=True) > 0)
-        self.assert_(asizeof.asizeof(OldFoo, code=True) > 0)
+        '''Test sizing class objects and instances'''
+        self.assertTrue(asizeof.asizeof(Foo, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(ThinFoo, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(OldFoo, code=True) > 0)
 
-        self.assert_(asizeof.asizeof(Foo([17,42,59])) > 0)
-        self.assert_(asizeof.asizeof(ThinFoo([17,42,59])) > 0)
-        self.assert_(asizeof.asizeof(OldFoo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(Foo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(ThinFoo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(OldFoo([17,42,59])) > 0)
 
         s1 = asizeof.asizeof(Foo("short"))
         s2 = asizeof.asizeof(Foo("long text ... well"))
-        self.assert_(s2 >= s1)
+        self.assertTrue(s2 >= s1)
         s3 = asizeof.asizeof(ThinFoo("short"))
-        self.assert_(s3 <= s1)
+        self.assertTrue(s3 <= s1)
 
     def test_special_objects(self):
-        '''Test sizing special objects.
-        '''
+        '''Test sizing special objects'''
         module_size = asizeof.asizeof(unittest)
         self.assertTrue(module_size > 0, module_size)
 
@@ -123,6 +119,7 @@ class TypesTest(unittest.TestCase):
         self.assertTrue(set(['__doc__']) <= ref_names, ref_names)
 
     def test_array(self):
+        '''Test array'''
         from array import array
         arr = array('i', [0] * 100)
         arr_size = asizeof.asizeof(arr)
@@ -130,8 +127,7 @@ class TypesTest(unittest.TestCase):
         self.assertTrue(arr_size >= buf_size, (arr_size, buf_size))
 
     def test_weakref(self):
-        '''Test sizing weak references.
-        '''
+        '''Test sizing weak references'''
         alive = Foo('alive')
         aref = weakref.ref(alive)
         dead = Foo('dead')
@@ -147,15 +143,14 @@ class TypesTest(unittest.TestCase):
         refs = asizeof.named_refs(dref)
 
     def test_os_stat(self):
-        '''Test sizing os.stat and os.statvfs objects.
-        '''
+        '''Test sizing os.stat and os.statvfs objects'''
         try:
             stat = os.stat(__file__)
         except Exception:
             pass
         else:
             stat_size = asizeof.asizeof(stat)
-            self.assertTrue(stat_size > 0, stat_size)
+            self.assertTrue(stat_size > 0)  # , stat_size)
             refs = asizeof.named_refs(stat)
             ref_names = set([name for name, _ in refs])
             self.assertTrue(set(['st_mode', 'st_size', 'st_mtime']) <= ref_names, ref_names)
@@ -172,8 +167,7 @@ class TypesTest(unittest.TestCase):
             self.assertTrue(set(['f_bsize', 'f_blocks']) <= ref_names, ref_names)
 
     def test_exception(self):
-        '''Test sizing exceptions.
-        '''
+        '''Test sizing exceptions'''
         try:
             raise Exception("Test exception-sizing.")
         except Exception:
@@ -190,17 +184,18 @@ class TypesTest(unittest.TestCase):
                 del etb
 
     def test_ignore_frame(self):
-        '''Test whether reference cycles are created
-        '''
+        '''Test whether reference cycles are created'''
         gc.collect()
         gc.disable()
-        s = asizeof.asizeof(all=True, code=True)
-        self.assertEqual(gc.collect(), 0)
+        s = asizeof.asizeof(all=True, frames=False, code=True)
+        c = gc.collect()
+        # NumPy (and/or other, recent) modules causes some
+        # objects to be uncollectable, typically 8 or less
+        self.assertTrue(c < 9, '%s ref cycles' % (c,))
         gc.enable()
 
     def test_closure(self):
-        '''Test sizing closures.
-        '''
+        '''Test sizing closures'''
         def outer(x):
             def inner():
                 return x
@@ -213,8 +208,7 @@ class TypesTest(unittest.TestCase):
         self.assertTrue(size_closure >= size_data, (size_closure, size_data))
 
     def test_namedtuple(self):
-        '''Test values are included but namedtuple __dict__ isn't.
-        '''
+        '''Test values are included but namedtuple __dict__ isn't'''
         from collections import namedtuple
         Point = namedtuple('Point', ['x', 'y'])
         point = Point(x=11, y=22)
@@ -223,17 +217,56 @@ class TypesTest(unittest.TestCase):
         self.assertTrue('__dict__' not in refs, refs)
         self.assertTrue('11' in refs, refs)
 
-    def test_numpy_array(self):
-        '''Test sizing numpy arrays.
-        '''
+    def test_numpy(self):
+        '''Test sizing numpy arrays, aranges, matrix'''
         try:
-            from numpy import arange
+            import numpy
         except ImportError:
             pass
         else:
-            x = arange(1000)
-            size = asizeof.asizeof(x)
-            self.assertTrue(size > 1000, size)
+            r = numpy.arange(10)
+            self.assertTrue(r.size == 10, r.size)
+            self.assertTrue(r.itemsize > 1, r.itemsize)
+            size = asizeof.asizeof(r)
+            self.assertTrue(size > r.nbytes, (size, r.nbytes))
+
+            a = numpy.array(range(1000))
+            self.assertTrue(a.size == 1000, a.size)
+            self.assertTrue(a.itemsize > 1, a.itemsize)
+            size = asizeof.asizeof(a)
+            self.assertTrue(size > a.nbytes, (size, a.nbytes))
+
+            m = numpy.matrix('1 2 3; 4 5 6')
+            self.assertTrue(m.size == 6, m.size)
+            self.assertTrue(m.itemsize > 1, m.itemsize)
+            size = asizeof.asizeof(m)
+            self.assertTrue(size > m.nbytes, (size, m.nbytes))
+
+            # <https://docs.scipy.org/doc/numpy/glossary.html#term-masked-array>
+            m = numpy.ma.masked_array(range(12))
+            self.assertTrue(m.size == 12, m.size)
+            self.assertTrue(m.itemsize > 1, m.itemsize)
+            size = asizeof.asizeof(m)
+            self.assertTrue(size > m.nbytes, (size, m.nbytes))
+
+            # <https://docs.scipy.org/doc/numpy/glossary.html#term-mask>
+            m = r > 2  # mask == array(dtype=bool)
+            self.assertTrue(m.size == r.size, m.size)
+#           self.assertTrue(m.itemsize == 1, m.itemsize)
+            size = asizeof.asizeof(m)
+            self.assertTrue(size > m.nbytes, (size, m.nbytes))
+
+    def test_private_slots(self):
+        class PrivateSlot(object):
+            __slots__ = ('__data',)
+            def __init__(self, data):
+                self.__data = data
+
+        data = [42] * 100
+        container = PrivateSlot(data)
+        size1 = asizeof.asizeof(container)
+        size2 = asizeof.asizeof(data)
+        self.assertTrue(size1 > size2, (size1, size2))
 
 
 class FunctionTest(unittest.TestCase):
@@ -241,10 +274,9 @@ class FunctionTest(unittest.TestCase):
     '''
 
     def test_asized(self):
-        '''Test asizeof.asized()
-        '''
+        '''Test asizeof.asized()'''
         self.assertEqual(list(asizeof.asized(detail=2)), [])
-        self.assertRaises(KeyError, asizeof.asized, **{'all': True})
+        self.assertRaises(KeyError, asizeof.asized, all=True)
         sized = asizeof.asized(Foo(42), detail=2)
         self.assertEqual(sized.name, 'Foo')
         refs = [ref for ref in sized.refs if ref.name == '__dict__']
@@ -261,22 +293,22 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(len(sized_objs), 2)
 
     def test_asized_detail(self):
+        '''Test asizeof.asized(detail=)'''
         foo = Foo(42)
         size1 = asizeof.asized(foo, detail=1)
         size2 = asizeof.asized(foo, detail=2)
         self.assertEqual(size1.size, size2.size)
 
     def test_asized_format(self):
-        '''Test Asized.format(depth=x)
-        '''
+        '''Test Asized.format(depth=x)'''
         foo = Foo(42)
         sized1 = asizeof.asized(foo, detail=1)
         sized2 = asizeof.asized(foo, detail=2)
         sized1_no = sized1.format('%(name)s', order_by='name')
-        sized1_d1 = sized1.format('%(name)s', depth=1, order_by='name')
-        sized1_d2 = sized1.format('%(name)s', depth=2, order_by='name')
-        sized2_d1 = sized2.format('%(name)s', depth=1, order_by='name')
-        sized2_d2 = sized2.format('%(name)s', depth=2, order_by='name')
+        sized1_d1 = sized1.format('%(name)s', detail=1, order_by='name')
+        sized1_d2 = sized1.format('%(name)s', detail=2, order_by='name')
+        sized2_d1 = sized2.format('%(name)s', detail=1, order_by='name')
+        sized2_d2 = sized2.format('%(name)s', detail=2, order_by='name')
         self.assertEqual(sized1_no, "Foo\n    __class__\n    __dict__")
         self.assertEqual(sized1_no, sized1_d1)
         self.assertEqual(sized1_no, sized1_d2)
@@ -284,10 +316,9 @@ class FunctionTest(unittest.TestCase):
         self.assertNotEqual(sized2_d1, sized2_d2)
 
     def test_asizesof(self):
-        '''Test asizeof.asizesof()
-        '''
+        '''Test asizeof.asizesof()'''
         self.assertEqual(list(asizeof.asizesof()), [])
-        self.assertRaises(KeyError, asizeof.asizesof, **{'all': True})
+        self.assertRaises(KeyError, asizeof.asizesof, all=True)
 
         objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
         sizes = list(asizeof.asizesof(*objs))
@@ -303,11 +334,10 @@ class FunctionTest(unittest.TestCase):
         asizer_sizes = sizer.asizesof(*objs)
         self.assertEqual(list(asizer_sizes), sizes)
         code_sizes = sizer.asizesof(*objs, **dict(code=True))
-        self.failIfEqual(list(code_sizes), sizes)
+        self.assertNotEqual(list(code_sizes), sizes)
 
     def test_asizeof(self):
-        '''Test asizeof.asizeof()
-        '''
+        '''Test asizeof.asizeof()'''
         self.assertEqual(asizeof.asizeof(), 0)
 
         objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
@@ -319,8 +349,7 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(total, sum, (total, sum))
 
     def test_asizer_limit(self):
-        '''Test limit setting for Asizer.
-        '''
+        '''Test limit setting for Asizer'''
         objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
         sizer = [asizeof.Asizer() for _ in range(4)]
         for limit, asizer in enumerate(sizer):
@@ -330,96 +359,128 @@ class FunctionTest(unittest.TestCase):
         self.assertTrue(limit_sizes[1] < limit_sizes[2], limit_sizes)
         self.assertTrue(limit_sizes[2] < limit_sizes[3], limit_sizes)
 
+    def test_alen(self):
+        '''Test asizeof.alen() formerly .leng()'''
+        l = [1,2,3,4]
+        s = "spam"
+        self.assertTrue(asizeof.alen(l) >= len(l), asizeof.alen(l))
+        self.assertEqual(asizeof.alen(tuple(l)), len(l))
+        self.assertTrue(asizeof.alen(set(l)) >= len(set(l)))
+        self.assertTrue(asizeof.alen(s) >= len(s))
+
+        # Python 3.0 ints behave like Python 2.x longs.  However,
+        # alen() reports None for old ints and >=1 for new ints/longs.
+        self.assertTrue(asizeof.alen(42) in [None, 1], asizeof.alen(42))
+        base = 2
+        try:
+            base = long(base)
+        except NameError:  # Python 3+
+            pass
+        self.assertEqual(asizeof.alen(base**8-1), 1)
+        self.assertEqual(asizeof.alen(base**16-1), 1)
+        self.assertTrue(asizeof.alen(base**32-1) >= 1)
+        self.assertTrue(asizeof.alen(base**64-1) >= 2)
+
+        try:
+            import array
+        except ImportError:
+            pass
+        else:
+            a = array.array('d', (1.0, 2, 3, 1e63))
+            self.assertEqual(asizeof.alen(a), len(a), asizeof.alen(a))
+
+        try:
+            import numpy
+        except ImportError:
+            pass
+        else:
+            a = numpy.array(range(10), dtype=numpy.complex)
+            self.assertEqual(asizeof.alen(a), a.size, asizeof.alen(a))
+
+            r = numpy.arange(100)
+            self.assertEqual(asizeof.alen(r), r.size, asizeof.alen(r))
+
+            m = numpy.matrix('1 2 3; 4 5 6')
+            self.assertEqual(asizeof.alen(m), m.size, asizeof.alen(m))
+
     def test_basicsize(self):
-        '''Test asizeof.basicsize()
-        '''
-        objects = [1, '', 'a', True, None]
-        for o in objects:
+        '''Test asizeof.basicsize()'''
+        for o in [1, '', 'a', True, None]:
             self.assertEqual(asizeof.basicsize(o), type(o).__basicsize__)
-        objects = [[], (), {}]
-        for o in objects:
-            self.assertEqual(asizeof.basicsize(o) - asizeof._sizeof_CPyGC_Head,
-                type(o).__basicsize__)
+        for o in [[], (), {}]:
+            self.assertEqual(asizeof.basicsize(o), type(o).__basicsize__ + asizeof._sizeof_CPyGC_Head)
         l1 = [1,2,3,4]
         l2 = ["spam",2,3,4,"eggs",6,7,8]
         self.assertEqual(asizeof.basicsize(l1), asizeof.basicsize(l2))
 
     def test_itemsize(self):
-        '''Test asizeof.itemsize()
-        '''
-        objects = [1, True, None, ()]
-        for o in objects:
+        '''Test asizeof.itemsize()'''
+        for o in  [1, True, None, ()]:
             self.assertEqual(asizeof.itemsize(o), type(o).__itemsize__)
-        itemsizes = [({}, asizeof._sizeof_CPyDictEntry),
-                     (set(), asizeof._sizeof_Csetentry),
-                     ]
-        for o, itemsize in itemsizes:
+        for o, itemsize in [({},    asizeof._sizeof_CPyDictEntry),
+                            (set(), asizeof._sizeof_Csetentry)]:
             self.assertEqual(asizeof.itemsize(o), itemsize)
 
-    def test_leng(self):
-        '''Test asizeof.leng()
-        '''
-        l = [1,2,3,4]
-        s = "spam"
-        self.assert_(asizeof.leng(l) >= len(l), asizeof.leng(l))
-        self.assertEqual(asizeof.leng(tuple(l)), len(l))
-        self.assert_(asizeof.leng(set(l)) >= len(set(l)))
-        self.assert_(asizeof.leng(s) >= len(s))
-
-        # Python 3.0 ints behave like Python 2.x longs. leng() reports
-        # None for old ints and >=1 for new ints/longs.
-        self.assert_(asizeof.leng(42) in [None, 1], asizeof.leng(42))
-        base = 2
         try:
-            base = long(base)
-        except NameError: # Python3.0
+            import array
+        except ImportError:
             pass
-        self.assertEqual(asizeof.leng(base**8-1), 1)
-        self.assertEqual(asizeof.leng(base**16-1), 1)
-        self.assert_(asizeof.leng(base**32-1) >= 1)
-        self.assert_(asizeof.leng(base**64-1) >= 2)
+        else:
+            a = array.array('d', (1.0, 2, 3, 1e63))
+            self.assertEqual(asizeof.itemsize(a), a.itemsize, asizeof.itemsize(a))
+
+        try:
+            import numpy
+        except ImportError:
+            pass
+        else:
+            a = numpy.array(range(10), dtype=numpy.complex)
+            self.assertEqual(asizeof.itemsize(a), a.itemsize, asizeof.itemsize(a))
+
+            r = numpy.arange(100)
+            self.assertEqual(asizeof.itemsize(r), r.itemsize, asizeof.itemsize(r))
+
+            m = numpy.matrix('1 2 3; 4 5 6')
+            self.assertEqual(asizeof.itemsize(m), m.itemsize, asizeof.itemsize(m))
 
     def test_refs(self):
-        '''Test asizeof.refs()
-        '''
+        '''Test asizeof.refs()'''
         f = Foo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 1, len(refs))
-        self.assert_({'data': 42} in refs, refs)
+        self.assertTrue(len(refs) >= 1, len(refs))
+        self.assertTrue({'data': 42} in refs, refs)
 
         f = OldFoo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 1, len(refs))
-        self.assert_({'odata': 42} in refs, refs)
+        self.assertTrue(len(refs) >= 1, len(refs))
+        self.assertTrue({'odata': 42} in refs, refs)
 
         f = ThinFoo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 2, len(refs))
-        self.assert_(42 in refs, refs)
-        self.assert_(('tdata',) in refs, refs) # slots
+        self.assertTrue(len(refs) >= 2, len(refs))
+        self.assertTrue(42 in refs, refs)
+        # slots no longer listed as instance refs
+        # self.assertTrue(('tdata',) in refs, refs)  # slots
 
     def test_exclude_types(self):
-        '''Test Asizer.exclude_types().
-        '''
+        '''Test Asizer.exclude_types()'''
         sizer = asizeof.Asizer()
         sizer.exclude_types(Foo)
         self.assertEqual(sizer.asizeof(Foo('ignored')), 0)
 
     def test_asizer(self):
-        '''Test Asizer properties.
-        '''
+        '''Test Asizer properties'''
         sizer = asizeof.Asizer()
         obj = 'unladen swallow'
         mutable = [obj]
         sizer.asizeof(obj)
         self.assertEqual(sizer.total, asizeof.asizeof(obj))
         sizer.asizeof(mutable, mutable)
-        self.assertEqual(sizer.duplicate, 1)
+        self.assertEqual(sizer.duplicate, 2)  # obj seen 3x!
         self.assertEqual(sizer.total, asizeof.asizeof(obj, mutable))
 
     def test_adict(self):
-        '''Test asizeof.adict()
-        '''
+        '''Test asizeof.adict()'''
         pdict = PseudoDict()
         size1 = asizeof.asizeof(pdict)
         asizeof.adict(PseudoDict)
@@ -427,21 +488,16 @@ class FunctionTest(unittest.TestCase):
         # TODO: come up with useful assertions
         self.assertEqual(size1, size2)
 
-    def test_private_slots(self):
-        class PrivateSlot(object):
-            __slots__ = ('__data',)
-            def __init__(self, data):
-                self.__data = data
 
-        data = [42] * 100
-        container = PrivateSlot(data)
-        size1 = asizeof.asizeof(container)
-        size2 = asizeof.asizeof(data)
-        self.assertTrue(size1 > size2, (size1, size2))
+class _DevNull(object):
+    def flush(self):
+        pass
+    def write(self, text):
+        pass
 
 
 def _repr(o):
-    return repr(o)
+    return pprint.pformat(o)
 
 
 class AsizeofDemos(unittest.TestCase):
@@ -453,19 +509,15 @@ class AsizeofDemos(unittest.TestCase):
 
     MAX = sys.getrecursionlimit()
 
-    class DevNull(object):
-        def write(self, text):
-            pass
-
     def setUp(self):
         self._stdout = sys.stdout
-        sys.stdout = self.DevNull()
+        sys.stdout = _DevNull()
 
     def tearDown(self):
         sys.stdout = self._stdout
 
-    def _printf(self, *args):
-        pass # XXX
+    def _printf(self, fmt, *args):
+        print(fmt % args)
 
     def _print_asizeof(self, obj, infer=False, stats=0):
         a = [_repr(obj),]
@@ -474,16 +526,17 @@ class AsizeofDemos(unittest.TestCase):
         self._printf(" asizeof(%s) is %d, %d, %d", *a)
 
     def _print_functions(self, obj, name=None, align=8, detail=MAX, code=False, limit=MAX,
-                              opt='', **unused):
+                               opt='', **unused):
         if name:
             self._printf('%sasizeof functions for %s ... %s', os.linesep, name, opt)
         self._printf('%s(): %s', ' basicsize', asizeof.basicsize(obj))
         self._printf('%s(): %s', ' itemsize',  asizeof.itemsize(obj))
-        self._printf('%s(): %r', ' leng',      asizeof.leng(obj))
-        self._printf('%s(): %s', ' refs',     _repr(asizeof.refs(obj)))
+        self._printf('%s(): %r', ' alen',      asizeof.alen(obj))
+        if opt != '-stack':
+            self._printf('%s(): %s', ' refs', _repr(asizeof.refs(obj)))
         self._printf('%s(): %s', ' flatsize',  asizeof.flatsize(obj, align=align))  # , code=code
-        self._printf('%s(): %s', ' asized',           asizeof.asized(obj, align=align, detail=detail, code=code, limit=limit))
-      ##_printf('%s(): %s', '.asized',   _asizer.asized(obj, align=align, detail=detail, code=code, limit=limit))
+        self._printf('%s(): %s', ' asized',    asizeof.asized(obj, align=align, detail=detail, code=code, limit=limit))
+      ##self._printf('%s(): %s', '.asized',   _asizer.asized(obj, align=align, detail=detail, code=code, limit=limit))
 
     class C: pass
 
@@ -616,8 +669,8 @@ class AsizeofDemos(unittest.TestCase):
         for o in (1024, 1000000000,
                   1.0, 1.0e100, 1024, 1000000000,
                   self.MAX, 1 << 32, _L5d, -_L5d, _L17d, -_L17d):
-            self._printf(" asizeof(%s) is %s (%s + %s * %s)", _repr(o), asizeof.asizeof(o, align=0, limit=0),
-                                                         asizeof.basicsize(o), asizeof.leng(o), asizeof.itemsize(o))
+            self._printf(" asizeof(%s) is %s (%s + %s * %s)", repr(o), asizeof.asizeof(o, align=0, limit=0),
+                         asizeof.basicsize(o), asizeof.alen(o), asizeof.itemsize(o))
 
     def test_iterator(self):
         '''Test iterator examples'''
@@ -706,19 +759,19 @@ class AsizeofDemos(unittest.TestCase):
         asizeof.asizeof(limit=self.MAX, code=False, stats=1, *sys.modules.values())
         self._print_functions(sys.modules, 'sys.modules', opt='-sys')
 
-    def test_typedefs(self): # remove?
+    def test_typedefs(self):  # remove?
         '''Test showing all basic _typedefs'''
         t = len(asizeof._typedefs)
         w = len(str(t)) * ' '
-        self._printf('%s%d type definitions: basic- and itemsize (leng), kind ... %s', os.linesep, t, '-type[def]s')
+#       self._printf('%s%d type definitions: basic- and itemsize (alen), kind ... %s', os.linesep, t, '-type[def]s')
         for k, v in sorted((asizeof._prepr(k), v) for k, v in asizeof._items(asizeof._typedefs)):
-            s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
-            self._printf('%s %s: %s', w, k, s)
+            s = '%(base)s and %(item)s%(alen)s, %(kind)s%(code)s' % v.format()
+#           self._printf('%s %s: %s', w, k, s)
 
 
 if __name__ == '__main__':
 
-    suite = unittest.makeSuite([AsizeofTest, TypesTest, FunctionTest, AsizeofDemos], 'test')
-  ##suite.addTest(doctest.DocTestSuite())
-  ##suite.debug()
-    unittest.TextTestRunner(verbosity=1).run(suite)
+    if '-v' in sys.argv[1:]:  # and sys.version_info > (2, 7, 0)
+        unittest.main(verbosity=2)
+    else:
+        unittest.main()
