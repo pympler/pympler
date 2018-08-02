@@ -19,7 +19,7 @@ class Foo(object):
 
 
 class ThinFoo(object):
-    __slots__ = ['tdata']
+    __slots__ = ('tdata',)
     def __init__(self, content):
         self.tdata = content
 
@@ -92,19 +92,19 @@ class TypesTest(unittest.TestCase):
     def test_classes(self):
         '''Test sizing class objects and instances
         '''
-        self.assert_(asizeof.asizeof(Foo, code=True) > 0)
-        self.assert_(asizeof.asizeof(ThinFoo, code=True) > 0)
-        self.assert_(asizeof.asizeof(OldFoo, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(Foo, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(ThinFoo, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(OldFoo, code=True) > 0)
 
-        self.assert_(asizeof.asizeof(Foo([17,42,59])) > 0)
-        self.assert_(asizeof.asizeof(ThinFoo([17,42,59])) > 0)
-        self.assert_(asizeof.asizeof(OldFoo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(Foo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(ThinFoo([17,42,59])) > 0)
+        self.assertTrue(asizeof.asizeof(OldFoo([17,42,59])) > 0)
 
         s1 = asizeof.asizeof(Foo("short"))
         s2 = asizeof.asizeof(Foo("long text ... well"))
-        self.assert_(s2 >= s1)
+        self.assertTrue(s2 >= s1)
         s3 = asizeof.asizeof(ThinFoo("short"))
-        self.assert_(s3 <= s1)
+        self.assertTrue(s3 <= s1)
 
     def test_special_objects(self):
         '''Test sizing special objects.
@@ -195,7 +195,10 @@ class TypesTest(unittest.TestCase):
         gc.collect()
         gc.disable()
         s = asizeof.asizeof(all=True, code=True)
-        self.assertEqual(gc.collect(), 0)
+        c = gc.collect()
+        # NumPy (and/or other, recent) modules causes some
+        # objects to be uncollectable, typically 8 or less
+        self.assertTrue(c < 9, '%s ref cycles' % (c,))
         gc.enable()
 
     def test_closure(self):
@@ -303,7 +306,7 @@ class FunctionTest(unittest.TestCase):
         asizer_sizes = sizer.asizesof(*objs)
         self.assertEqual(list(asizer_sizes), sizes)
         code_sizes = sizer.asizesof(*objs, **dict(code=True))
-        self.failIfEqual(list(code_sizes), sizes)
+        self.assertNotEqual(list(code_sizes), sizes)
 
     def test_asizeof(self):
         '''Test asizeof.asizeof()
@@ -361,14 +364,14 @@ class FunctionTest(unittest.TestCase):
         '''
         l = [1,2,3,4]
         s = "spam"
-        self.assert_(asizeof.leng(l) >= len(l), asizeof.leng(l))
+        self.assertTrue(asizeof.leng(l) >= len(l), asizeof.leng(l))
         self.assertEqual(asizeof.leng(tuple(l)), len(l))
-        self.assert_(asizeof.leng(set(l)) >= len(set(l)))
-        self.assert_(asizeof.leng(s) >= len(s))
+        self.assertTrue(asizeof.leng(set(l)) >= len(set(l)))
+        self.assertTrue(asizeof.leng(s) >= len(s))
 
         # Python 3.0 ints behave like Python 2.x longs. leng() reports
         # None for old ints and >=1 for new ints/longs.
-        self.assert_(asizeof.leng(42) in [None, 1], asizeof.leng(42))
+        self.assertTrue(asizeof.leng(42) in [None, 1], asizeof.leng(42))
         base = 2
         try:
             base = long(base)
@@ -376,27 +379,30 @@ class FunctionTest(unittest.TestCase):
             pass
         self.assertEqual(asizeof.leng(base**8-1), 1)
         self.assertEqual(asizeof.leng(base**16-1), 1)
-        self.assert_(asizeof.leng(base**32-1) >= 1)
-        self.assert_(asizeof.leng(base**64-1) >= 2)
+        self.assertTrue(asizeof.leng(base**32-1) >= 1)
+        self.assertTrue(asizeof.leng(base**64-1) >= 2)
 
     def test_refs(self):
         '''Test asizeof.refs()
         '''
         f = Foo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 1, len(refs))
-        self.assert_({'data': 42} in refs, refs)
+        self.assertTrue(len(refs) >= 1, len(refs))
+        self.assertTrue({'data': 42} in refs, refs)
 
         f = OldFoo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 1, len(refs))
-        self.assert_({'odata': 42} in refs, refs)
+        self.assertTrue(len(refs) >= 1, len(refs))
+        self.assertTrue({'odata': 42} in refs, refs)
 
         f = ThinFoo(42)
         refs = list(asizeof.refs(f))
-        self.assert_(len(refs) >= 2, len(refs))
-        self.assert_(42 in refs, refs)
-        self.assert_(('tdata',) in refs, refs) # slots
+        self.assertTrue(len(refs) >= 2, len(refs))
+        self.assertTrue(42 in refs, refs)
+        # __slots__ are no longer in refs(anInstance),
+        # only the value of the __slots__ attributes
+        # /mrJean1 2018-07-05
+        # self.assertTrue(('tdata',) in refs, refs)  # slots
 
     def test_exclude_types(self):
         '''Test Asizer.exclude_types().
@@ -414,7 +420,7 @@ class FunctionTest(unittest.TestCase):
         sizer.asizeof(obj)
         self.assertEqual(sizer.total, asizeof.asizeof(obj))
         sizer.asizeof(mutable, mutable)
-        self.assertEqual(sizer.duplicate, 1)
+        self.assertEqual(sizer.duplicate, 2)  # obj seen 3x!
         self.assertEqual(sizer.total, asizeof.asizeof(obj, mutable))
 
     def test_adict(self):
@@ -718,7 +724,12 @@ class AsizeofDemos(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    suite = unittest.makeSuite([AsizeofTest, TypesTest, FunctionTest, AsizeofDemos], 'test')
+    if '-v' in sys.argv[1:]:  # and sys.version_info > (2, 7, 0)
+        unittest.main(verbosity=2)
+    else:
+        unittest.main()
+
+  ##suite = unittest.makeSuite([AsizeofTest, TypesTest, FunctionTest, AsizeofDemos], 'test')
   ##suite.addTest(doctest.DocTestSuite())
   ##suite.debug()
-    unittest.TextTestRunner(verbosity=1).run(suite)
+  ##unittest.TextTestRunner(verbosity=1).run(suite)
