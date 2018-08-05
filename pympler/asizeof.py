@@ -1499,8 +1499,8 @@ try:
 
     # sizing numpy 1.13 arrays works fine, but 1.8 and older
     # appears to suffer from sys.getsizeof() bug like array
-    v = tuple(map(int, numpy.__version__.split('.')))
-    _numpy_excl = v < (1, 9, 0)
+    v = tuple(map(int, numpy.__version__.split('.')[:2]))
+    _numpy_excl = v < (1, 9)
     if _numpy_excl:  # see function _typedef below
         for t in _numpy_types:
             _getsizeof_excls_add(t)
