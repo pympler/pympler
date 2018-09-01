@@ -10,6 +10,10 @@ virtual memory size).
 import sys
 import unittest
 
+try:
+    from unittest import mock
+except ImportError:  # Python 2.7
+    mock = None
 from pympler import process
 
 
@@ -50,7 +54,6 @@ class ProcessMemoryTests(unittest.TestCase):
                     self.assertEqual(pi1.pagefaults, pi2.pagefaults)
             if pi1.pagesize and pi2.pagesize:
                 self.assertEqual(pi1.pagesize, pi2.pagesize)
-
 
     def test_ps_vs_proc_sizes(self):
         '''Test process sizes match: ps util vs /proc/self/stat
@@ -96,6 +99,19 @@ class ProcessMemoryTests(unittest.TestCase):
             self.assertEqual(type(tinfo.name), type(''))
             self.assertEqual(type(tinfo.daemon), type(True))
             self.failIfEqual(tinfo.ident, 0)
+
+
+    def test_proc(self):
+        '''Test reading proc stats with mock data.'''
+        if mock is None:
+            return
+        mock_stat = mock.mock_open(read_data='22411 (cat) R 22301 22411 22301 34818 22411 4194304 82 0 0 0 0 0 0 0 20 0 1 0 709170 8155136 221 18446744073709551615 94052544688128 94052544719312 140729623469552 0 0 0 0 0 0 0 0 0 17 6 0 0 0 0 0 94052546816624 94052546818240 94052566347776 140729623473446 140729623473466 140729623473466 140729623478255 0')
+        mock_status = mock.mock_open(read_data='Name:  cat\n\nVmData:    2 kB\nMultiple colons: 1:1')
+        with mock.patch('builtins.open', new_callable=mock.mock_open) as mock_file:
+            mock_file.side_effect = [mock_stat.return_value, mock_status.return_value]
+            procinfo = process._ProcessMemoryInfoProc()
+            self.assertTrue(procinfo.available)
+            self.assertEqual(procinfo.data_segment, 2048)
 
 
 if __name__ == "__main__":

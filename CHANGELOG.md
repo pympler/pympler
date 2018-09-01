@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   by Mark Davidoff (#55), fixed by Pedro Tacla Yamada
 - Fix Debug Toolbar - Remove all jQuery variables from the global scope -- By
   the5fire (#66)
+- Fix process import error when empty lines found in /proc/self/status --
+  Reported by dnlsng (#67)
 
 ## 0.5 - 2017-03-23
 

@@ -144,7 +144,10 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
             self.pagefaults = int(stats[11])
 
             for entry in status.readlines():
-                key, value = entry.split(':', 1)
+                try:
+                    key, value = entry.split(':', 1)
+                except ValueError:
+                    continue
                 size_in_bytes = lambda x: int(x.split()[0]) * 1024
                 if key == 'VmData':
                     self.data_segment = size_in_bytes(value)
