@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.6 - 2018-09-01
+
 ### Added
 - Python 3.7 support
+
+### Changed
+- Update asizeof module to version 18.07.08. Includes more accurate sizing of
+  objects with slots. -- By Jean Brouwers
 
 ### Removed
 - Python 2.6 and 3.2 support
@@ -20,6 +26,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   the5fire (#66)
 - Fix process import error when empty lines found in /proc/self/status --
   Reported by dnlsng (#67)
+- Return more accurate size of objects with slots -- Reported by Ivo Anjo
+  (#69), fixed by Jean Brouwers
 
 ## 0.5 - 2017-03-23
 

@@ -148,6 +148,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                     key, value = entry.split(':', 1)
                 except ValueError:
                     continue
+                value = value.strip()
                 size_in_bytes = lambda x: int(x.split()[0]) * 1024
                 if key == 'VmData':
                     self.data_segment = size_in_bytes(value)

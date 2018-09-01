@@ -110,7 +110,9 @@ class ProcessMemoryTests(unittest.TestCase):
         with mock.patch('builtins.open', new_callable=mock.mock_open) as mock_file:
             mock_file.side_effect = [mock_stat.return_value, mock_status.return_value]
             procinfo = process._ProcessMemoryInfoProc()
-            self.assertTrue(procinfo.available)
+        self.assertTrue(procinfo.available)
+        self.assertEqual(procinfo.vsz, 8155136)
+        if sys.version_info >= (3, 4):  # Python 3.3 doesn't support mock_open.readlines
             self.assertEqual(procinfo.data_segment, 2048)
 
 
