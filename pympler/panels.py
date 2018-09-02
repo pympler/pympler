@@ -6,7 +6,7 @@ instances for the current request.
 
 Requires Django and Django Debug toolbar:
 
-https://github.com/django-debug-toolbar/django-debug-toolbar
+https://github.com/jazzband/django-debug-toolbar
 
 Pympler adds a memory panel as a third party addon (not included in the
 django-debug-toolbar). It can be added by overriding the `DEBUG_TOOLBAR_PANELS`
