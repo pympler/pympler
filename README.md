@@ -1,8 +1,8 @@
 README for pympler
 ==================
 
-[![Latest Version](https://img.shields.io/pypi/v/pympler.svg)](https://pypi.python.org/pypi/Pympler/)
-[![License](https://img.shields.io/pypi/l/pympler.svg)](https://pypi.python.org/pypi/Pympler/)
+[![Latest Version](https://img.shields.io/pypi/v/pympler.svg)](https://pypi.org/project/Pympler/)
+[![License](https://img.shields.io/pypi/l/pympler.svg)](https://pypi.org/project/Pympler/)
 
 
 Before installing Pympler, try it with your Python version:
@@ -31,7 +31,7 @@ Usage
 
 The usage of pympler is described in the documentation.  It is
 available either in this distribution at *doc/index.html* or
-you can [read it online](http://packages.python.org/Pympler/).
+you can [read it online](https://pympler.readthedocs.io/en/latest/).
 
 
 Contributing

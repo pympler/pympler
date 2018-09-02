@@ -37,10 +37,9 @@ If you have *pip* installed, the easiest way to get Pympler is::
     pip install pympler
 
 Alternately, download Pympler releases from the `Python Package Index
-<https://pypi.python.org/pypi/Pympler>`_ or `check out the latest
-development revision
-<https://github.com/pympler/pympler>`_ with git. Please
-see the README file for installation instructions.
+<https://pypi.org/projects/Pympler>`_ or `check out the latest development
+revision <https://github.com/pympler/pympler>`_ with git. Please see the README
+file for installation instructions.
 
 
 Target Audience

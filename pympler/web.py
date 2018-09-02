@@ -265,7 +265,7 @@ def garbage_graph(index):
 @bottle.route('/help')
 def show_documentation():
     """Redirect to online documentation."""
-    bottle.redirect('http://packages.python.org/Pympler')
+    bottle.redirect('https://pympler.readthedocs.io/en/latest/')
 
 
 class PymplerServer(bottle.ServerAdapter):

@@ -246,7 +246,6 @@ def main():
         options.keep = True
         options.linkcheck = True
         options.test = True
-        options.pychecker = True
 
     if options.clean or options.dist:  # remove all bytecodes, first
         run_clean(_Src_dir, 'test')

@@ -6,8 +6,6 @@ Check-in new revision
   $ run.py --test [--clean]
 * run the doctests
   $ run.py --doctest
-* run PyChecker to check the source
-  $ run.py --pychecker ...
 
 
 Release a new version
@@ -50,6 +48,11 @@ Checks
 Release
 -------
   
-* release a new version to the Python cheeseshop via
-  $ run.py --dist [--html --keep] --upload
-* update the documentation at http://pythonhosted.org/Pympler/
+* clean the working copy from any local changes
+* build the source distribution
+  $ python setup.py sdist
+* test installing the build in a new virtual env
+  $ pip install dist/Pympler-X.X.tar.gz
+* release a new version to the Python package index
+  $ twine upload dist/Pympler-X.X.tar.gz
+* check the documentation at https://pympler.readthedocs.io/en/latest/
