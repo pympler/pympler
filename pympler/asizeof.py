@@ -203,7 +203,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '18.07.08'
+__version__ = '18.09.12'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -295,19 +295,31 @@ _Type_type = type(type)  # == type and new-style class type
 def _items(obj):  # dict only
     '''Return iter-/generator, preferably.
     '''
-    return getattr(obj, 'iteritems', obj.items)()
+    o = getattr(obj, 'iteritems', obj.items)
+    if _callable(o):
+        return o()
+    else:
+        return o or ()
 
 
 def _keys(obj):  # dict only
     '''Return iter-/generator, preferably.
     '''
-    return getattr(obj, 'iterkeys', obj.keys)()
+    o = getattr(obj, 'iterkeys', obj.keys)
+    if _callable(o):
+        return o()
+    else:
+        return o or ()
 
 
 def _values(obj):  # dict only
     '''Return iter-/generator, preferably.
     '''
-    return getattr(obj, 'itervalues', obj.values)()
+    o = getattr(obj, 'itervalues', obj.values)
+    if _callable(o):
+        return o()
+    else:
+        return o or ()
 
 
 try:  # callable() builtin
