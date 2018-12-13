@@ -68,9 +68,9 @@ class MuppyTest(unittest.TestCase):
         maximum = 958
         objects = []
         for i in range(1000):
-            rand = random.randint(0,1000)
-            objects.append(' ' * rand)
+            objects.append(' ' * i)
         objects = muppy.filter(objects, min=minimum, max=maximum)
+        self.assert_(len(objects) != 0)
         for o in objects:
             self.assert_(minimum <= getsizeof(o) <= maximum)
 

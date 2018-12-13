@@ -129,16 +129,16 @@ def filter(objects, Type=None, min=-1, max=-1):
     max -- maximum object size
 
     """
-    res = []
-    if min > max:
+    if min > max and max > -1:
         raise ValueError("minimum must be smaller than maximum")
+
     if Type is not None:
-        res = [o for o in objects if isinstance(o, Type)]
+        objects = [o for o in objects if isinstance(o, Type)]
     if min > -1:
-        res = [o for o in res if getsizeof(o) < min]
+        objects = [o for o in objects if getsizeof(o) > min]
     if max > -1:
-        res = [o for o in res if getsizeof(o) > max]
-    return res
+        objects = [o for o in objects if getsizeof(o) < max]
+    return objects
 
 
 def get_referents(object, level=1):
