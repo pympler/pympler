@@ -720,7 +720,7 @@ def _dict_refs(obj, named):
             for k, v in _items(obj):
                 yield k
                 yield v
-    except ReferenceError:
+    except (ReferenceError, TypeError):
         warnings.warn("Reference error iterating '%s'" % (_classof(obj),))
 
 
