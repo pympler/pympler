@@ -2706,7 +2706,7 @@ def refs(obj, **opts):
 # License file from an earlier version of this source file follows:
 
 # --------------------------------------------------------------------
-#       Copyright (c) 2002-2018 -- ProphICy Semiconductor, Inc.
+#       Copyright (c) 2002-2019 -- ProphICy Semiconductor, Inc.
 #                        All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
