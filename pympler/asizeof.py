@@ -70,7 +70,7 @@ downgrading Pympler to version 0.3.x.
    Call methods **exclude_refs** and/or **exclude_types** to exclude
    references to respectively instances or types of certain objects.
 
-   Use one of the **print\_...** methods to report the statistics.
+   Use one of the **print\\_...** methods to report the statistics.
 
    An instance of class **Asized** is returned for each object sized
    by the **asized** function or method.
@@ -185,7 +185,7 @@ downgrading Pympler to version 0.3.x.
 .. [#bi] ``Type``s and ``class``es are considered built-in if the
      ``__module__`` of the type or class is listed in the private
      ``_builtin_modules``.
-'''  # PYCHOK '\_' OK
+'''
 import sys
 if sys.version_info < (2, 6, 0):
     raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
