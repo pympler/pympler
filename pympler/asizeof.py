@@ -185,7 +185,7 @@ downgrading Pympler to version 0.3.x.
 .. [#bi] ``Type``s and ``class``es are considered built-in if the
      ``__module__`` of the type or class is listed in the private
      ``_builtin_modules``.
-'''
+'''  # PYCHOK OK
 import sys
 if sys.version_info < (2, 6, 0):
     raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
