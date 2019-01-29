@@ -185,7 +185,7 @@ downgrading Pympler to version 0.3.x.
 .. [#bi] ``Type``s and ``class``es are considered built-in if the
      ``__module__`` of the type or class is listed in the private
      ``_builtin_modules``.
-'''  # PYCHOK '\_' OK
+'''  # PYCHOK escape
 import sys
 if sys.version_info < (2, 6, 0):
     raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
@@ -203,7 +203,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '18.09.12'
+__version__ = '19.01.16'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -256,7 +256,7 @@ try:  # sizeof(unicode_char)
     u = unicode('\0')
 except NameError:  # no unicode() in Python 3+
     u = '\0'
-u = u.encode('unicode-internal')  # see .../Lib/test/test_sys.py
+u = u.encode('utf-8')
 _sizeof_Cunicode = len(u)
 del u
 
@@ -390,12 +390,6 @@ def _basicsize(t, base=0, heap=False, obj=None):
         s += _sizeof_CPyGC_Head
     # include reference counters
     return s + _sizeof_Crefcounts
-
-
-def _c100(stats):
-    '''Cutoff as percentage.
-    '''
-    return int((stats - int(stats)) * 100.0 + 0.5)
 
 
 def _classof(obj, dflt=None):
@@ -562,19 +556,22 @@ def _nameof(obj, dflt=''):
     return getattr(obj, '__name__', dflt)
 
 
-def _objs_opts(objs, all=None, **opts):
+def _objs_opts_x(objs, all=None, **opts):
     '''Return given or 'all' objects
        and the remaining options.
     '''
     if objs:  # given objects
         t = objs
+        x = False
     elif all in (False, None):
         t = ()
+        x = True
     elif all is True:  # 'all' objects
         t = _getobjects()
+        x = True
     else:
         raise ValueError('invalid option: %s=%r' % ('all', all))
-    return t, opts
+    return t, opts, x
 
 
 def _p100(part, total, prec=1):
@@ -653,10 +650,10 @@ def _repr(obj, clip=80):
     '''Clip long repr() string.
     '''
     try:  # safe repr()
-        r = repr(obj)
+        r = repr(obj).replace(linesep, '\\n')
     except Exception:
         r = 'N/A'
-    if 0 < clip < len(r):
+    if len(r) > clip > 0:
         h = (clip // 2) - 2
         if h > 0:
             r = r[:h] + '....' + r[-h:]
@@ -666,7 +663,7 @@ def _repr(obj, clip=80):
 def _SI(size, K=1024, i='i'):
     '''Return size as SI string.
     '''
-    if 1 < K < size:
+    if 1 < K <= size:
         f = float(size)
         for si in iter('KMGPTE'):
             f /= K
@@ -720,8 +717,8 @@ def _dict_refs(obj, named):
             for k, v in _items(obj):
                 yield k
                 yield v
-    except ReferenceError:
-        warnings.warn("Reference error iterating '%s'" % (_classof(obj),))
+    except (ReferenceError, TypeError) as x:
+        warnings.warn("Iterating '%s': %r" % (_classof(obj), x))
 
 
 def _enum_refs(obj, named):
@@ -757,11 +754,16 @@ def _func_refs(obj, named):
 
 
 def _gen_refs(obj, named):
-    '''Return the referent(s) of a generator object.
+    '''Return the referent(s) of a generator (expression) object.
     '''
     # only some gi_frame attrs
     f = getattr(obj, 'gi_frame', None)
     return _refs(f, named, 'f_locals', 'f_code')
+#   do not yield any items to keep generator intact
+#   for r in _refs(f, named, 'f_locals', 'f_code'):
+#       yield r
+#   for r in obj:
+#       yield r
 
 
 def _im_refs(obj, named):
@@ -1230,9 +1232,9 @@ class _Typedef(object):
     def kwds(self):
         '''Return all attributes as keywords dict.
         '''
-        return dict(base=self.base, item=self.item,
+        return dict(base=self.base, both=self.both,
+                    item=self.item, kind=self.kind,
                     leng=self.leng, refs=self.refs,
-                    both=self.both, kind=self.kind,
                     type=self.type, vari=self.vari)
 
     def save(self, t, base=0, heap=False):
@@ -1249,13 +1251,14 @@ class _Typedef(object):
                 _typedefs[c] = _Typedef(base=_basicsize(type(t), base=base, heap=heap),
                                         refs=_type_refs,
                                         both=False, kind=k, type=t)
-        elif _isbuiltin2(t) and t not in _typedefs:  # array, range, xrange in Python 2.x
+        elif t not in _typedefs:
+            if not _isbuiltin2(t):  # array, range, xrange in Python 2.x
+                s = ' '.join((self.vari, _moduleof(t), _nameof(t)))
+                s = '%r %s %s' % ((c, k), self.both, s.strip())
+                raise KeyError('asizeof typedef %r bad: %s' % (self, s))
+
             _typedefs[t] = _Typedef(base=_basicsize(t, base=base),
                                     both=False, kind=_kind_ignored, type=t)
-        else:
-            s = ' '.join((self.vari, _moduleof(t), _nameof(t)))
-            s = '%r %s %s' % ((c, k), self.both, s.strip())
-            raise KeyError('asizeof typedef %r bad: %s' % (self, s))
 
     def set(self, safe_len=False, **kwds):
         '''Set one or more attributes.
@@ -1469,7 +1472,7 @@ try:
 except NameError:  # missing
     pass
 
-try:
+try:  # MCCABE 14
     import numpy  # NumPy array, matrix, etc.
 
     def _isnumpy(obj):
@@ -1478,7 +1481,7 @@ try:
         try:
             return isinstance(obj, _numpy_types) or (hasattr(obj, 'nbytes') and
                                           _moduleof(_classof(obj)).startswith('numpy'))
-        except (AttributeError, OSError):  # on iOS/Pythonista
+        except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
             return False
 
     def _len_numpy(obj):
@@ -1608,8 +1611,8 @@ try:
 except NameError:
     pass
 
-try:  # generator, code only, no len(), not callable()
-    _typedef_code(Types.GeneratorType, refs=_gen_refs)
+try:  # generator (expression), no itemsize, no len(), not callable()
+    _typedef_both(Types.GeneratorType, refs=_gen_refs)
 except AttributeError:  # missing
     pass
 
@@ -1736,11 +1739,11 @@ def _typedef(obj, derive=False, frames=False, infer=False):  # MCCABE 25
 class _Prof(object):
     '''Internal type profile class.
     '''
-    total  = 0      # total size
     high   = 0      # largest size
     number = 0      # number of (unique) objects
-    objref = None   # largest object (weakref)
-    weak   = False  # objref is weakref(object)
+    objref = None   # largest obj (weakref)
+    total  = 0      # total size
+    weak   = False  # objref is weakref(obj)
 
     def __cmp__(self, other):
         if self.total < other.total:
@@ -1764,7 +1767,7 @@ class _Prof(object):
         else:
             a, p = self.total, ''
         o = self.objref
-        if self.weak:  # weakref'd
+        if self.weak:
             o = o()
         t = _SI2(self.total)
         if grand:
@@ -1784,6 +1787,56 @@ class _Prof(object):
                 self.objref, self.weak = Weakref.ref(obj), True
             except TypeError:
                 self.objref, self.weak = obj, False
+
+
+class _Rank(object):
+    '''Internal largest object class.
+    '''
+    __slots__ = {
+        'deep':   0,      # recursion depth
+        'id':     0,      # obj id
+        'key':    None,   # Typedef
+        'objref': None,   # obj or Weakref.ref(obj)
+        'pid':    0,      # parent obj id
+        'size':   0,      # size in bytes
+        'weak':   False}  # objref is Weakref.ref
+
+    def __init__(self, key, obj, size, deep, pid):
+        self.deep = deep
+        self.id = id(obj)
+        self.key = key
+        try:  # prefer using weak ref
+            self.objref, self.weak = Weakref.ref(obj), True
+        except TypeError:
+            self.objref, self.weak = obj, False
+        self.pid = pid
+        self.size = size
+
+    def format(self, clip=0, id2x={}):
+        '''Return string.
+        '''
+        o = self.objref
+        if self.weak:
+            o = o()
+        if self.deep > 0:
+            d = ' (at %s)' % (self.deep,)
+        else:
+            d = ''
+        if self.pid:
+            p = ', pix %s' % (id2x.get(self.pid, '?'),)
+        else:
+            p = ''
+        return '%s: %s%s, ix %d%s%s' % (_prepr(self.key, clip=clip),
+               _repr(o, clip=clip), _lengstr(o), id2x[self.id], d, p)
+
+
+class _Seen(dict):
+    '''Internal obj visits counter.
+    '''
+    def again(self, key):
+        s = self[key] + 1
+        if s > 0:
+            self[key] = s
 
 
 # Public classes
@@ -1850,6 +1903,7 @@ class Asized(object):
 class Asizer(object):
     '''Sizer state and options to accumulate sizes.
     '''
+    _above_  = 1024   # rank only objs of 1K+ size
     _align_  = 8
     _clip_   = 80
     _code_   = False
@@ -1867,11 +1921,13 @@ class Asizer(object):
     _incl    = ''  # or ' (incl. code)'
     _mask    = 7   # see _align_
     _missed  = 0   # due to errors
-    _profile = False
-    _profs   = None  # {}
-    _seen    = None  # {}
-    _stream  = None  # I/O stream for printing
-    _total   = 0     # total size
+    _profile = False  # no profiling
+    _profs   = None   # {}
+    _ranked  = 0
+    _ranks   = []     # sorted by decreasing size
+    _seen    = None   # {}
+    _stream  = None   # I/O stream for printing
+    _total   = 0      # total size
 
     def __init__(self, **opts):
         '''New **Asizer** accumulator.
@@ -1881,6 +1937,43 @@ class Asizer(object):
         '''
         self._excl_d = {}
         self.reset(**opts)
+
+    def _c100(self, stats):
+        '''Cutoff as percentage (for backward compatibility)
+        '''
+        s = int(stats)
+        c = int((stats - s) * 100.0 + 0.5) or self.cutoff
+        return s, c
+
+    def _clear(self):
+        '''Clear state.
+        '''
+        self._depth = 0   # recursion depth reached
+        self._incl = ''  # or ' (incl. code)'
+        self._missed = 0   # due to errors
+        self._profile = False
+        self._profs = {}
+        self._ranked = 0
+        self._ranks = []
+        self._seen = _Seen()
+        self._total = 0   # total size
+        for k in _keys(self._excl_d):
+            self._excl_d[k] = 0
+        # don't size, profile or rank private, possibly large objs
+        m = sys.modules[__name__]
+        self.exclude_objs(self, self._excl_d, self._profs, self._ranks,
+                                self._seen, m, m.__dict__, m.__doc__,
+                               _typedefs)
+
+    def _nameof(self, obj):
+        '''Return the object's name.
+        '''
+        return _nameof(obj, '') or self._repr(obj)
+
+    def _prepr(self, obj):
+        '''Like **prepr()**.
+        '''
+        return _prepr(obj, clip=self._clip_)
 
     def _printf(self, fmt, *args, **print3options):
         '''Print to sys.stdout or the configured stream if any is
@@ -1894,56 +1987,57 @@ class Asizer(object):
         else:
             _printf(fmt, *args, **print3options)
 
-    def _clear(self):
-        '''Clear state.
-        '''
-        self._depth = 0   # recursion depth reached
-        self._incl = ''  # or ' (incl. code)'
-        self._missed = 0   # due to errors
-        self._profile = False
-        self._profs = {}
-        self._seen = {}
-        self._total = 0   # total size
-        for k in _keys(self._excl_d):
-            self._excl_d[k] = 0
-
-    def _nameof(self, obj):
-        '''Return the object's name.
-        '''
-        return _nameof(obj, '') or self._repr(obj)
-
-    def _prepr(self, obj):
-        '''Like **prepr()**.
-        '''
-        return _prepr(obj, clip=self._clip_)
-
     def _prof(self, key):
         '''Get _Prof object.
         '''
         p = self._profs.get(key, None)
         if not p:
             self._profs[key] = p = _Prof()
+            self.exclude_objs(p)  # XXX superfluous?
         return p
+
+    def _rank(self, key, obj, size, deep, pid):
+        '''Rank 100 largest objects by size.
+        '''
+        rs = self._ranks
+        # bisect, see <http://GitHub.com/python/cpython/blob/master/Lib/bisect.py>
+        i, j = 0, len(rs)
+        while i < j:
+            m = (i + j) // 2
+            if size < rs[m].size:
+                i = m + 1
+            else:
+                j = m
+        if i < 100:
+            r = _Rank(key, obj, size, deep, pid)
+            rs.insert(i, r)
+            self.exclude_objs(r)  # XXX superfluous?
+            while len(rs) > 100:
+                rs.pop()
+            # self._ranks[:] = rs[:100]
+        self._ranked += 1
 
     def _repr(self, obj):
         '''Like ``repr()``.
         '''
         return _repr(obj, clip=self._clip_)
 
-    def _sizer(self, obj, deep, sized):  # MCCABE 17
+    def _sizer(self, obj, pid, deep, sized):  # MCCABE 19
         '''Size an object, recursively.
         '''
         s, f, i = 0, 0, id(obj)
-        # skip obj if seen before
-        # or if ref of a given obj
-        if i in self._seen:
-            if deep:
-                self._seen[i] += 1
-                if sized:
-                    s = sized(s, f, name=self._nameof(obj))
-                return s
-        else:
-            self._seen[i] = 0
+        if i not in self._seen:
+            self._seen[i] = 1
+        elif deep or self._seen[i]:
+            # skip obj if seen before
+            # or if ref of a given obj
+            self._seen.again(i)
+            if sized:
+                s = sized(s, f, name=self._nameof(obj))
+                self.exclude_objs(s)
+            return s  # zero
+        else:  # deep == seen[i] == 0
+            self._seen.again(i)
         try:
             k, rs = _objkey(obj), []
             if k in self._excl_d:
@@ -1956,35 +2050,42 @@ class Asizer(object):
                                                       infer=self._infer_)
                 if (v.both or self._code_) and v.kind is not self._ign_d:
                     s = f = v.flat(obj, self._mask)  # flat size
-                    if self._profile:  # profile type
+                    if self._profile:
+                        # profile based on *flat* size
                         self._prof(k).update(obj, s)
                     # recurse, but not for nested modules
                     if v.refs and deep < self._limit_ \
                               and not (deep and ismodule(obj)):
                         # add sizes of referents
-                        r, z, d = v.refs, self._sizer, deep + 1
+                        z, d = self._sizer, deep + 1
                         if sized and deep < self._detail_:
                             # use named referents
-                            for o in r(obj, True):
+                            self.exclude_objs(rs)
+                            for o in v.refs(obj, True):
                                 if isinstance(o, _NamedRef):
-                                    t = z(o.ref, d, sized)
-                                    t.name = o.name
+                                    r = z(o.ref, i, d, sized)
+                                    r.name = o.name
                                 else:
-                                    t = z(o, d, sized)
-                                    t.name = self._nameof(o)
-                                rs.append(t)
-                                s += t.size
+                                    r = z(o, i, d, sized)
+                                    r.name = self._nameof(o)
+                                rs.append(r)
+                                s += r.size
                         else:  # just size and accumulate
-                            for o in r(obj, False):
-                                s += z(o, d, None)
-                        # recursion depth reached
+                            for o in v.refs(obj, False):
+                                s += z(o, i, d, None)
+                        # deepest recursion reached
                         if self._depth < d:
                             self._depth = d
-            self._seen[i] += 1
+                if self._stats_ and s > self._above_ > 0:
+                    # rank based on *total* size
+                    self._rank(k, obj, s, deep, pid)
         except RuntimeError:  # XXX RecursionLimitExceeded:
             self._missed += 1
+        if not deep:
+            self._total += s  # accumulate
         if sized:
             s = sized(s, f, name=self._nameof(obj), refs=rs)
+            self.exclude_objs(s)
         return s
 
     def _sizes(self, objs, sized=None):
@@ -1994,19 +2095,15 @@ class Asizer(object):
         '''
         self.exclude_refs(*objs)  # skip refs to objs
         s, t = {}, []
+        self.exclude_objs(s, t)
         for o in objs:
             i = id(o)
             if i in s:  # duplicate
-                self._seen[i] += 1
+                self._seen.again(i)
             else:
-                s[i] = self._sizer(o, 0, sized)
+                s[i] = self._sizer(o, 0, 0, sized)
             t.append(s[i])
-        if sized:
-            s = sum(i.size for i in _values(s))
-        else:
-            s = sum(_values(s))
-        self._total += s  # accumulate
-        return s, tuple(t)
+        return tuple(t)
 
     @property
     def align(self):
@@ -2025,7 +2122,7 @@ class Asizer(object):
         '''
         if opts:
             self.set(**opts)
-        _, t = self._sizes(objs, Asized)
+        t = self._sizes(objs, Asized)
         if len(t) == 1:
             t = t[0]
         return t
@@ -2036,8 +2133,8 @@ class Asizer(object):
         '''
         if opts:
             self.set(**opts)
-        s, _ = self._sizes(objs, None)
-        return s
+        self.exclude_refs(*objs)  # skip refs to objs
+        return sum(self._sizer(o, 0, 0, None) for o in objs)
 
     def asizesof(self, *objs, **opts):
         '''Return the individual sizes of the given objects
@@ -2047,8 +2144,7 @@ class Asizer(object):
         '''
         if opts:
             self.set(**opts)
-        _, t = self._sizes(objs, None)
-        return t
+        return self._sizes(objs, None)
 
     @property
     def clip(self):
@@ -2061,6 +2157,12 @@ class Asizer(object):
         '''Size (byte) code (bool).
         '''
         return self._code_
+
+    @property
+    def cutoff(self):
+        '''Stats cutoff (int).
+        '''
+        return self._cutoff_
 
     @property
     def derive(self):
@@ -2078,7 +2180,13 @@ class Asizer(object):
     def duplicate(self):
         '''Get the number of duplicate objects seen so far (int).
         '''
-        return sum((s - 1) for s in _values(self._seen) if s > 0)
+        return sum(1 for v in _values(self._seen) if v > 1)  # == len
+
+    def exclude_objs(self, *objs):
+        '''Exclude the specified objects from sizing, profiling and ranking.
+        '''
+        for o in objs:
+            self._seen.setdefault(id(o), -1)
 
     def exclude_refs(self, *objs):
         '''Exclude any references to the specified objects from sizing.
@@ -2138,6 +2246,28 @@ class Asizer(object):
         '''
         return self._missed
 
+    def print_largest(self, w=0, cutoff=0, **print3options):
+        '''Print the largest objects.
+
+           The available options and defaults are:
+
+            *w=0*           -- indentation for each line
+
+            *cutoff=100*    -- number of largest objects to print
+
+            *print3options* -- some keyword arguments, like Python 3+ print
+        '''
+        c = int(cutoff) if cutoff else self._cutoff_
+        n = min(len(self._ranks), max(c, 0))
+        s = self._above_
+        if n > 0 and s > 0:
+            self._printf('%s%*d largest object%s (of %d over %d bytes%s)', linesep,
+                          w, n, _plural(n), self._ranked, s, _SI(s), **print3options)
+            id2x = dict((r.id, i) for i, r in enumerate(self._ranks))
+            for r in self._ranks[:n]:
+                s, t = r.size, r.format(self._clip_, id2x)
+                self._printf('%*d bytes%s: %s', w, s, _SI(s), t, **print3options)
+
     def print_profiles(self, w=0, cutoff=0, **print3options):
         '''Print the profiles above *cutoff* percentage.
 
@@ -2157,10 +2287,10 @@ class Asizer(object):
             s = ''
             if self._total:
                 s = ' (% of grand total)'
-                c = max(cutoff, self._cutoff_)
-                c = int(c * 0.01 * self._total)
+                c = int(cutoff) if cutoff else self._cutoff_
+                C = int(c * 0.01 * self._total)
             else:
-                c = 0
+                C = c = 0
             self._printf('%s%*d profile%s:  total%s, average, and largest flat size%s:  largest object',
                          linesep, w, len(t), _plural(len(t)), s, self._incl, **print3options)
             r = len(t)
@@ -2168,15 +2298,14 @@ class Asizer(object):
                 s = 'object%(plural)s:  %(total)s, %(avg)s, %(high)s:  %(obj)s%(lengstr)s' % v.format(self._clip_, self._total)
                 self._printf('%*d %s %s', w, v.number, self._prepr(k), s, **print3options)
                 r -= 1
-                if r > 1 and v.total < c:
-                    c = max(cutoff, self._cutoff_)
+                if r > 1 and v.total < C:
                     self._printf('%+*d profiles below cutoff (%.0f%%)', w, r, c)
                     break
             z = len(self._profs) - len(t)
             if z > 0:
                 self._printf('%+*d %r object%s', w, z, 'zero', _plural(z), **print3options)
 
-    def print_stats(self, objs=(), opts={}, sized=(), sizes=(), stats=3.0, **print3options):
+    def print_stats(self, objs=(), opts={}, sized=(), sizes=(), stats=3, **print3options):
         '''Prints the statistics.
 
            The available options and defaults are:
@@ -2191,14 +2320,13 @@ class Asizer(object):
 
                 *sizes=()*      -- optional, tuple of sizes returned
 
-                *stats=0.0*     -- print stats, see function **asizeof**
+                *stats=3*       -- print stats, see function **asizeof**
 
                 *print3options* -- some keyword arguments, like Python 3+ print
         '''
-        s = min(opts.get('stats', stats) or 0, self._stats_)
+        s = min(opts.get('stats', stats) or 0, self.stats)
         if s > 0:  # print stats
-            t = self._total + self._missed + sum(_values(self._seen))
-            w = len(str(t)) + 1
+            w = len(str(self.missed + self.seen + self.total)) + 1
             t = c = ''
             o = _kwdstr(**opts)
             if o and objs:
@@ -2222,10 +2350,13 @@ class Asizer(object):
                 self._printf('%sasizeof(%s%s%s) ...', linesep, t, c, o, **print3options)
             # print summary
             self.print_summary(w=w, objs=objs, **print3options)
+            # for backward compatibility, cutoff from fractional stats
+            s, c = self._c100(s)
+            self.print_largest(w=w, cutoff=c if s < 2 else 10, **print3options)
             if s > 1:  # print profile
-                self.print_profiles(w=w, cutoff=_c100(s), **print3options)
+                self.print_profiles(w=w, cutoff=c, **print3options)
                 if s > 2:  # print typedefs
-                    self.print_typedefs(w=w, **print3options)
+                    self.print_typedefs(w=w, **print3options)  # PYCHOK .print_largest?
 
     def print_summary(self, w=0, objs=(), **print3options):
         '''Print the summary statistics.
@@ -2244,17 +2375,20 @@ class Asizer(object):
         self._printf('%*d byte sizeof(void*)', w, _sizeof_Cvoidp, **print3options)
         n = len(objs or ())
         self._printf('%*d object%s %s', w, n, _plural(n), 'given', **print3options)
-        n = len(self._seen)
+        n = self.sized
         self._printf('%*d object%s %s', w, n, _plural(n), 'sized', **print3options)
         if self._excl_d:
             n = sum(_values(self._excl_d))
             self._printf('%*d object%s %s', w, n, _plural(n), 'excluded', **print3options)
         n = self.seen
         self._printf('%*d object%s %s', w, n, _plural(n), 'seen', **print3options)
-        n = self.duplicate
-        self._printf('%*d %s object%s', w, n, 'duplicate', _plural(n), **print3options)
+        n = self.ranked
+        if n > 0:
+            self._printf('%*d object%s %s', w, n, _plural(n), 'ranked', **print3options)
         n = self.missed
         self._printf('%*d object%s %s', w, n, _plural(n), 'missed', **print3options)
+        n = self.duplicate
+        self._printf('%*d duplicate%s', w, n, _plural(n), **print3options)
         if self._depth > 0:
             self._printf('%*d deepest recursion', w, self._depth, **print3options)
 
@@ -2283,18 +2417,26 @@ class Asizer(object):
             for m, v in _items(_dict_classes):
                 self._printf('%*s %s:  %s', w, '', m, self._prepr(v), **print3options)
 
-    def reset(self, align=8, clip=80, code=False, derive=False,  # PYCHOK too many args
-                    detail=0, frames=False, ignored=True, infer=False,
-                    limit=100, stats=0, stream=None, **extra):
-        '''Reset sizing options, state, etc.
+    @property
+    def ranked(self):
+        '''Get the number objects ranked by size so far (int).
+        '''
+        return self._ranked
+
+    def reset(self, above=1024, align=8, clip=80, code=False,  # PYCHOK too many args
+                    cutoff=10, derive=False, detail=0, frames=False, ignored=True,
+                    infer=False, limit=100, stats=0, stream=None, **extra):
+        '''Reset sizing options, state, etc. to defaults.
 
            The available options and default values are:
 
+                *above=0*      -- threshold for largest objects stats
+
                 *align=8*      -- size alignment
 
-                *clip=80*      -- clip repr() strings
-
                 *code=False*   -- incl. (byte)code size
+
+                *cutoff=10*    -- limit large objects or profiles stats
 
                 *derive=False* -- derive from super type
 
@@ -2308,7 +2450,7 @@ class Asizer(object):
 
                 *limit=100*    -- recursion limit
 
-                *stats=0.0*    -- print statistics, see function **asizeof**
+                *stats=0*      -- print statistics, see function **asizeof**
 
                 *stream=None*  -- output stream for printing
 
@@ -2318,9 +2460,11 @@ class Asizer(object):
             t = _plural(len(extra)), _kwdstr(**extra)
             raise KeyError('invalid option%s: %s' % t)
         # options
+        self._above_ = above
         self._align_ = align
         self._clip_ = clip
         self._code_ = code
+        self._cutoff_ = cutoff
         self._derive_ = derive
         self._detail_ = detail  # for Asized only
         self._frames_ = frames
@@ -2334,23 +2478,27 @@ class Asizer(object):
             self._ign_d = None
         # clear state
         self._clear()
-        self.set(align=align, code=code, stats=stats)
+        self.set(align=align, code=code, cutoff=cutoff, stats=stats)
 
     @property
     def seen(self):
         '''Get the number objects seen so far (int).
         '''
-        return sum(_values(self._seen))
+        return sum(v for v in _values(self._seen) if v > 0)
 
-    def set(self, align=None, code=None, frames=None,
-                  detail=None, limit=None, stats=None):
+    def set(self, above=None, align=None, code=None, cutoff=None,
+                  frames=None, detail=None, limit=None, stats=None):
         '''Set some sizing options.  See also **reset**.
 
            The available options are:
 
+                *above*  -- threshold for largest objects stats
+
                 *align*  -- size alignment
 
                 *code*   -- incl. (byte)code size
+
+                *cutoff* -- limit large objects or profiles stats
 
                 *detail* -- **Asized** refs level
 
@@ -2363,6 +2511,8 @@ class Asizer(object):
            Any options not set remain unchanged from the previous setting.
         '''
         # adjust
+        if above is not None:
+            self._above_ = int(above)
         if align is not None:
             self._align_ = align
             if align > 1:
@@ -2384,15 +2534,23 @@ class Asizer(object):
         if stats is not None:
             if stats < 0:
                 raise ValueError('invalid option: %s=%r' % ('stats', stats))
-            self._cutoff_ = _c100(stats)
-            self._stats_ = s = int(stats)
+            # for backward compatibility, cutoff from fractional stats
+            s, c = self._c100(stats)
+            self._cutoff_ = int(cutoff) if cutoff else c
+            self._stats_ = s
             self._profile = s > 1  # profile types
+
+    @property
+    def sized(self):
+        '''Get the number objects sized so far (int).
+        '''
+        return sum(1 for v in _values(self._seen) if v > 0)
 
     @property
     def stats(self):
         '''Get the stats and cutoff setting (float).
         '''
-        return self._stats_ + (self._cutoff_ * 0.01)
+        return self._stats_  # + (self._cutoff_ * 0.01)
 
     @property
     def total(self):
@@ -2428,11 +2586,13 @@ def asized(*objs, **opts):
 
        The available options and defaults are:
 
+            *above=0*      -- threshold for largest objects stats
+
             *align=8*      -- size alignment
 
-            *clip=80*      -- clip repr() strings
-
             *code=False*   -- incl. (byte)code size
+
+            *cutoff=10*    -- limit large objects or profiles stats
 
             *derive=False* -- derive from super type
 
@@ -2446,7 +2606,7 @@ def asized(*objs, **opts):
 
             *limit=100*    -- recursion limit
 
-            *stats=0.0*    -- print statistics
+            *stats=0*      -- print statistics
 
        If only one object is given, the return value is the **Asized**
        instance for that object.  Otherwise, the length of the returned
@@ -2475,13 +2635,15 @@ def asizeof(*objs, **opts):
 
        The available options and defaults are:
 
-            *align=8*      -- size alignment
+            *above=0*      -- threshold for largest objects stats
 
-            *all=False*    -- all current objects
+            *align=8*      -- size alignment
 
             *clip=80*      -- clip ``repr()`` strings
 
             *code=False*   -- incl. (byte)code size
+
+            *cutoff=10*    -- limit large objects or profiles stats
 
             *derive=False* -- derive from super type
 
@@ -2493,7 +2655,7 @@ def asizeof(*objs, **opts):
 
             *limit=100*    -- recursion limit
 
-            *stats=0.0*    -- print statistics
+            *stats=0*      -- print statistics
 
        Set *align* to a power of 2 to align sizes.  Any value less
        than 2 avoids size alignment.
@@ -2524,19 +2686,25 @@ def asizeof(*objs, **opts):
        given objects.  High *limit* values may cause runtime errors
        and miss objects for sizing.
 
-       A positive value for *stats* prints up to 8 statistics, (1)
-       a summary of the number of objects sized and seen, (2) a
-       simple profile of the sized objects by type and (3+) up to
-       6 tables showing the static, dynamic, derived, ignored,
-       inferred and dict types used, found respectively installed.
-       The fractional part of the *stats* value (x 100) is the
-       cutoff percentage for simple profiles.
+       A positive value for *stats* prints up to 9 statistics, (1)
+       a summary of the number of objects sized and seen and a list
+       of the largests objects with size over *above* bytes, (2) a
+       simple profile of the sized objects by type and (3+) up to 6
+       tables showing the static, dynamic, derived, ignored, inferred
+       and dict types used, found respectively installed.
+       The fractional part of the *stats* value (x 100) is the number
+       of largest objects shown for (*stats*1.+) or the cutoff
+       percentage for simple profiles for (*stats*=2.+).  For example,
+       *stats=1.10* shows the summary and the 10 largest objects,
+       also the default.
 
        See this module documentation for the definition of flat size.
     '''
-    t, p = _objs_opts(objs, **opts)
+    t, p, x = _objs_opts_x(objs, **opts)
     _asizer.reset(**p)
     if t:
+        if x:  # don't size, profile or rank _getobjects tuple
+            _asizer.exclude_objs(t)
         s = _asizer.asizeof(*t)
         _asizer.print_stats(objs=t, opts=opts)  # show opts as _kwdstr
         _asizer._clear()
@@ -2551,11 +2719,15 @@ def asizesof(*objs, **opts):
 
        The available options and defaults are:
 
+            *above=1024*   -- threshold for largest objects stats
+
             *align=8*      -- size alignment
 
             *clip=80*      -- clip ``repr()`` strings
 
             *code=False*   -- incl. (byte)code size
+
+            *cutoff=10*    -- limit large objects or profiles stats
 
             *derive=False* -- derive from super type
 
@@ -2567,7 +2739,7 @@ def asizesof(*objs, **opts):
 
             *limit=100*    -- recursion limit
 
-            *stats=0.0*    -- print statistics
+            *stats=0*      -- print statistics
 
        See function **asizeof** for a description of the options.
 
@@ -2703,10 +2875,44 @@ def refs(obj, **opts):
     return v
 
 
-# License file from an earlier version of this source file follows:
+if __name__ == '__main__':
+
+    if '-v' in sys.argv:
+        import platform
+        print('%s %s (Python %s %s)' % (__file__, __version__,
+                                        sys.version.split()[0],
+                                        platform.architecture()[0]))
+
+    elif '-types' in sys.argv:  # print static _typedefs
+        n = len(_typedefs)
+        w = len(str(n)) * ' '
+        _printf('%s%d type definitions: %s and %s, kind ... %s', linesep,
+                 n, 'basic-', 'itemsize (leng)', '-type[def]s')
+        for k, v in sorted((_prepr(k), v) for k, v in _items(_typedefs)):
+            s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
+            _printf('%s %s: %s', w, k, s)
+
+    else:
+        gc = None
+        if '-gc' in sys.argv:
+            try:
+                import gc  # PYCHOK expected
+                gc.collect()
+            except ImportError:
+                pass
+
+        frames = '-frames' in sys.argv
+
+        # just an example
+        asizeof(all=True, frames=frames, stats=1, above=1024)  # print summary + 10 largest
+
+        if gc:
+            print('gc.collect() %d' % (gc.collect(),))
+
+# License from the initial version of this source file follows:
 
 # --------------------------------------------------------------------
-#       Copyright (c) 2002-2018 -- ProphICy Semiconductor, Inc.
+#       Copyright (c) 2002-2019 -- ProphICy Semiconductor, Inc.
 #                        All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
