@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+- Fix TypeError raised in certain scenarios -- Reported by James Hirschorn
+  (#72), fixed by Jean Brouwers
+- Fix TypeError when creating snapshots with classtracker in certain scenarios
+  -- Reported by rtadewald (#79), fixed by Jean Brouwers
+
 ## 0.6 - 2018-09-01
 
 ### Added
