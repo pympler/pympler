@@ -76,7 +76,7 @@ class TypesTest(unittest.TestCase):
             self.assertEqual(i, 3)
             break
         self.assertEqual(s1, s2)
-        self.assertEqual(s3, 0)
+        self.assertNotEqual(s3, 0)
 
     def test_methods(self):
         '''Test sizing methods and functions
