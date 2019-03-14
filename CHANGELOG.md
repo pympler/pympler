@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+- Added `asizeof` options `above` and `cutoff` to specify minimal size and the
+  number of large objects to be printed
+- The `Asizer` class has a new property `ranked` returning the number of ranked
+  objects.
+- New `Asizer` method `exclude_objs` can be used to exclude objects from being
+  sized, profiled and ranked.
+
+### Changed
+- The `asizeof` option `stats` has been enhanced to include the list of the 100
+  largest objects, ranked by total size.
+
+### Fixed
+- Fix TypeError raised in certain scenarios -- Reported by James Hirschorn
+  (#72), fixed by Jean Brouwers
+- Fix TypeError when creating snapshots with classtracker in certain scenarios
+  -- Reported by rtadewald (#79), fixed by Jean Brouwers
+
 ## 0.6 - 2018-09-01
 
 ### Added
