@@ -203,7 +203,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '19.01.16'
+__version__ = '19.03.29'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -717,7 +717,7 @@ def _dict_refs(obj, named):
             for k, v in _items(obj):
                 yield k
                 yield v
-    except (ReferenceError, TypeError) as x:
+    except (KeyError, ReferenceError, TypeError) as x:
         warnings.warn("Iterating '%s': %r" % (_classof(obj), x))
 
 
