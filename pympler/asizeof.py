@@ -70,7 +70,7 @@ downgrading Pympler to version 0.3.x.
    Call methods **exclude_refs** and/or **exclude_types** to exclude
    references to respectively instances or types of certain objects.
 
-   Use one of the **print\_...** methods to report the statistics.
+   Use one of the **print\\_...** methods to report the statistics.
 
    An instance of class **Asized** is returned for each object sized
    by the **asized** function or method.
