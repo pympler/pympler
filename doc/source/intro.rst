@@ -62,7 +62,7 @@ the size of these objects and all associated referents::
     >>> obj = [1, 2, (3, 4), 'text']
     >>> asizeof.asizeof(obj)
     176
-    >>> print asizeof.asized(obj, detail=1).format()
+    >>> print(asizeof.asized(obj, detail=1).format())
     [1, 2, (3, 4), 'text'] size=176 flat=48
         (3, 4) size=64 flat=32
         'text' size=32 flat=32
