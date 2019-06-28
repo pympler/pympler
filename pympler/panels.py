@@ -58,13 +58,13 @@ class MemoryPanel(Panel):
             self._tracker.track_class(cls)
         self._tracker.create_snapshot('before')
         self.record_stats({'before': ProcessMemoryInfo()})
-
-    def process_response(self, request, response):
+        response = super(MemoryPanel, self).process_request(request)
         self.record_stats({'after': ProcessMemoryInfo()})
         self._tracker.create_snapshot('after')
         stats = self._tracker.stats
         stats.annotate()
         self.record_stats({'stats': stats})
+        return response
 
     def enable_instrumentation(self):
         self._tracker = ClassTracker()

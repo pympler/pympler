@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Compatibility with Django Debug Toolbar 2.x -- Reported by John Carter (#96)
+
+### Removed
+- Compatibility with Django Debug Toolbar 1.x
+
 ## 0.7 - 2019-04-05
 
 ### Added
