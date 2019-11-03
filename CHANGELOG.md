@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 ### Added
+- Python 3.8 support
 - Compatibility with Django Debug Toolbar 2.x -- Reported by John Carter (#96)
 
 ### Removed
+- Python 3.3 support
 - Compatibility with Django Debug Toolbar 1.x
 
 ## 0.7 - 2019-04-05

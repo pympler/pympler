@@ -1,18 +1,19 @@
 language: python
 python:
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
+  - "3.7"
+  - "3.8-dev"
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y graphviz python-tk python-matplotlib
 install:
   - travis_retry pip install Sphinx
+  - travis_retry pip install recommonmark
   - travis_retry pip install pep8
-  - travis_retry pip install 'coverage<4'
+  - travis_retry pip install coverage
   - travis_retry pip install coveralls
   - travis_retry pip install numpy
 script:
