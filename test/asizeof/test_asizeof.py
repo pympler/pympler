@@ -63,10 +63,11 @@ class TypesTest(unittest.TestCase):
                 i += 1
 
         gen = infinite_gen()
-        s1 = asizeof.asizeof(gen, code=True)
+        asizeof.asizeof(gen, code=True)
         for i in gen:
             self.assertEqual(i, 1)
             break
+        s1 = asizeof.asizeof(gen, code=True)
         for i in gen:
             self.assertEqual(i, 2)
             break
