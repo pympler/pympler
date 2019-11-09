@@ -63,18 +63,13 @@ class TypesTest(unittest.TestCase):
                 i += 1
 
         gen = infinite_gen()
+        asizeof.asizeof(gen, code=True)
+        self.assertEqual(next(gen), 1)
         s1 = asizeof.asizeof(gen, code=True)
-        for i in gen:
-            self.assertEqual(i, 1)
-            break
-        for i in gen:
-            self.assertEqual(i, 2)
-            break
+        self.assertEqual(next(gen), 2)
         s2 = asizeof.asizeof(gen, code=True)
         s3 = asizeof.asizeof(gen, code=False)
-        for i in gen:
-            self.assertEqual(i, 3)
-            break
+        self.assertEqual(next(gen), 3)
         self.assertEqual(s1, s2)
         self.assertNotEqual(s3, 0)
 
