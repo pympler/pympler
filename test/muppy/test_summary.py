@@ -5,13 +5,10 @@ import unittest
 from sys import getsizeof
 
 from pympler import summary, muppy
+from pympler.util.compat import StringIO
 
 
 class SummaryTest(unittest.TestCase):
-
-    class DevNull(object):
-        def write(self, text):
-            pass
 
     def test_repr(self):
         """Test that the right representation is returned. """
@@ -57,11 +54,14 @@ class SummaryTest(unittest.TestCase):
         """Test summary can be printed."""
         try:
             self._stdout = sys.stdout
-            sys.stdout = self.DevNull()
+            stream = StringIO()
+            sys.stdout = stream
             sum1 = summary.summarize(muppy.get_objects())
             sum2 = summary.summarize(muppy.get_objects())
             sumdiff = summary.get_diff(sum1, sum2)
             summary.print_(sumdiff)
+            self.assertIn('str', stream.getvalue())
+            self.assertNotIn("<class 'str", stream.getvalue())
         finally:
             sys.stdout = self._stdout
 

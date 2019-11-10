@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Python 3.3 support
 - Compatibility with Django Debug Toolbar 1.x
 
+### Fixed
+- Fix formatting of Python 3 class names in summary diff -- Reported by laundmo
+  (#98)
+
 ## 0.7 - 2019-04-05
 
 ### Added

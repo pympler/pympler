@@ -248,9 +248,8 @@ def print_(rows, limit=15, sort='size', order='descending'):
 
 
 # regular expressions used by _repr to replace default type representations
-type_prefix = re.compile(r"^<type '")
+type_repr = re.compile(r"^<(type|class) '(\S+)'>$")
 address = re.compile(r' at 0x[0-9a-f]+')
-type_suffix = re.compile(r"'>$")
 
 
 def _repr(o, verbosity=1):
@@ -276,8 +275,7 @@ def _repr(o, verbosity=1):
         res = representations[t][verbosity](o)
 
     res = address.sub('', res)
-    res = type_prefix.sub('', res)
-    res = type_suffix.sub('', res)
+    res = type_repr.sub(r'\2', res)
 
     return res
 
