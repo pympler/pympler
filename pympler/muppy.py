@@ -44,7 +44,7 @@ def get_objects(remove_dups=True, include_frames=False):
         # the objects referenced by them
         refs = get_referents(o)
         for ref in refs:
-            if not _is_containerobject(ref):
+            if not gc.is_tracked(ref):
                 # we already got the container objects, now we only add
                 # non-container objects
                 res.append(ref)

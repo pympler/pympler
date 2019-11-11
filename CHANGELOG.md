@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Compatibility with Django Debug Toolbar 1.x
 
 ### Fixed
+- Include dicts which aren't tracked by garbage collector in summary diff --
+  Reported by Dave Johansen (#97)
 - Fix formatting of Python 3 class names in summary diff -- Reported by laundmo
   (#98)
 

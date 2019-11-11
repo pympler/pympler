@@ -213,7 +213,7 @@ class ObjectTracker(object):
             # the objects referenced by them
             refs = muppy.get_referents(o)
             for ref in refs:
-                if not muppy._is_containerobject(ref):
+                if not gc.is_tracked(ref):
                     # we already got the container objects, now we only add
                     # non-container objects
                     res.append(ref)

@@ -206,6 +206,16 @@ class MuppyTest(unittest.TestCase):
         self.assertEqual(gc.collect(), 0)
         gc.enable()
 
+    def test_untracked_containers(self):
+        """Test whether untracked container objects are detected.
+        """
+        untracked = {}
+        tracked = {'untracked': untracked}
+        self.assertTrue(gc.is_tracked(tracked))
+        self.assertFalse(gc.is_tracked(untracked))
+        objects = [id(o) for o in muppy.get_objects()]
+        self.assertTrue(id(untracked) in objects)
+
 
 def suite():
     suite = unittest.makeSuite(MuppyTest,'test')
