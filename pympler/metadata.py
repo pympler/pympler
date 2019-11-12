@@ -5,7 +5,7 @@ This information is used in setup.py as well as in doc/source/conf.py.
 """
 
 project_name = 'Pympler'
-version      = '0.7'
+version      = '0.8'
 url          = 'https://github.com/pympler/pympler'
 license      = 'Apache License, Version 2.0'
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
@@ -31,6 +31,6 @@ web profiling frontend exposes process statistics, garbage
 visualisation and class tracker statistics.
 
 Pympler is written entirely in Python, with no dependencies to
-external libraries. It has been tested with Python 2.7, 3.4, 3.5, 3.6, 3.7, 3.8
-on Linux, Windows and MacOS X.
+external libraries. It has been tested with Python 2.7, 3.4, 3.5, 3.6,
+3.7, 3.8 on Linux, Windows and MacOS X.
 '''
