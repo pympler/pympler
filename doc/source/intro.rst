@@ -23,7 +23,7 @@ Requirements
 Pympler is written entirely in Python, with no dependencies to external
 libraries. It integrates `Bottle <http://bottlepy.org>`_ and
 `Flot <http://www.flotcharts.org>`_. Pympler has been tested with
-Python 2.7, 3.3, 3.4, 3.5, 3.6 and 3.7.
+Python 2.7, 3.4, 3.5, 3.6, 3.7 and 3.8.
 
 Pympler is platform independent and has been tested on various Linux
 distributions (32bit and 64bit), Windows 7 and MacOS X.
