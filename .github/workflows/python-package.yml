@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip wheel
-        pip install Sphinx recommonmark pycodestyle coverage coveralls numpy
+        pip install Sphinx recommonmark pycodestyle coverage coveralls numpy mypy
     - name: Test
       run: |
         python -Wall setup.py try
@@ -35,6 +35,9 @@ jobs:
     - name: Lint
       run: |
         pycodestyle pympler
+    - name: Type checks
+      run: |
+        mypy pympler
     - name: Build documentation
       run: |
         python run.py --html
