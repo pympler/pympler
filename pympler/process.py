@@ -67,7 +67,7 @@ class _ProcessMemoryInfo(object):
         """
         return False  # pragma: no cover
 
-    def __sub__(self, other: _ProcessMemoryInfo) -> Iterable[Tuple[str, int]]:
+    def __sub__(self, other: '_ProcessMemoryInfo') -> Iterable[Tuple[str, int]]:
         diff = [('Resident set size (delta)', self.rss - other.rss),
                 ('Virtual size (delta)', self.vsz - other.vsz),
                 ]

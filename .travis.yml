@@ -1,6 +1,5 @@
 language: python
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
   - "3.7"
@@ -13,6 +12,7 @@ install:
   - travis_retry pip install Sphinx
   - travis_retry pip install recommonmark
   - travis_retry pip install pep8
+  - travis_retry pip install mypy
   - travis_retry pip install coverage
   - travis_retry pip install coveralls
   - travis_retry pip install numpy
@@ -23,6 +23,7 @@ script:
   - COVERAGE=1 coverage run test/runtest.py
   - python run.py --doctest
   - python run.py --html
+  - mypy pympler --ignore-missing-imports
 after_script:
   - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
 after_success:
