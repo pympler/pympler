@@ -4,12 +4,14 @@ Generate charts from gathered data.
 Requires **matplotlib**.
 """
 
+from pympler.classtracker_stats import Stats
+
 try:
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    def tracker_timespace(filename, stats):
+    def tracker_timespace(filename: str, stats: Stats):
         """
         Create a time-space chart from a ``Stats`` instance.
         """
@@ -54,5 +56,5 @@ try:
         fig.savefig(filename)
 
 except ImportError:
-    def tracker_timespace(*_args):
+    def tracker_timespace(filename: str, stats: Stats):
         pass
