@@ -228,6 +228,7 @@ class Snapshot(object):
         self.timestamp = timestamp
         self.system_total = pympler.process.ProcessMemoryInfo()
         self.desc = description
+        self.classes = None  # type: Optional[Dict[str, Dict[str, Any]]]
 
     @property
     def total(self) -> int:
@@ -566,7 +567,7 @@ class ClassTracker(object):
             for tobj in tracked_objects:
                 tobj.track_size(timestamp, sizer)
 
-            snapshot = Snapshot(timestamp, description)
+            snapshot = Snapshot(timestamp, str(description))
             snapshot.tracked_total = sizer.total
             if compute_total:
                 snapshot.asizeof_total = asizeof.asizeof(all=True, code=True)
