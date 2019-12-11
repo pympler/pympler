@@ -76,8 +76,8 @@ class LogTestCase(unittest.TestCase):
         self.tracker.clear()
 
         stats = ConsoleStats(stream=f2)
-        self.assertEqual(stats.index, None)
-        self.assertEqual(stats.snapshots, None)
+        self.assertEqual(stats.index, {})
+        self.assertEqual(stats.snapshots, [])
         tmp.seek(0)
         stats.load_stats(tmp)
         tmp.close()
