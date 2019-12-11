@@ -187,8 +187,10 @@ downgrading Pympler to version 0.3.x.
      ``_builtin_modules``.
 '''  # PYCHOK escape
 import sys
-if sys.version_info < (2, 6, 0):
-    raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
+if sys.version_info < (3, 5, 0):
+    raise NotImplementedError('%s requires Python 3.5 or newer' % ('asizeof',))
+
+from typing import Dict
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
@@ -207,9 +209,10 @@ __version__ = '21.08.09'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
-_builtin_modules = (int.__module__, 'types', Exception.__module__)  # 'weakref'
+_builtin_mods = [int.__module__, 'types', Exception.__module__]  # 'weakref'
 if __name__ != '__main__':  # treat this very module as built-in
-    _builtin_modules += (__name__,)
+    _builtin_mods.append(__name__)
+_builtin_modules = tuple(_builtin_mods)
 
 # Sizes of some primitive C types
 # XXX len(pack(T, 0)) == Struct(T).size == calcsize(T)
@@ -239,24 +242,14 @@ _sizeof_CPyModuleObject = _calcsize('PzP0P')  # sizeof(PyModuleObject)
 _sizeof_CPyDictEntry = _calcsize('z2P')  # sizeof(PyDictEntry)
 _sizeof_Csetentry = _calcsize('lP')  # sizeof(setentry)
 
-try:  # C typedef digit for multi-precision int (or long)
-    _sizeof_Cdigit = long.__itemsize__
-except NameError:  # no long in Python 3+
-    _sizeof_Cdigit = int.__itemsize__
+_sizeof_Cdigit = int.__itemsize__
 if _sizeof_Cdigit < 2:  # pragma: no coverage
     raise AssertionError('sizeof(%s) bad: %d' % ('digit', _sizeof_Cdigit))
 
-try:
-    _builtins2 = range, xrange
-except NameError:  # Python 3+
-    _builtins2 = range,
+_builtins2 = (range,)
 
 # Get character size for internal unicode representation in Python < 3.3
-try:  # sizeof(unicode_char)
-    u = unicode('\0')
-except NameError:  # no unicode() in Python 3+
-    u = '\0'
-u = u.encode('utf-8')
+u = '\0'.encode('utf-8')
 _sizeof_Cunicode = len(u)
 del u
 
@@ -276,11 +269,7 @@ if hasattr(sys, 'gettotalrefcount'):  # pragma: no coverage
 else:
     _sizeof_Crefcounts = 0
 
-try:
-    from abc import ABCMeta
-except ImportError:
-    class ABCMeta(type):
-        pass
+from abc import ABCMeta
 
 # Some flags from .../Include/object.h
 _Py_TPFLAGS_HEAPTYPE = 1 << 9  # Py_TPFLAGS_HEAPTYPE
@@ -331,20 +320,10 @@ except NameError:  # callable() removed in Python 3+
 
 # 'cell' is holding data used in closures
 c = (lambda unused: (lambda: unused))(None)
-try:
-    _cell_type = type(c.__closure__[0])
-except AttributeError:  # Python 2.5
-    _cell_type = type(c.func_closure[0])
+_cell_type = type(c.__closure__[0])
 del c
 
-try:
-    from gc import get_objects as _getobjects  # containers only?
-except ImportError:
-    def _getobjects():
-        # modules first, globals and stack
-        # objects (may contain duplicates)
-        return tuple(_values(sys.modules)) + (
-               globals(), stack(sys.getrecursionlimit())[2:])
+from gc import get_objects as _getobjects  # containers only?
 
 if sys.platform == 'ios':  # Apple iOS
     _gc_getobjects = _getobjects
@@ -353,23 +332,13 @@ if sys.platform == 'ios':  # Apple iOS
         # avoid Pythonista3/Python 3+ crash
         return tuple(o for o in _gc_getobjects() if not _isNULL(o))
 
-try:  # only used to get referents of
-    # iterators, but gc.get_referents()
-    # returns () for dict...-iterators
-    from gc import get_referents as _getreferents
-except ImportError:
-    def _getreferents(unused):
-        return ()  # sorry, no refs
+from gc import get_referents as _getreferents
 
 # sys.getsizeof() new in Python 2.6
 _getsizeof = sys.getsizeof  # overridden below
 _getsizeof_excls = ()  # types not sys.getsizeof'd
 
-try:  # str intern()
-    _intern = intern
-except NameError:  # no intern() in Python 3+
-    def _intern(val):
-        return val
+from sys import intern as _intern
 
 
 # Private functions
@@ -1035,7 +1004,7 @@ class _Claskey(object):
 # results for repr() and str() of new- and old-style classes
 # and instances.
 
-_claskeys = {}  # [id(obj)] = _Claskey()
+_claskeys = {}  # type: Dict[int, _Claskey]
 
 
 def _claskey(obj, style):
@@ -1048,76 +1017,21 @@ def _claskey(obj, style):
     return k
 
 
-try:  # MCCABE 19
-    # no Class- and InstanceType in Python 3+
-    _Types_ClassType = Types.ClassType
-    _Types_InstanceType = Types.InstanceType
+def _keytuple(obj):  # PYCHOK expected
+    '''Return class and instance keys for a class.
+    '''
+    if type(obj) is _Type_type:  # isclass(obj):
+        return _claskey(obj, _new_style), obj
+    return None, None  # not a class
 
-    class _Instkey(object):
-        '''Wrapper for old-style class (instances).
-        '''
-        __slots__ = ('_obj',)
 
-        def __init__(self, obj):
-            self._obj = obj  # XXX Weakref.ref(obj)
-
-        def __str__(self):
-            t = _moduleof(self._obj), self._obj.__name__, _old_style
-            return '<class %s.%s%s>' % t
-        __repr__ = __str__
-
-    _instkeys = {}  # [id(obj)] = _Instkey()
-
-    def _instkey(obj):
-        '''Wrap an old-style class (instance).
-        '''
-        i = id(obj)
-        k = _instkeys.get(i, None)
-        if not k:
-            _instkeys[i] = k = _Instkey(obj)
-        return k
-
-    def _keytuple(obj):
-        '''Return class and instance keys for a class.
-        '''
-        t = type(obj)
-        if t is _Types_InstanceType:
-            t = obj.__class__
-            return _claskey(t, _old_style), _instkey(t)
-        elif t is _Types_ClassType:
-            return _claskey(obj, _old_style), _instkey(obj)
-        elif t is _Type_type:
-            return _claskey(obj, _new_style), obj
-        return None, None  # not a class
-
-    def _objkey(obj):
-        '''Return the key for any object.
-        '''
-        k = type(obj)
-        if k is _Types_InstanceType:
-            k = _instkey(obj.__class__)
-        elif k is _Types_ClassType:
-            k = _claskey(obj, _old_style)
-        elif k is _Type_type:
-            k = _claskey(obj, _new_style)
-        return k
-
-except AttributeError:  # Python 3+
-
-    def _keytuple(obj):  # PYCHOK expected
-        '''Return class and instance keys for a class.
-        '''
-        if type(obj) is _Type_type:  # isclass(obj):
-            return _claskey(obj, _new_style), obj
-        return None, None  # not a class
-
-    def _objkey(obj):  # PYCHOK expected
-        '''Return the key for any object.
-        '''
-        k = type(obj)
-        if k is _Type_type:  # isclass(obj):
-            k = _claskey(obj, _new_style)
-        return k
+def _objkey(obj):  # PYCHOK expected
+    '''Return the key for any object.
+    '''
+    k = type(obj)
+    if k is _Type_type:  # isclass(obj):
+        k = _claskey(obj, _new_style)
+    return k
 
 
 class _NamedRef(object):
@@ -1345,10 +1259,8 @@ _typedef_both(type(None))
 
 # dict, dictproxy, dict_proxy and other dict-like types
 _dict_typedef = _typedef_both(dict, item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
-try:  # <type dictproxy> only in Python 2.x
-    _typedef_both(Types.DictProxyType, item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
-except AttributeError:  # XXX any class __dict__ is <type dict_proxy> in Python 3+?
-    _typedef_both(type(_Typedef.__dict__), item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
+# XXX any class __dict__ is <type dict_proxy> in Python 3+?
+_typedef_both(type(_Typedef.__dict__), item=_sizeof_CPyDictEntry, leng=_len_dict, refs=_dict_refs)
 # other dict-like classes and types may be derived or inferred,
 # provided the module and class name is listed here (see functions
 # adict, _isdictclass and _infer_dict for further details)
@@ -1381,7 +1293,7 @@ try:
         '''
         return len(obj) * obj.itemsize
 
-    _all_lens += (_len_array,)
+    _all_lens += (_len_array,)  # type: ignore
 
     _typedef_both(array, **_array_kwds(array('d', [])))
 
@@ -1402,14 +1314,6 @@ except NameError:  # missing
 
 try:  # ignore basestring
     _typedef_both(basestring, leng=None)
-except NameError:  # missing
-    pass
-
-try:
-    if isbuiltin(buffer):  # Python 2.2
-        _typedef_both(type(buffer('')), item=_sizeof_Cbyte, leng=_len)  # XXX len in bytes?
-    else:
-        _typedef_both(buffer, item=_sizeof_Cbyte, leng=_len)  # XXX len in bytes?
 except NameError:  # missing
     pass
 
