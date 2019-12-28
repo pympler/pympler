@@ -5,8 +5,8 @@ Provide saving, loading and presenting gathered `ClassTracker` statistics.
 from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import os
+import pickle
 import sys
-from pympler.util.compat import pickle
 from copy import deepcopy
 from pympler.util.stringutils import trunc, pp, pp_timestamp
 

@@ -2,10 +2,10 @@ import doctest
 import sys
 import unittest
 
+from io import StringIO
 from sys import getsizeof
 
 from pympler import summary, muppy
-from pympler.util.compat import StringIO
 
 
 class SummaryTest(unittest.TestCase):

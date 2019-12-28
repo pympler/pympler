@@ -2,10 +2,13 @@
 import sys
 import unittest
 
-from pympler.util.compat import HTMLParser, HTTPConnection, StringIO
-from pympler.util.compat import Request, urlopen, URLError
+from html.parser import HTMLParser
+from http.client import HTTPConnection
+from io import StringIO
 from socket import error as socket_error
 from time import sleep
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 from pympler.classtracker import ClassTracker
 from pympler.garbagegraph import start_debug_garbage, end_debug_garbage
