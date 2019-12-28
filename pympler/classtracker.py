@@ -17,7 +17,6 @@ from time import sleep, time
 from weakref import ref as weakref_ref
 
 from pympler.classtracker_stats import ConsoleStats
-from pympler.util.compat import instancemethod
 from pympler.util.stringutils import safe_repr
 
 import pympler.asizeof as asizeof
@@ -339,7 +338,7 @@ class ClassTracker(object):
         def new_constructor(*args: Any, **kwargs: Any) -> None:
             return func(observer, *args, **kwargs)
 
-        cls.__init__ = instancemethod(new_constructor, None, cls)  # type: ignore
+        cls.__init__ = new_constructor  # type: ignore
 
     def _is_tracked(self, cls: type) -> bool:
         """

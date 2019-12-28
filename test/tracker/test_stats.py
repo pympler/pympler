@@ -4,10 +4,9 @@ import re
 import sys
 import unittest
 
+from io import StringIO, BytesIO
 from shutil import rmtree
 from tempfile import mkdtemp, mkstemp
-
-from pympler.util.compat import StringIO, BytesIO
 
 from pympler.classtracker import ClassTracker
 from pympler.classtracker_stats import ConsoleStats, HtmlStats, Stats
