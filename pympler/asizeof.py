@@ -190,7 +190,7 @@ import sys
 if sys.version_info < (3, 5, 0):
     raise NotImplementedError('%s requires Python 3.5 or newer' % ('asizeof',))
 
-from typing import Dict
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
@@ -320,7 +320,7 @@ except NameError:  # callable() removed in Python 3+
 
 # 'cell' is holding data used in closures
 c = (lambda unused: (lambda: unused))(None)
-_cell_type = type(c.__closure__[0])
+_cell_type = type(c.__closure__[0])  # type: ignore
 del c
 
 from gc import get_objects as _getobjects  # containers only?
@@ -964,7 +964,7 @@ def _len_unicode(obj):
 _all_lens = (None, _len, _len_bytearray, _len_code, _len_dict,
                    _len_frame, _len_int, _len_iter, _len_list,
                    _len_module, _len_set, _len_slice, _len_struct,
-                   _len_unicode)  # _len_array, _len_numpy, _len_slots
+                   _len_unicode)  # type: Tuple[Union[None, Callable], ...] # _len_array, _len_numpy, _len_slots
 
 
 # More private functions and classes
@@ -1218,7 +1218,7 @@ class _Typedef(object):
             raise ValueError('invalid option: %s=%r' % ('vari', vari))
 
 
-_typedefs = {}  # [key] = _Typedef()
+_typedefs = {}  # type: Dict[type, _Typedef]
 
 
 def _typedef_both(t, base=0, item=0, leng=None, refs=None,
@@ -1274,46 +1274,38 @@ except AttributeError:  # missing
     pass
 
 # Newer or obsolete types
-try:
-    from array import array  # array type
+from array import array  # array type
 
-    def _array_kwds(obj):
-        if hasattr(obj, 'itemsize'):
-            v = 'itemsize'
-        else:
-            v = _Not_vari
-        # since item size varies by the array data type, set
-        # itemsize to 1 byte and use _len_array in bytes; note,
-        # function itemsize returns the actual size in bytes
-        # and function leng returns the length in number of items
-        return dict(leng=_len_array, item=_sizeof_Cbyte, vari=v)
+def _array_kwds(obj):
+    if hasattr(obj, 'itemsize'):
+        v = 'itemsize'
+    else:
+        v = _Not_vari
+    # since item size varies by the array data type, set
+    # itemsize to 1 byte and use _len_array in bytes; note,
+    # function itemsize returns the actual size in bytes
+    # and function leng returns the length in number of items
+    return dict(leng=_len_array, item=_sizeof_Cbyte, vari=v)
 
-    def _len_array(obj):
-        '''Array length (in bytes!).
-        '''
-        return len(obj) * obj.itemsize
+def _len_array(obj):
+    '''Array length (in bytes!).
+    '''
+    return len(obj) * obj.itemsize
 
-    _all_lens += (_len_array,)  # type: ignore
+_all_lens += (_len_array,)  # type: ignore
 
-    _typedef_both(array, **_array_kwds(array('d', [])))
+_typedef_both(array, **_array_kwds(array('d', [])))
 
-    v = sys.version_info
-    _array_excl = (v[0] == 2 and v < (2, 7, 4)) or \
-                  (v[0] == 3 and v < (3, 2, 4))
-    if _array_excl:  # see function _typedef below
-        _getsizeof_excls_add(array)
+v = sys.version_info
+_array_excl = (v[0] == 2 and v < (2, 7, 4)) or \
+              (v[0] == 3 and v < (3, 2, 4))
+if _array_excl:  # see function _typedef below
+    _getsizeof_excls_add(array)
 
-    del v
-except ImportError:  # missing
-    _array_excl = array = None  # see function _typedef below
+del v
 
 try:  # bool has non-zero __itemsize__ in 3.0
     _typedef_both(bool)
-except NameError:  # missing
-    pass
-
-try:  # ignore basestring
-    _typedef_both(basestring, leng=None)
 except NameError:  # missing
     pass
 
@@ -1342,11 +1334,6 @@ except Exception:  # missing
     pass
 
 try:
-    _typedef_both(file, refs=_file_refs)
-except NameError:  # missing
-    pass
-
-try:
     _typedef_both(frozenset, item=_sizeof_Csetentry, leng=_len_set, refs=_seq_refs)
 except NameError:  # missing
     pass
@@ -1360,11 +1347,7 @@ try:  # not callable()
 except AttributeError:  # missing
     pass
 
-try:  # if long exists, it is multi-precision ...
-    _typedef_both(long, item=_sizeof_Cdigit, leng=_len_int)
-    _typedef_both(int)  # ... and int is fixed size
-except NameError:  # no long, only multi-precision int in Python 3+
-    _typedef_both(int, item=_sizeof_Cdigit, leng=_len_int)
+_typedef_both(int, item=_sizeof_Cdigit, leng=_len_int)
 
 try:  # not callable()
     _typedef_both(Types.MemberDescriptorType)
@@ -1418,7 +1401,7 @@ try:  # MCCABE 14
         t = (numpy.matrix(range(0)),)
     else:  # numpy.matrix deprecated in 1.19.3
         t = ()
-    _numpy_types = ()
+    _numpy_types = ()  # type: Tuple[type, ...]
     for d in (t + (numpy.array(range(0)), numpy.arange(0),
               numpy.ma.masked_array([]), numpy.ndarray(0))):
         t = type(d)
@@ -1438,19 +1421,15 @@ try:  # MCCABE 14
 
     del d, t, v
 except ImportError:  # no NumPy
-    _numpy_excl = numpy = None  # see function _typedef below
+    _numpy_excl = numpy = None  # type: ignore # see function _typedef below
 
-    def _isnumpy(unused):  # PYCHOK expected
+    def _isnumpy(obj):  # PYCHOK expected
         '''Not applicable, no NumPy.
         '''
         return False
 
 try:
     _typedef_both(range)
-except NameError:  # missing
-    pass
-try:
-    _typedef_both(xrange)
 except NameError:  # missing
     pass
 
@@ -1488,11 +1467,7 @@ try:
 except AttributeError:  # missing
     pass
 
-try:
-    _typedef_both(unicode, leng=_len_unicode, item=_sizeof_Cunicode)
-    _typedef_both(str, leng=_len, item=_sizeof_Cbyte)  # 1-byte char
-except NameError:  # str is unicode
-    _typedef_both(str, leng=_len_unicode, item=_sizeof_Cunicode)
+_typedef_both(str, leng=_len_unicode, item=_sizeof_Cunicode)
 
 try:  # <type 'KeyedRef'>
     _typedef_both(Weakref.KeyedRef, refs=_weak_refs, heap=True)  # plus head
@@ -1541,11 +1516,6 @@ except AttributeError:  # missing
 s = [_items({}), _keys({}), _values({})]
 try:  # reversed list and tuples iterators
     s.extend([reversed([]), reversed(())])
-except NameError:  # missing
-    pass
-
-try:  # range iterator
-    s.append(xrange(1))
 except NameError:  # missing
     pass
 
@@ -1843,7 +1813,7 @@ class Asizer(object):
     _profile = False  # no profiling
     _profs   = None   # {}
     _ranked  = 0
-    _ranks   = []     # sorted by decreasing size
+    _ranks   = []     # type: List[_Rank] # sorted by decreasing size
     _seen    = None   # {}
     _stream  = None   # I/O stream for printing
     _total   = 0      # total size
@@ -2813,25 +2783,23 @@ if __name__ == '__main__':
         w = len(str(n)) * ' '
         _printf('%s%d type definitions: %s and %s, kind ... %s', linesep,
                  n, 'basic-', 'itemsize (leng)', '-type[def]s')
-        for k, v in sorted((_prepr(k), v) for k, v in _items(_typedefs)):
-            s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
-            _printf('%s %s: %s', w, k, s)
+        for k, td in sorted((_prepr(k), td) for k, td in _items(_typedefs)):
+            desc = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % td.format()
+            _printf('%s %s: %s', w, k, desc)
 
     else:
-        gc = None
+        import gc
+        collect = False
         if '-gc' in sys.argv:
-            try:
-                import gc  # PYCHOK expected
-                gc.collect()
-            except ImportError:
-                pass
+            collect = True
+            gc.collect()
 
         frames = '-frames' in sys.argv
 
         # just an example
         asizeof(all=True, frames=frames, stats=1, above=1024)  # print summary + 10 largest
 
-        if gc:
+        if collect:
             print('gc.collect() %d' % (gc.collect(),))
 
 # License from the initial version of this source file follows:

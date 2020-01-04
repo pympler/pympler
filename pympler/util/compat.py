@@ -5,7 +5,7 @@ Compatibility layer to allow Pympler being used from different Python versions.
 try:
     import tkinter
 except ImportError:
-    tkinter = None
+    tkinter = None  # type: ignore
 
 
 # Helper functions

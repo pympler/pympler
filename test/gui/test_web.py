@@ -15,12 +15,7 @@ from pympler.garbagegraph import start_debug_garbage, end_debug_garbage
 from pympler.process import get_current_thread_id
 from pympler.web import start_profiler, start_in_background
 
-
-# Use separate process for server if available. Otherwise use a thread.
-#try:
-#    from multiprocessing import Process
-#except ImportError:
-from threading import Thread as Process
+from threading import Thread
 
 _server = None
 
@@ -29,7 +24,7 @@ class Trash(object):
     pass
 
 
-class Server(Process):
+class Server(Thread):
 
     def __init__(self):
         super(Server, self).__init__()
@@ -45,6 +40,7 @@ class Server(Process):
         tracked_trash = Trash()
         tracker.create_snapshot()
 
+        # XXX Comment this out when troubleshooting failing tests
         sys.stdout = StringIO()
         sys.stderr = StringIO()
         start_profiler(debug=True, quiet=True, tracker=tracker)
@@ -52,17 +48,14 @@ class Server(Process):
 
 class WebGuiTest(unittest.TestCase):
 
-
     defaulthost = 'localhost:8090'
     defaulturl = 'http://' + defaulthost
-
 
     class LinkChecker(HTMLParser):
 
         def __init__(self):
             HTMLParser.__init__(self)
             self.errors = 0
-
 
         def follow(self, link):
             if link.startswith('http://'):
@@ -75,16 +68,14 @@ class WebGuiTest(unittest.TestCase):
             if response.status not in [200, 302, 303, 307]:
                 sys.stderr.write('\nLINK-ERROR: %s, %d, %s' % (link, response.status, response.reason))
                 if response.status == 500:
-                    sys.stderr.write(body)
+                    sys.stderr.write(body.decode())
                 self.errors += 1
-
 
         def handle_starttag(self, tag, attrs):
             if tag == 'a':
                 for name, value in attrs:
                     if name == 'href':
                         self.follow(value)
-
 
     def setUp(self):
         """Use the same server for all tests."""
@@ -103,7 +94,6 @@ class WebGuiTest(unittest.TestCase):
                     wait -= 1
                     sleep(1)
 
-
     def get(self, url, status=200):
         conn = HTTPConnection(self.defaulthost, timeout=5)
         conn.request("GET", url)
@@ -117,14 +107,12 @@ class WebGuiTest(unittest.TestCase):
             pass
         return body
 
-
     def test_overview(self):
         """Test availability of web gui."""
 
         req = Request(self.defaulturl)
         page = str(urlopen(req).read())
         self.assert_("Process overview" in page)
-
 
     def test_links(self):
         """Test all linked pages are available."""
@@ -135,12 +123,10 @@ class WebGuiTest(unittest.TestCase):
         parser.close()
         self.assertEqual(parser.errors, 0)
 
-
     def test_static_files(self):
         """Test if static files are served."""
         for filename in ['style.css', 'jquery.flot.min.js']:
             self.get('/static/%s' % filename, status=200)
-
 
     def test_traceback(self):
         """Test if stack traces can be viewed.
@@ -166,7 +152,6 @@ class WebGuiTest(unittest.TestCase):
         body = self.get('/traceback/12345', status=200)
         self.assertTrue("Cannot retrieve stacktrace for thread 12345" in body, body)
 
-
     def test_garbage(self):
         """Test if reference cycles can be viewed."""
         start_debug_garbage()
@@ -190,14 +175,12 @@ class WebGuiTest(unittest.TestCase):
         finally:
             end_debug_garbage()
 
-
     def test_tracker(self):
         resp = self.get('/tracker', status=200)
         clsname = '%s.Trash' % (Trash.__module__)
         self.assertTrue(clsname in resp, resp)
         resp = self.get('/tracker/class/%s' % clsname, status=200)
         self.assertTrue('1 instance' in resp, resp)
-
 
     def test_start_in_background(self):
         """Test server can be started in background mode."""
@@ -206,10 +189,9 @@ class WebGuiTest(unittest.TestCase):
         self.assertEqual(thread.daemon, True)
 
 
-
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    tclasses = [WebGuiTest,]
+    tclasses = [WebGuiTest]
     for tclass in tclasses:
         names = unittest.getTestCaseNames(tclass, 'test_')
         suite.addTests(map(tclass, names))
