@@ -106,19 +106,19 @@ class Stats(object):
         if filename:
             self.load_stats(filename)
 
-    def load_stats(self, fdump: Union[str, IO]) -> None:
+    def load_stats(self, fdump: Union[str, IO[bytes]]) -> None:
         """
         Load the data from a dump file.
         The argument `fdump` can be either a filename or an open file object
         that requires read access.
         """
-        if isinstance(fdump, type('')):
+        if isinstance(fdump, str):
             fdump = open(fdump, 'rb')
         self.index = pickle.load(fdump)
         self.snapshots = pickle.load(fdump)
         self.sorted = []
 
-    def dump_stats(self, fdump: Union[str, IO], close: bool = True) -> None:
+    def dump_stats(self, fdump: Union[str, IO[bytes]], close: bool = True) -> None:
         """
         Dump the logged data to a file.
         The argument `file` can be either a filename or an open file object
