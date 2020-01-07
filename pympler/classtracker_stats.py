@@ -307,10 +307,11 @@ class ConsoleStats(Stats):
         """
         if tobj.death:
             self.stream.write('%-32s ( free )   %-35s\n' % (
-                trunc(tobj.name, 32, left=1), trunc(tobj.repr, 35)))
+                trunc(tobj.name, 32, left=True), trunc(tobj.repr, 35)))
         else:
             self.stream.write('%-32s 0x%08x %-35s\n' % (
-                trunc(tobj.name, 32, left=1),
+                trunc(tobj.name, 32, left=True),
+
                 tobj.id,
                 trunc(tobj.repr, 35)
             ))
