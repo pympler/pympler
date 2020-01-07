@@ -23,7 +23,7 @@ script:
   - COVERAGE=1 coverage run test/runtest.py
   - python run.py --doctest
   - python run.py --html
-  - mypy pympler --ignore-missing-imports
+  - mypy pympler
 after_script:
   - pep8 --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
 after_success:
