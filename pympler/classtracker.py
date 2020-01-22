@@ -511,7 +511,7 @@ class ClassTracker(object):
         function waits for the thread to terminate which can take some time
         depending on the configured interval.
         """
-        if self._periodic_thread and self._periodic_thread.isAlive():
+        if self._periodic_thread and self._periodic_thread.is_alive():
             self._periodic_thread.stop = True
             self._periodic_thread.join()
             self._periodic_thread = None
