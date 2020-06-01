@@ -600,8 +600,8 @@ class HtmlStats(Stats):
                         data = snapshot.classes[classname].copy()
                         path = self.relative_path(self.links[classname])
                         data['cls'] = '<a href="%s">%s</a>' % (path, classname)
-                        data['sum'] = pp(data['sum'])
-                        data['avg'] = pp(data['avg'])
+                        data['sum'] = pp(float(data['sum']))
+                        data['avg'] = pp(float(data['avg']))
                         fobj.write(self.snapshot_cls % data)
             fobj.write('</table>')
             fobj.write('</td><td>\n')
@@ -644,6 +644,34 @@ class HtmlStats(Stats):
 
         return self.chart_tag % (os.path.basename(filename))
 
+    def poly_between(self, x: List, ylower: List,
+                     yupper: List) -> Tuple[Iterable, Iterable]:
+        """
+        This function was removed from matplotlib - here we use a simplified
+        version:
+
+        https://github.com/matplotlib/matplotlib/commit/f4b13e9385c3d60585d62953c2bee92cccd73202
+
+        Given a sequence of *x*, *ylower* and *yupper*, return the polygon
+        that fills the regions between them.  *ylower* or *yupper* can be
+        scalar or iterable.  If they are iterable, they must be equal in
+        length to *x*.
+        Return value is *x*, *y* arrays for use with
+        :meth:`matplotlib.axes.Axes.fill`.
+        """
+        import numpy
+
+        Nx = len(x)
+        if not numpy.iterable(ylower):
+            ylower = ylower * numpy.ones(Nx)
+
+        if not numpy.iterable(yupper):
+            yupper = yupper * numpy.ones(Nx)
+
+        x = numpy.concatenate((x, x[::-1]))
+        y = numpy.concatenate((yupper, ylower[::-1]))
+        return x, y
+
     def create_snapshot_chart(self, filename: str = '') -> str:
         """
         Create chart that depicts the memory allocation over time apportioned
@@ -652,7 +680,6 @@ class HtmlStats(Stats):
         try:
             from pylab import (figure, title, xlabel, ylabel, plot, fill,
                                legend, savefig)
-            import matplotlib.mlab as mlab
         except ImportError:
             return self.nopylab_msg % ("memory allocation")
 
@@ -670,7 +697,7 @@ class HtmlStats(Stats):
                       for fp in self.snapshots
                       if fp.classes is not None]
                 sz = [sx + sy for sx, sy in zip(base, sz)]
-                xp, yp = mlab.poly_between(times, base, sz)
+                xp, yp = self.poly_between(times, base, sz)
                 polys.append(((xp, yp), {'label': cn}))
                 poly_labels.append(cn)
                 base = sz
