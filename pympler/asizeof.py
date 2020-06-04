@@ -203,7 +203,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '19.03.29'
+__version__ = '20.06.04'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -1497,9 +1497,16 @@ try:  # MCCABE 14
         # function alen returns the length in number of items
         return dict(base=b, item=_sizeof_Cbyte,  # not obj.itemsize
                             leng=_len_numpy,
+                            refs=_numpy_refs,
                             vari='itemsize')
 
+    def _numpy_refs(obj, named):
+        '''Return the .base object for NumPy slices, views, etc.
+        '''
+        return _refs(obj, named, 'base')
+
     _all_lens += (_len_numpy,)
+    _all_refs += (_numpy_refs,)
 
     _numpy_types = ()
     for d in (numpy.array(range(0)), numpy.arange(0),
@@ -1903,7 +1910,7 @@ class Asized(object):
 class Asizer(object):
     '''Sizer state and options to accumulate sizes.
     '''
-    _above_  = 1024   # rank only objs of 1K+ size
+    _above_  = 1024   # rank only objs of size 1K+
     _align_  = 8
     _clip_   = 80
     _code_   = False
@@ -2104,6 +2111,12 @@ class Asizer(object):
                 s[i] = self._sizer(o, 0, 0, sized)
             t.append(s[i])
         return tuple(t)
+
+    @property
+    def above(self):
+        '''Get the large object size threshold (int).
+        '''
+        return self._above_
 
     @property
     def align(self):
