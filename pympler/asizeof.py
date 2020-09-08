@@ -1834,7 +1834,10 @@ class _Seen(dict):
     '''Internal obj visits counter.
     '''
     def again(self, key):
-        s = self[key] + 1
+        try:
+            s = self[key] + 1
+        except KeyError:
+            s = 1
         if s > 0:
             self[key] = s
 
