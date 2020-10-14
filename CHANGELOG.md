@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.9 - UNRELEASED
+## UNRELEASED
+
+### Fixed
+
+- Fix summarizing objects at higher verbosity levels -- By Colin Watson
+- Fix tree widget import for Python 3.5 and higher -- By Felix Jung (#77)
+- Fix compatibility issues with numpy 1.19 and later -- By Jean Brouwers (#121)
+- Fix object filtering by size in muppy -- By Kris Jurka
+- Fix documentation typos -- By Tim Gates
+
+## 0.9 - 2020-10-14
 
 ### Added
 
