@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.9 - UNRELEASED
+
+### Added
+
+- Python 3.9 support -- By tirkarthi (#105)
+- Compatibility with Django 3.x -- By Lance Moore (#108)
+
+### Removed
+
+- Python 3.4 support
+
+### Fixed
+
+- Include size of data when sizing Numpy slices -- Rported by sinorga (#111),
+  fixed by Jean Brouwers
+- Fix KeyError when sizing dicts in certain scenarios -- Reported by MrSanZhi
+  (#114), fixed by Jean Brouwers
+
 ## 0.8 - 2019-11-12
 
 ### Added
