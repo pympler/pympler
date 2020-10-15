@@ -40,6 +40,12 @@ try:
 except ImportError:
     from pympler.util import bottle
 
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .classtracker import ClassTracker
+    from .classtracker_stats import Stats
+
 
 class ServerState(threading.local):
     """
@@ -49,21 +55,21 @@ class ServerState(threading.local):
 
     Cache internal structures (garbage graphs, tracker statistics).
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.server = None
         self.stats = None
         self.garbage_graphs = None
         self.id2ref = WeakValueDictionary()
         self.id2obj = dict()
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         self.garbage_graphs = None
 
 
 server = ServerState()
 
 
-def get_ref(obj):
+def get_ref(obj: Any) -> str:
     """
     Get string reference to object. Stores a weak reference in a dictionary
     using the object's id as the key. If the object cannot be weakly
@@ -80,7 +86,7 @@ def get_ref(obj):
     return str(oid)
 
 
-def get_obj(ref):
+def get_obj(ref: str) -> Any:
     """Get object from string reference."""
     oid = int(ref)
     return server.id2ref.get(oid) or server.id2obj[oid]
@@ -94,7 +100,7 @@ bottle.TEMPLATE_PATH.append(static_files)
 
 @bottle.route('/')
 @bottle.view('index')
-def root():
+def root() -> Dict[str, Any]:
     """Get overview."""
     pmi = ProcessMemoryInfo()
     return dict(processinfo=pmi)
@@ -102,7 +108,7 @@ def root():
 
 @bottle.route('/process')
 @bottle.view('process')
-def process():
+def process() -> Dict[str, Any]:
     """Get process overview."""
     pmi = ProcessMemoryInfo()
     threads = get_current_threads()
@@ -111,7 +117,7 @@ def process():
 
 @bottle.route('/tracker')
 @bottle.view('tracker')
-def tracker_index():
+def tracker_index() -> Dict[str, Any]:
     """Get tracker overview."""
     stats = server.stats
     if stats and stats.snapshots:
@@ -150,17 +156,18 @@ def tracker_index():
 
 @bottle.route('/tracker/class/:clsname')
 @bottle.view('tracker_class')
-def tracker_class(clsname):
+def tracker_class(clsname: str) -> Dict[str, Any]:
     """Get class instance details."""
     stats = server.stats
     if not stats:
         bottle.redirect('/tracker')
-    stats.annotate()
+    else:
+        stats.annotate()
     return dict(stats=stats, clsname=clsname)
 
 
 @bottle.route('/refresh')
-def refresh():
+def refresh() -> None:
     """Clear all cached information."""
     server.clear_cache()
     bottle.redirect('/')
@@ -168,7 +175,7 @@ def refresh():
 
 @bottle.route('/traceback/:threadid')
 @bottle.view('stacktrace')
-def get_traceback(threadid):
+def get_traceback(threadid: str) -> Dict[str, Any]:
     threadid = int(threadid)
     frames = sys._current_frames()
     if threadid in frames:
@@ -183,7 +190,7 @@ def get_traceback(threadid):
 
 @bottle.route('/objects/:oid')
 @bottle.view('referents')
-def get_obj_referents(oid):
+def get_obj_referents(oid: str) -> Dict[str, Any]:
     referents = {}
     obj = get_obj(oid)
     if type(obj) is dict:
@@ -198,12 +205,12 @@ def get_obj_referents(oid):
 
 
 @bottle.route('/static/:filename')
-def static_file(filename):
+def static_file(filename: str):
     """Get static files (CSS-files)."""
     return bottle.static_file(filename, root=static_files)
 
 
-def _compute_garbage_graphs():
+def _compute_garbage_graphs() -> List:
     """
     Retrieve garbage graph objects from cache, compute if cache is cold.
     """
@@ -214,7 +221,7 @@ def _compute_garbage_graphs():
 
 @bottle.route('/garbage')
 @bottle.view('garbage_index')
-def garbage_index():
+def garbage_index() -> Dict[str, Any]:
     """Get garbage overview."""
     garbage_graphs = _compute_garbage_graphs()
     return dict(graphs=garbage_graphs)
@@ -222,7 +229,7 @@ def garbage_index():
 
 @bottle.route('/garbage/:index')
 @bottle.view('garbage')
-def garbage_cycle(index):
+def garbage_cycle(index: str) -> Dict[str, Any]:
     """Get reference cycle details."""
     graph = _compute_garbage_graphs()[int(index)]
     graph.reduce_to_cycles()
@@ -246,7 +253,7 @@ def _get_graph(graph, filename):
 
 
 @bottle.route('/garbage/graph/:index')
-def garbage_graph(index):
+def garbage_graph(index: str):
     """Get graph representation of reference cycle."""
     graph = _compute_garbage_graphs()[int(index)]
     reduce_graph = bottle.request.GET.get('reduce', '')
@@ -263,7 +270,7 @@ def garbage_graph(index):
 
 
 @bottle.route('/help')
-def show_documentation():
+def show_documentation() -> None:
     """Redirect to online documentation."""
     bottle.redirect('https://pympler.readthedocs.io/en/latest/')
 
@@ -275,8 +282,10 @@ class PymplerServer(bottle.ServerAdapter):
         self.server.serve_forever()
 
 
-def start_profiler(host='localhost', port=8090, tracker=None, stats=None,
-                   debug=False, **kwargs):
+def start_profiler(host: str = 'localhost', port: int = 8090,
+                   tracker: Optional['ClassTracker'] = None,
+                   stats: Optional['Stats'] = None, debug: bool = False,
+                   **kwargs):
     """
     Start the web server to show profiling data. The function suspends the
     Python application (the current thread) until the web server is stopped.
@@ -328,11 +337,11 @@ class ProfilerThread(Thread):
         self.kwargs = kwargs
         self.daemon = True
 
-    def run(self):
+    def run(self) -> None:
         start_profiler(**self.kwargs)
 
 
-def start_in_background(**kwargs):
+def start_in_background(**kwargs) -> ProfilerThread:
     """
     Start the web server in the background. A new thread is created which
     serves the profiling interface without suspending the current application.
