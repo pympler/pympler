@@ -5,6 +5,8 @@ from pympler.util.stringutils import trunc, pp
 import sys
 import gc
 
+from typing import Optional, TextIO
+
 __all__ = ['GarbageGraph', 'start_debug_garbage', 'end_debug_garbage']
 
 
@@ -31,7 +33,7 @@ class GarbageGraph(ReferenceGraph):
     >>> gb.render('garbage.eps')
     True
     """
-    def __init__(self, reduce=False, collectable=True):
+    def __init__(self, reduce: bool = False, collectable: bool = True):
         """
         Initialize the GarbageGraph with the objects identified by the garbage
         collector. If `collectable` is true, every reference cycle is recorded.
@@ -45,7 +47,7 @@ class GarbageGraph(ReferenceGraph):
 
         ReferenceGraph.__init__(self, gc.garbage, reduce)
 
-    def print_stats(self, stream=None):
+    def print_stats(self, stream: Optional[TextIO] = None) -> None:
         """
         Log annotated garbage objects to console or file.
 
@@ -64,7 +66,7 @@ class GarbageGraph(ReferenceGraph):
                      (self.count, self.num_in_cycles, pp(self.total_size)))
 
 
-def start_debug_garbage():
+def start_debug_garbage() -> None:
     """
     Turn off garbage collector to analyze *collectable* reference cycles.
     """
@@ -72,7 +74,7 @@ def start_debug_garbage():
     gc.disable()
 
 
-def end_debug_garbage():
+def end_debug_garbage() -> None:
     """
     Turn garbage collection on and disable debug output.
     """
