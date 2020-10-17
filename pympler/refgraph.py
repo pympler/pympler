@@ -124,7 +124,7 @@ class ReferenceGraph(object):
         self.objects = cycles
         return len(self.objects)
 
-    def reduce_to_cycles(self) -> Optional[ReferenceGraph]:
+    def reduce_to_cycles(self) -> Optional['ReferenceGraph']:
         """
         Iteratively eliminate leafs to reduce the set of objects to only those
         that build cycles. Return the reduced graph. If there are no cycles,
@@ -192,7 +192,7 @@ class ReferenceGraph(object):
                 if e.dst == x.id:
                     neighbors.add(e.src)
             for nb in neighbors:
-                g[nb].group = min(x.group, getattr(g[nb], 'group', idx))
+                g[nb].group = min(x.group, idx if g[nb].group is None else g[nb].group)
 
         # Assign the edges to the respective groups. Both "ends" of the edge
         # should share the same group so just use the first object's group.
@@ -220,7 +220,7 @@ class ReferenceGraph(object):
 
         return True
 
-    def split(self) -> Iterator[ReferenceGraph]:
+    def split(self) -> Iterator['ReferenceGraph']:
         """
         Split the graph into sub-graphs. Only connected objects belong to the
         same graph. `split` yields copies of the Graph object. Shallow copies
@@ -252,7 +252,7 @@ class ReferenceGraph(object):
                 index += 1
                 yield subgraph
 
-    def split_and_sort(self) -> List[ReferenceGraph]:
+    def split_and_sort(self) -> List['ReferenceGraph']:
         """
         Split the graphs into sub graphs and return a list of all graphs sorted
         by the number of nodes. The graph with most nodes is returned first.
