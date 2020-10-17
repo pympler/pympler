@@ -45,6 +45,7 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .classtracker import ClassTracker
     from .classtracker_stats import Stats
+    from .refgraph import ReferenceGraph
 
 
 class ServerState(threading.local):
@@ -56,11 +57,11 @@ class ServerState(threading.local):
     Cache internal structures (garbage graphs, tracker statistics).
     """
     def __init__(self) -> None:
-        self.server = None
-        self.stats = None
-        self.garbage_graphs = None
-        self.id2ref = WeakValueDictionary()
-        self.id2obj = dict()
+        self.server = None  # type: Optional[PymplerServer]
+        self.stats = None  # type: Optional[Stats]
+        self.garbage_graphs = None  # type: Optional[List[ReferenceGraph]]
+        self.id2ref = WeakValueDictionary()  # type: WeakValueDictionary[int, Any]
+        self.id2obj = dict()  # type: Dict[int, Any]
 
     def clear_cache(self) -> None:
         self.garbage_graphs = None
@@ -176,10 +177,10 @@ def refresh() -> None:
 @bottle.route('/traceback/:threadid')
 @bottle.view('stacktrace')
 def get_traceback(threadid: str) -> Dict[str, Any]:
-    threadid = int(threadid)
+    thread = int(threadid)
     frames = sys._current_frames()
-    if threadid in frames:
-        frame = frames[threadid]
+    if thread in frames:
+        frame = frames[thread]
         outer_frames = getouterframes(frame, 5)
         outer_frames.reverse()
         stack = [(get_ref(f[0].f_locals),) + f[1:] for f in outer_frames]
