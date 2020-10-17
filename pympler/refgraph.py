@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE
 from copy import copy
 from sys import platform
 
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, Iterator, List, Optional, Set
 
 __all__ = ['ReferenceGraph']
 
@@ -20,9 +20,7 @@ __all__ = ['ReferenceGraph']
 # sub-processes on Linux. On Windows, however, close_fds=True leads to
 # ValueError if stdin/stdout/stderr is piped:
 # http://code.google.com/p/pympler/issues/detail?id=28#c1
-popen_flags = {}
-if platform not in ['win32']:  # pragma: no branch
-    popen_flags['close_fds'] = True
+CLOSE_FILE_DESCRIPTORS = platform not in ['win32']
 
 
 class _MetaObject(object):
@@ -33,6 +31,11 @@ class _MetaObject(object):
     __slots__ = ('size', 'id', 'type', 'str', 'group', 'cycle')
 
     def __init__(self) -> None:
+        self.size = 0
+        self.id = 0
+        self.type = ''
+        self.str = ''
+        self.group = None  # type: Optional[int]
         self.cycle = False
 
 
@@ -46,7 +49,7 @@ class _Edge(object):
         self.src = src
         self.dst = dst
         self.label = label
-        self.group = None
+        self.group = None  # type: Optional[int]
 
     def __repr__(self) -> str:
         return "<%08x => %08x, '%s', %s>" % (self.src, self.dst, self.label,
@@ -79,12 +82,13 @@ class ReferenceGraph(object):
         """
         self.objects = list(objects)
         self.count = len(self.objects)
-        self.num_in_cycles = 'N/A'
-        self.edges = None
+        self.num_in_cycles = None  # type: Optional[int]
+        self.edges = set()  # type: Set[_Edge]
+        self.index = None  # type: Optional[int]
 
         if reduce:
             self.num_in_cycles = self._reduce_to_cycles()
-            self._reduced = self  # TODO: weakref?
+            self._reduced = self  # type: Optional[ReferenceGraph]
         else:
             self._reduced = None
 
@@ -130,7 +134,7 @@ class ReferenceGraph(object):
             reduced = copy(self)
             reduced.objects = self.objects[:]
             reduced.metadata = []
-            reduced.edges = []
+            reduced.edges = set()
             self.num_in_cycles = reduced._reduce_to_cycles()
             reduced.num_in_cycles = self.num_in_cycles
             if self.num_in_cycles:
@@ -138,12 +142,12 @@ class ReferenceGraph(object):
                 reduced._annotate_objects()
                 for meta in reduced.metadata:
                     meta.cycle = True
+                self._reduced = reduced
             else:
-                reduced = None
-            self._reduced = reduced
+                self._reduced = None
         return self._reduced
 
-    def _get_edges(self) -> set:
+    def _get_edges(self) -> None:
         """
         Compute the edges for the reference graph.
         The function returns a set of tuples (id(a), id(b), ref) if a
@@ -160,10 +164,11 @@ class ReferenceGraph(object):
                     members = n.items()
                 if not members:
                     members = named_refs(n)
-                for (k, v) in members:
-                    if id(v) == ref:
-                        label = k
-                        break
+                if members:
+                    for (k, v) in members:
+                        if id(v) == ref:
+                            label = k
+                            break
                 self.edges.add(_Edge(id(n), ref, label))
 
     def _annotate_groups(self) -> None:
@@ -177,7 +182,7 @@ class ReferenceGraph(object):
 
         idx = 0
         for x in self.metadata:
-            if not hasattr(x, 'group'):
+            if x.group is None:
                 x.group = idx
                 idx += 1
             neighbors = set()
@@ -202,20 +207,20 @@ class ReferenceGraph(object):
         ``self.objects``, ``self.metadata`` and ``self.edges`` are modified.
         Returns `True` if the group is non-empty. Otherwise returns `False`.
         """
-        self.metadata = [x for x in self.metadata if x.group == group]
+        self.metadata = [x for x in self.metadata if x.group == group]  # type: List[_MetaObject]
         group_set = set([x.id for x in self.metadata])
         self.objects = [obj for obj in self.objects if id(obj) in group_set]
         self.count = len(self.metadata)
         if self.metadata == []:
             return False
 
-        self.edges = [e for e in self.edges if e.group == group]
+        self.edges = {e for e in self.edges if e.group == group}
 
         del self._max_group
 
         return True
 
-    def split(self):
+    def split(self) -> Iterator[ReferenceGraph]:
         """
         Split the graph into sub-graphs. Only connected objects belong to the
         same graph. `split` yields copies of the Graph object. Shallow copies
@@ -247,7 +252,7 @@ class ReferenceGraph(object):
                 index += 1
                 yield subgraph
 
-    def split_and_sort(self):
+    def split_and_sort(self) -> List[ReferenceGraph]:
         """
         Split the graphs into sub graphs and return a list of all graphs sorted
         by the number of nodes. The graph with most nodes is returned first.
@@ -258,7 +263,7 @@ class ReferenceGraph(object):
             graph.index = index
         return graphs
 
-    def _annotate_objects(self):
+    def _annotate_objects(self) -> None:
         """
         Extract meta-data describing the stored objects.
         """
@@ -277,7 +282,7 @@ class ReferenceGraph(object):
             md.str = safe_repr(obj, clip=128)
             self.metadata.append(md)
 
-    def _get_graphviz_data(self):
+    def _get_graphviz_data(self) -> str:
         """
         Emit a graph representing the connections between the objects described
         within the metadata list. The text representation can be transformed to
@@ -307,7 +312,8 @@ class ReferenceGraph(object):
         s.append('}\n')
         return "".join(s)
 
-    def render(self, filename, cmd='dot', format='ps', unflatten=False):
+    def render(self, filename: str, cmd: str = 'dot', format: str = 'ps',
+               unflatten: bool = False) -> bool:
         """
         Render the graph to `filename` using graphviz. The graphviz invocation
         command may be overridden by specifying `cmd`. The `format` may be any
@@ -333,13 +339,14 @@ class ReferenceGraph(object):
 
         if unflatten:
             p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE,
-                       **popen_flags)
-            p2 = Popen(cmdline, stdin=p1.stdout, **popen_flags)
+                       close_fds=CLOSE_FILE_DESCRIPTORS)
+            p2 = Popen(cmdline, stdin=p1.stdout,
+                       close_fds=CLOSE_FILE_DESCRIPTORS)
             p1.communicate(data.encode())
             p2.communicate()
             return p2.returncode == 0
         else:
-            p = Popen(cmdline, stdin=PIPE, **popen_flags)
+            p = Popen(cmdline, stdin=PIPE, close_fds=CLOSE_FILE_DESCRIPTORS)
             p.communicate(data.encode())
             return p.returncode == 0
 
