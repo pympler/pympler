@@ -11,6 +11,8 @@ from subprocess import Popen, PIPE
 from copy import copy
 from sys import platform
 
+from typing import Any, Iterable, List, Optional
+
 __all__ = ['ReferenceGraph']
 
 
@@ -30,7 +32,7 @@ class _MetaObject(object):
     """
     __slots__ = ('size', 'id', 'type', 'str', 'group', 'cycle')
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.cycle = False
 
 
@@ -40,20 +42,20 @@ class _Edge(object):
     """
     __slots__ = ('src', 'dst', 'label', 'group')
 
-    def __init__(self, src, dst, label):
+    def __init__(self, src: int, dst: int, label: str):
         self.src = src
         self.dst = dst
         self.label = label
         self.group = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%08x => %08x, '%s', %s>" % (self.src, self.dst, self.label,
                                              self.group)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return (self.src, self.dst, self.label).__hash__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__hash__() == other.__hash__()
 
 
@@ -71,7 +73,7 @@ class ReferenceGraph(object):
     >>> gb.render('spam.eps')
     True
     """
-    def __init__(self, objects, reduce=False):
+    def __init__(self, objects: Iterable[Any], reduce: bool = False):
         """
         Initialize the ReferenceGraph with a collection of `objects`.
         """
@@ -89,7 +91,7 @@ class ReferenceGraph(object):
         self._get_edges()
         self._annotate_objects()
 
-    def _eliminate_leafs(self, graph):
+    def _eliminate_leafs(self, graph: List[Any]) -> List[Any]:
         """
         Eliminate leaf objects - that are objects not referencing any other
         objects in the list `graph`. Returns the list of objects without the
@@ -103,7 +105,7 @@ class ReferenceGraph(object):
                 result.append(n)
         return result
 
-    def _reduce_to_cycles(self):
+    def _reduce_to_cycles(self) -> int:
         """
         Iteratively eliminate leafs to reduce the set of objects to only those
         that build cycles. Return the number of objects involved in reference
@@ -118,7 +120,7 @@ class ReferenceGraph(object):
         self.objects = cycles
         return len(self.objects)
 
-    def reduce_to_cycles(self):
+    def reduce_to_cycles(self) -> Optional[ReferenceGraph]:
         """
         Iteratively eliminate leafs to reduce the set of objects to only those
         that build cycles. Return the reduced graph. If there are no cycles,
@@ -141,7 +143,7 @@ class ReferenceGraph(object):
             self._reduced = reduced
         return self._reduced
 
-    def _get_edges(self):
+    def _get_edges(self) -> set:
         """
         Compute the edges for the reference graph.
         The function returns a set of tuples (id(a), id(b), ref) if a
@@ -164,7 +166,7 @@ class ReferenceGraph(object):
                         break
                 self.edges.add(_Edge(id(n), ref, label))
 
-    def _annotate_groups(self):
+    def _annotate_groups(self) -> None:
         """
         Annotate the objects belonging to separate (non-connected) graphs with
         individual indices.
@@ -194,7 +196,7 @@ class ReferenceGraph(object):
 
         self._max_group = idx
 
-    def _filter_group(self, group):
+    def _filter_group(self, group: int) -> bool:
         """
         Eliminate all objects but those which belong to `group`.
         ``self.objects``, ``self.metadata`` and ``self.edges`` are modified.
@@ -341,7 +343,7 @@ class ReferenceGraph(object):
             p.communicate(data.encode())
             return p.returncode == 0
 
-    def write_graph(self, filename):
+    def write_graph(self, filename: str) -> None:
         """
         Write raw graph data which can be post-processed using graphviz.
         """

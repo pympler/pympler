@@ -180,9 +180,9 @@ def get_traceback(threadid: str) -> Dict[str, Any]:
     frames = sys._current_frames()
     if threadid in frames:
         frame = frames[threadid]
-        stack = getouterframes(frame, 5)
-        stack.reverse()
-        stack = [(get_ref(f[0].f_locals),) + f[1:] for f in stack]
+        outer_frames = getouterframes(frame, 5)
+        outer_frames.reverse()
+        stack = [(get_ref(f[0].f_locals),) + f[1:] for f in outer_frames]
     else:
         stack = []
     return dict(stack=stack, threadid=threadid)
@@ -205,7 +205,7 @@ def get_obj_referents(oid: str) -> Dict[str, Any]:
 
 
 @bottle.route('/static/:filename')
-def static_file(filename: str):
+def static_file(filename: str) -> bottle.HTTPResponse:
     """Get static files (CSS-files)."""
     return bottle.static_file(filename, root=static_files)
 
@@ -238,7 +238,7 @@ def garbage_cycle(index: str) -> Dict[str, Any]:
     return dict(objects=objects, index=index)
 
 
-def _get_graph(graph, filename):
+def _get_graph(graph: GarbageGraph, filename: str) -> Optional[str]:
     """Retrieve or render a graph."""
     try:
         rendered = graph.rendered_file
@@ -253,7 +253,7 @@ def _get_graph(graph, filename):
 
 
 @bottle.route('/garbage/graph/:index')
-def garbage_graph(index: str):
+def garbage_graph(index: str) -> None:
     """Get graph representation of reference cycle."""
     graph = _compute_garbage_graphs()[int(index)]
     reduce_graph = bottle.request.GET.get('reduce', '')
@@ -285,7 +285,7 @@ class PymplerServer(bottle.ServerAdapter):
 def start_profiler(host: str = 'localhost', port: int = 8090,
                    tracker: Optional['ClassTracker'] = None,
                    stats: Optional['Stats'] = None, debug: bool = False,
-                   **kwargs):
+                   **kwargs: str) -> None:
     """
     Start the web server to show profiling data. The function suspends the
     Python application (the current thread) until the web server is stopped.
