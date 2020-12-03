@@ -127,7 +127,7 @@ class SummaryTracker(object):
                     "You cannot provide summary2 without summary1.")
         return summary._sweep(res)
 
-    def print_diff(self, summary1=None, summary2=None):
+    def print_diff(self, summary1=None, summary2=None, file=None):
         """Compute diff between to summaries and print it.
 
         If no summary is provided, the diff from the last to the current
@@ -135,7 +135,8 @@ class SummaryTracker(object):
         to the current summary is used. If summary1 and summary2 are
         provided, the diff between these two is used.
         """
-        summary.print_(self.diff(summary1=summary1, summary2=summary2))
+        summary.print_(self.diff(summary1=summary1, summary2=summary2),
+                       file=file)
 
     def format_diff(self, summary1=None, summary2=None):
         """Compute diff between to summaries and return a list of formatted
