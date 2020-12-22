@@ -148,9 +148,9 @@ def tracker_index() -> Dict[str, Any]:
             series = [s.total - s.tracked_total - s.overhead
                       for s in stats.snapshots]
             timeseries.append(("Other", series))
-        timeseries = [dict(label=label, data=list(enumerate(data)))
-                      for label, data in timeseries]
-        return dict(snapshots=stats.snapshots, timeseries=dumps(timeseries))
+        timeseries_dump = dumps([dict(label=label, data=list(enumerate(data)))
+                                 for label, data in timeseries])
+        return dict(snapshots=stats.snapshots, timeseries=timeseries_dump)
     else:
         return dict(snapshots=[])
 
