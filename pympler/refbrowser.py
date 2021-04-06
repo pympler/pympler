@@ -242,7 +242,10 @@ class FileBrowser(StreamBrowser):
 # remains outside this block. If you try to instantiate it without having
 # Tkinter installed, the import error will be raised.
 try:
-    from idlelib import TreeWidget as _TreeWidget
+    if sys.version_info < (3, 5, 2):
+        from idlelib import TreeWidget as _TreeWidget
+    else:
+        from idlelib import tree as _TreeWidget
 
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
