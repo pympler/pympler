@@ -86,7 +86,7 @@ def _init_representations():
     representations[dict] = _dict
     function = [
         lambda f: "function (%s)" % f.__name__,
-        lambda f: "function (%s.%s)" % (f.__module, f.__name__),
+        lambda f: "function (%s.%s)" % (f.__module__, f.__name__),
     ]
     representations[types.FunctionType] = function
     _list = [
