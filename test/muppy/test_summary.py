@@ -10,12 +10,22 @@ from pympler.util.compat import StringIO
 
 class SummaryTest(unittest.TestCase):
 
-    def test_repr(self):
-        """Test that the right representation is returned. """
-        self.assert_(summary._repr(''), "<type 'str'>")
-        self.assert_(summary._repr('', 1), "<type 'str'>")
-        self.assert_(summary._repr('', verbosity=1), "<type 'str'>")
-        self.assert_(summary._repr('', verbosity=100), "<type 'str'>")
+    def test_repr_str(self):
+        """Test that the right representation is returned for strings. """
+        self.assertEqual(summary._repr(''), 'str')
+        self.assertEqual(summary._repr('', 1), 'str')
+        self.assertEqual(summary._repr('', verbosity=1), 'str')
+        self.assertEqual(summary._repr('', verbosity=2), 'str')
+        self.assertEqual(summary._repr('', verbosity=100), 'str')
+
+    def test_repr_dict(self):
+        """Test that the right representation is returned for dicts. """
+        self.assertEqual(summary._repr({'a': 1}), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, 1), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=1), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=2), 'dict, len=1')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=3), 'dict, len=1')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=100), 'dict, len=1')
 
     def test_summarize(self):
         """Test summarize method. """
