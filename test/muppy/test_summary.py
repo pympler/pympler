@@ -27,6 +27,22 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(summary._repr({'a': 1}, verbosity=3), 'dict, len=1')
         self.assertEqual(summary._repr({'a': 1}, verbosity=100), 'dict, len=1')
 
+    def test_repr_function(self):
+        """Test that the right representation is returned for functions. """
+        def func():
+            pass
+
+        self.assertEqual(summary._repr(func), 'function (func)')
+        self.assertEqual(summary._repr(func, 1), 'function (func)')
+        self.assertEqual(summary._repr(func, verbosity=1),
+                         'function (func)')
+        self.assertEqual(summary._repr(func, verbosity=2),
+                         'function (muppy.test_summary.func)')
+        self.assertEqual(summary._repr(func, verbosity=3),
+                         'function (muppy.test_summary.func)')
+        self.assertEqual(summary._repr(func, verbosity=100),
+                         'function (muppy.test_summary.func)')
+
     def test_summarize(self):
         """Test summarize method. """
         objects = [1, 'a', 'b', 'a', 5, [], {}]
