@@ -270,7 +270,7 @@ def _repr(o, verbosity=1):
         res = str(t)
     else:
         verbosity -= 1
-        if len(representations[t]) < verbosity:
+        if len(representations[t]) <= verbosity:
             verbosity = len(representations[t]) - 1
         res = representations[t][verbosity](o)
 
