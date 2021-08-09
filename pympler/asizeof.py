@@ -203,7 +203,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '20.06.04'
+__version__ = '21.08.09'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -1508,9 +1508,15 @@ try:  # MCCABE 14
     _all_lens += (_len_numpy,)
     _all_refs += (_numpy_refs,)
 
+    v = tuple(map(int, numpy.__version__.split('.')[:2]))
+
+    if v < (1, 19):
+        t = (numpy.matrix(range(0)),)
+    else:  # numpy.matrix deprecated in 1.19.3
+        t = ()
     _numpy_types = ()
-    for d in (numpy.array(range(0)), numpy.arange(0),
-              numpy.matrix(range(0)), numpy.ma.masked_array([])):
+    for d in (t + (numpy.array(range(0)), numpy.arange(0),
+              numpy.ma.masked_array([]), numpy.ndarray(0))):
         t = type(d)
         if t not in _numpy_types:
             _numpy_types += (t,)
@@ -1521,7 +1527,6 @@ try:  # MCCABE 14
 
     # sizing numpy 1.13 arrays works fine, but 1.8 and older
     # appears to suffer from sys.getsizeof() bug like array
-    v = tuple(map(int, numpy.__version__.split('.')[:2]))
     _numpy_excl = v < (1, 9)
     if _numpy_excl:  # see function _typedef below
         for t in _numpy_types:
