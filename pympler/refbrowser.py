@@ -192,7 +192,7 @@ class StreamBrowser(RefBrowser):
                 # print the first branch (on the same line)
                 self._print(tree.children[0], prefix, carryon)
                 for b in range(1, len_children):
-                    # the caryon becomes the prefix for all following children
+                    # the carryon becomes the prefix for all following children
                     prefix = carryon[:-2] + self.cross + self.hline
                     # remove the vlines for any children of last branch
                     if b == (len_children - 1):

@@ -44,7 +44,7 @@ MemStats class provides all we need::
 When SCons starts, ``MemStats`` is instantiated and the `ClassTracker` is
 connected to a number of classes. SCons has predefined spots where it invokes
 its statistics facilities with ``do_append`` being called. This is where
-snapshosts will be taken of all objects tracked so far.
+snapshots will be taken of all objects tracked so far.
 
 Because of the large number of instances, only a summary is printed to the
 console via ``stats.print_summary()`` and the profile data is dumped to a file
