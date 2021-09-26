@@ -1491,7 +1491,7 @@ try:  # MCCABE 14
 
     def _numpy_kwds(obj):
         b = _getsizeof(obj, 96) - obj.nbytes  # XXX 96..144 typical?
-        # since item size depends on the nympy data type, set
+        # since item size depends on the numpy data type, set
         # itemsize to 1 byte and use _len_numpy in bytes; note,
         # function itemsize returns the actual size in bytes,
         # function alen returns the length in number of items

@@ -2356,7 +2356,7 @@ class FileUpload(object):
     content_length = HeaderProperty('Content-Length', reader=int, default=-1)
 
     def get_header(self, name, default=None):
-        """ Return the value of a header within the mulripart part. """
+        """ Return the value of a header within the multipart part. """
         return self.headers.get(name, default)
 
     @cached_property
