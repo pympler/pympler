@@ -70,9 +70,9 @@ class MuppyTest(unittest.TestCase):
         for i in range(1000):
             objects.append(' ' * i)
         objects = muppy.filter(objects, min=minimum, max=maximum)
-        self.assert_(len(objects) != 0)
+        self.assertTrue(len(objects) != 0)
         for o in objects:
-            self.assert_(minimum <= getsizeof(o) <= maximum)
+            self.assertTrue(minimum <= getsizeof(o) <= maximum)
 
         self.assertRaises(ValueError, muppy.filter, objects, min=17, max=16)
 
@@ -93,19 +93,19 @@ class MuppyTest(unittest.TestCase):
         res = muppy.get_referents(l2, level=1)
         self.assertEqual(len(l2), len(res))
         for o in res:
-            self.assert_(o in l2)
+            self.assertTrue(o in l2)
 
         # return all objects from first and second level
         res = muppy.get_referents(l2, level=2)
         self.assertEqual(len(l1) + len(l2), len(res))
         for o in res:
-            self.assert_((o in l1) or (o in l2))
+            self.assertTrue((o in l1) or (o in l2))
 
         # return all objects from all levels, but with duplicates removed
         res = muppy.get_referents(l2, level=4242)
         self.assertEqual(len(l1) + len(l2), len(res))
         for o in res:
-            self.assert_((o in l0) or (o in l1) or (o in l2))
+            self.assertTrue((o in l0) or (o in l1) or (o in l2))
 
     def test_get_size(self):
         """Test that the return value is the sum of the size of all objects."""
@@ -157,7 +157,7 @@ class MuppyTest(unittest.TestCase):
 #            except AttributeError:
 #                muppy.extra_var = []
 #        res = muppy._get_usage(function)
-#        self.assert_(res is not None)
+#        self.assertTrue(res is not None)
 
     def test_is_containerobject(self):
         """Test that (non-)container objects are identified correctly."""
@@ -181,7 +181,7 @@ class MuppyTest(unittest.TestCase):
         res = muppy._remove_duplicates(objects)
         self.assertEqual(len(expected), len(res))
         for o in res:
-            self.assert_(o in expected)
+            self.assertTrue(o in expected)
 
     def test_sort(self):
         """Test that objects are sorted by size."""
@@ -189,7 +189,7 @@ class MuppyTest(unittest.TestCase):
         objects = muppy.sort(objects)
         while len(objects) > 1:
             prev_o = objects.pop(0)
-            self.assert_(getsizeof(objects[0]) >= getsizeof(prev_o),\
+            self.assertTrue(getsizeof(objects[0]) >= getsizeof(prev_o),\
                  "The previous element appears to be larger than the " +\
                  "current: %s<%s" % (prev_o, objects[0]))
 

@@ -120,7 +120,7 @@ class WebGuiTest(unittest.TestCase):
 
         req = Request(self.defaulturl)
         page = str(urlopen(req).read())
-        self.assert_("Process overview" in page)
+        self.assertTrue("Process overview" in page)
 
 
     def test_links(self):
