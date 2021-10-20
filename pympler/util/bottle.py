@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# type: ignore
 """
 Bottle is a fast and simple micro-framework for small web applications. It
 offers request dispatching (Routes) with url parameter support, templates,
@@ -17,7 +16,7 @@ License: MIT (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Marcel Hellkamp'
-__version__ = '0.12.13'
+__version__ = '0.12.19'
 __license__ = 'MIT'
 
 # The gevent server adapter needs to patch some modules before they are imported
@@ -36,8 +35,8 @@ if __name__ == '__main__':
     if _cmd_options.server and _cmd_options.server.startswith('gevent'):
         import gevent.monkey; gevent.monkey.patch_all()
 
-import base64, cgi, email.utils, functools, hmac, imp, itertools, mimetypes,\
-        os, re, subprocess, sys, tempfile, threading, time, warnings
+import base64, cgi, email.utils, functools, hmac, itertools, mimetypes,\
+        os, re, subprocess, sys, tempfile, threading, time, warnings, hashlib
 
 from datetime import date as datedate, datetime, timedelta
 from tempfile import TemporaryFile
@@ -85,7 +84,12 @@ if py3k:
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
     urlunquote = functools.partial(urlunquote, encoding='latin1')
     from http.cookies import SimpleCookie
-    from collections import MutableMapping as DictMixin
+    if py >= (3, 3, 0):
+        from collections.abc import MutableMapping as DictMixin
+        from types import ModuleType as new_module
+    else:
+        from collections import MutableMapping as DictMixin
+        from imp import new_module
     import pickle
     from io import BytesIO
     from configparser import ConfigParser
@@ -103,6 +107,7 @@ else: # 2.x
     from Cookie import SimpleCookie
     from itertools import imap
     import cPickle as pickle
+    from imp import new_module
     from StringIO import StringIO as BytesIO
     from ConfigParser import SafeConfigParser as ConfigParser
     if py25:
@@ -435,7 +440,7 @@ class Router(object):
         nocheck = set(methods)
         for method in set(self.static) - nocheck:
             if path in self.static[method]:
-                allowed.add(verb)
+                allowed.add(method)
         for method in set(self.dyna_regexes) - allowed - nocheck:
             for combined, rules in self.dyna_regexes[method]:
                 match = combined(path)
@@ -1558,7 +1563,7 @@ class BaseResponse(object):
 
     @property
     def headerlist(self):
-        ''' WSGI conform list of (header, value) tuples. '''
+        """ WSGI conform list of (header, value) tuples. """
         out = []
         headers = list(self._headers.items())
         if 'Content-Type' not in self._headers:
@@ -1566,10 +1571,12 @@ class BaseResponse(object):
         if self._status_code in self.bad_headers:
             bad_headers = self.bad_headers[self._status_code]
             headers = [h for h in headers if h[0] not in bad_headers]
-        out += [(name, val) for name, vals in headers for val in vals]
+        out += [(name, val) for (name, vals) in headers for val in vals]
         if self._cookies:
             for c in self._cookies.values():
-                out.append(('Set-Cookie', c.OutputString()))
+                out.append(('Set-Cookie', _hval(c.OutputString())))
+        if py3k:
+            out = [(k, v.encode('utf8').decode('latin1')) for (k, v) in out]
         return out
 
     content_type = HeaderProperty('Content-Type')
@@ -1780,7 +1787,7 @@ class _ImportRedirect(object):
         ''' Create a virtual package that redirects imports (see PEP 302). '''
         self.name = name
         self.impmask = impmask
-        self.module = sys.modules.setdefault(name, imp.new_module(name))
+        self.module = sys.modules.setdefault(name, new_module(name))
         self.module.__dict__.update({'__file__': __file__, '__path__': [],
                                     '__all__': [], '__loader__': self})
         sys.meta_path.append(self)
@@ -2357,7 +2364,7 @@ class FileUpload(object):
     content_length = HeaderProperty('Content-Length', reader=int, default=-1)
 
     def get_header(self, name, default=None):
-        """ Return the value of a header within the multipart part. """
+        """ Return the value of a header within the mulripart part. """
         return self.headers.get(name, default)
 
     @cached_property
@@ -2578,7 +2585,7 @@ def parse_range_header(header, maxlen=0):
 
 def _parse_qsl(qs):
     r = []
-    for pair in qs.replace(';','&').split('&'):
+    for pair in qs.split('&'):
         if not pair: continue
         nv = pair.split('=', 1)
         if len(nv) != 2: nv.append('')
@@ -2596,7 +2603,7 @@ def _lscmp(a, b):
 def cookie_encode(data, key):
     ''' Encode and sign a pickle-able object. Return a (byte) string '''
     msg = base64.b64encode(pickle.dumps(data, -1))
-    sig = base64.b64encode(hmac.new(tob(key), msg).digest())
+    sig = base64.b64encode(hmac.new(tob(key), msg, digestmod=hashlib.md5).digest())
     return tob('!') + sig + tob('?') + msg
 
 
@@ -2605,7 +2612,7 @@ def cookie_decode(data, key):
     data = tob(data)
     if cookie_is_encoded(data):
         sig, msg = data.split(tob('?'), 1)
-        if _lscmp(sig[1:], base64.b64encode(hmac.new(tob(key), msg).digest())):
+        if _lscmp(sig[1:], base64.b64encode(hmac.new(tob(key), msg, digestmod=hashlib.md5).digest())):
             return pickle.loads(base64.b64decode(msg))
     return None
 
@@ -2905,14 +2912,16 @@ class GeventServer(ServerAdapter):
         * See gevent.wsgi.WSGIServer() documentation for more options.
     """
     def run(self, handler):
-        from gevent import wsgi, pywsgi, local
+        from gevent import pywsgi, local
         if not isinstance(threading.local(), local.local):
             msg = "Bottle requires gevent.monkey.patch_all() (before import)"
             raise RuntimeError(msg)
-        if not self.options.pop('fast', None): wsgi = pywsgi
-        self.options['log'] = None if self.quiet else 'default'
+        if self.options.pop('fast', None):
+            depr('The "fast" option has been deprecated and removed by Gevent.')
+        if self.quiet:
+            self.options['log'] = None
         address = (self.host, self.port)
-        server = wsgi.WSGIServer(address, handler, **self.options)
+        server = pywsgi.WSGIServer(address, handler, **self.options)
         if 'BOTTLE_CHILD' in os.environ:
             import signal
             signal.signal(signal.SIGINT, lambda s, f: server.stop())
@@ -3155,7 +3164,7 @@ class FileCheckerThread(threading.Thread):
         files = dict()
 
         for module in list(sys.modules.values()):
-            path = getattr(module, '__file__', '')
+            path = getattr(module, '__file__', '') or ''
             if path[-4:] in ('.pyo', '.pyc'): path = path[:-1]
             if path and exists(path): files[path] = mtime(path)
 
@@ -3419,7 +3428,7 @@ class StplParser(object):
     _re_cache = {} #: Cache for compiled re patterns
     # This huge pile of voodoo magic splits python code into 8 different tokens.
     # 1: All kinds of python strings (trust me, it works)
-    _re_tok = '((?m)[urbURB]?(?:\'\'(?!\')|""(?!")|\'{6}|"{6}' \
+    _re_tok = '([urbURB]?(?:\'\'(?!\')|""(?!")|\'{6}|"{6}' \
                '|\'(?:[^\\\\\']|\\\\.)+?\'|"(?:[^\\\\"]|\\\\.)+?"' \
                '|\'{3}(?:[^\\\\]|\\\\.|\\n)+?\'{3}' \
                '|"{3}(?:[^\\\\]|\\\\.|\\n)+?"{3}))'
@@ -3442,7 +3451,8 @@ class StplParser(object):
     # Match the start tokens of code areas in a template
     _re_split = '(?m)^[ \t]*(\\\\?)((%(line_start)s)|(%(block_start)s))(%%?)'
     # Match inline statements (may contain python strings)
-    _re_inl = '%%(inline_start)s((?:%s|[^\'"\n]*?)+)%%(inline_end)s' % _re_inl
+    _re_inl = '(?m)%%(inline_start)s((?:%s|[^\'"\n]*?)+)%%(inline_end)s' % _re_inl
+    _re_tok = '(?m)' + _re_tok
 
     default_syntax = '<% %> % {{ }}'
 
