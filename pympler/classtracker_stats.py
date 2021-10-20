@@ -2,7 +2,9 @@
 Provide saving, loading and presenting gathered `ClassTracker` statistics.
 """
 
-from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any, Dict, IO, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+)
 
 import os
 import pickle
@@ -121,7 +123,8 @@ class Stats(object):
         self.snapshots = pickle.load(fdump)
         self.sorted = []
 
-    def dump_stats(self, fdump: Union[str, IO[bytes]], close: bool = True) -> None:
+    def dump_stats(self, fdump: Union[str, IO[bytes]], close: bool = True
+                   ) -> None:
         """
         Dump the logged data to a file.
         The argument `file` can be either a filename or an open file object
@@ -234,7 +237,8 @@ class Stats(object):
         for snapshot in self.snapshots:
             self.annotate_snapshot(snapshot)
 
-    def annotate_snapshot(self, snapshot: 'Snapshot') -> Dict[str, Dict[str, Any]]:
+    def annotate_snapshot(self, snapshot: 'Snapshot'
+                          ) -> Dict[str, Dict[str, Any]]:
         """
         Store additional statistical data in snapshot.
         """
@@ -330,7 +334,8 @@ class ConsoleStats(Stats):
                 pp_timestamp(tobj.death),
             ))
 
-    def print_stats(self, clsname: Optional[str] = None, limit: float = 1.0) -> None:
+    def print_stats(self, clsname: Optional[str] = None, limit: float = 1.0
+                    ) -> None:
         """
         Write tracked objects to stdout.  The output can be filtered and
         pruned.  Only objects are printed whose classname contain the substring
@@ -353,7 +358,10 @@ class ConsoleStats(Stats):
         _sorted = self.sorted
 
         if clsname:
-            _sorted = [to for to in _sorted if clsname in to.classname]  # type: ignore
+            _sorted = [
+                to for to in _sorted
+                if clsname in to.classname  # type: ignore
+            ]
 
         if limit < 1.0:
             limit = max(1, int(len(self.sorted) * limit))
@@ -438,7 +446,8 @@ class HtmlStats(Stats):
         <td id="num">%(pct)3.1f%%</td></tr>"""
 
     def _print_refs(self, fobj: IO, refs: Iterable[Asized], total: int,
-                    level: int = 1, minsize: int = 0, minpct: float = 0.1) -> None:
+                    level: int = 1, minsize: int = 0, minpct: float = 0.1
+                    ) -> None:
         """
         Print individual referents recursively.
         """
@@ -548,7 +557,8 @@ class HtmlStats(Stats):
         objects including code objects but excluding overhead have a total size
         of %(asizeof)s.</p>\n"""
 
-    def relative_path(self, filepath: str, basepath: Optional[str] = None) -> str:
+    def relative_path(self, filepath: str, basepath: Optional[str] = None
+                      ) -> str:
         """
         Convert the filepath path to a relative path against basepath. By
         default basepath is self.basedir.
@@ -729,7 +739,8 @@ class HtmlStats(Stats):
 
         return self.chart_tag % (self.relative_path(filename))
 
-    def create_html(self, fname: str, title: str = "ClassTracker Statistics") -> None:
+    def create_html(self, fname: str, title: str = "ClassTracker Statistics"
+                    ) -> None:
         """
         Create HTML page `fname` and additional files in a directory derived
         from `fname`.

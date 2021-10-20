@@ -145,7 +145,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                     continue
                 value = value.strip()
 
-                def size_in_bytes(x):
+                def size_in_bytes(x: str) -> int:
                     return int(x.split()[0]) * 1024
 
                 if key == 'VmData':

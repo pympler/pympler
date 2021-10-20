@@ -36,7 +36,8 @@ class _ClassObserver(object):
     """
     __slots__ = ('init', 'name', 'detail', 'keep', 'trace')
 
-    def __init__(self, init: Callable, name: str, detail: int, keep: bool, trace: bool):
+    def __init__(self, init: Callable, name: str, detail: int, keep: bool,
+                 trace: bool):
         self.init = init
         self.name = name
         self.detail = detail
@@ -196,7 +197,8 @@ class PeriodicThread(Thread):
     Thread object to take snapshots periodically.
     """
 
-    def __init__(self, tracker: 'ClassTracker', interval: float, *args: Any, **kwargs: Any):
+    def __init__(self, tracker: 'ClassTracker', interval: float, *args: Any,
+                 **kwargs: Any):
         """
         Create thread with given interval and associated with the given
         tracker.
@@ -276,7 +278,8 @@ class ClassTracker(object):
         self.snapshots = []  # type: List[Snapshot]
 
         # Time series of instance count for each tracked class.
-        self.history = defaultdict(list)  # type: Dict[str, List[Tuple[float, int]]]
+        self.history = defaultdict(list) \
+            # type: Dict[str, List[Tuple[float, int]]]
 
         # Keep objects alive by holding a strong reference.
         self._keepalive = []  # type: List[Any]
@@ -297,7 +300,8 @@ class ClassTracker(object):
         """
         return ConsoleStats(tracker=self, stream=self._stream)
 
-    def _tracker(self, _observer_: _ClassObserver, _self_: Any, *args: Any, **kwds: Any) -> None:
+    def _tracker(self, _observer_: _ClassObserver, _self_: Any, *args: Any,
+                 **kwds: Any) -> None:
         """
         Injected constructor for tracked classes.
         Call the actual constructor of the object and track the object.  Attach
@@ -312,7 +316,8 @@ class ClassTracker(object):
         _observer_.init(_self_, *args, **kwds)
 
     def _inject_constructor(self, cls: type, func: Callable, name: str,
-                            resolution_level: int, keep: bool, trace: bool) -> None:
+                            resolution_level: int, keep: bool, trace: bool,
+                            ) -> None:
         """
         Modifying Methods in Place - after the recipe 15.7 in the Python
         Cookbook by Ken Seehof. The original constructors may be restored

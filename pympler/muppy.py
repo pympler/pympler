@@ -19,7 +19,8 @@ def ignore_object(obj: Any) -> bool:
         return True
 
 
-def get_objects(remove_dups: bool = True, include_frames: bool = False) -> List[Any]:
+def get_objects(remove_dups: bool = True, include_frames: bool = False
+                ) -> List[Any]:
     """Return a list of all known objects excluding frame objects.
 
     If (outer) frame objects shall be included, pass `include_frames=True`.  In
@@ -91,7 +92,8 @@ def get_diff(left: List[Any], right: List[Any]) -> Dict[str, List[Any]]:
             res[t].append(o)
         return res
 
-    def get_not_included(foo: List[Any], bar: Dict[type, List[Any]]) -> List[Any]:
+    def get_not_included(foo: List[Any], bar: Dict[type, List[Any]]
+                         ) -> List[Any]:
         """Compare objects from foo with objects defined in the values of
         bar (set of partitions).
         Returns a list of all objects included in list, but not dict values.
@@ -120,7 +122,8 @@ def sort(objects: List[Any]) -> List[Any]:
     return objects
 
 
-def filter(objects: List[Any], Type: Optional[type] = None, min: int = -1, max: int = -1) -> List[Any]:
+def filter(objects: List[Any], Type: Optional[type] = None, min: int = -1,
+           max: int = -1) -> List[Any]:
     """Filter objects.
 
     The filter can be by type, minimum size, and/or maximum size.
