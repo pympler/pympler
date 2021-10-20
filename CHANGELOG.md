@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## UNRELEASED
 
+### Added
+
+- Added type annotations to various Pympler modules which are checked via Mypy
+
+### Changed
+
+- Update bottle.py to 0.12.19
+
+### Removed
+
+- Python 2.7 support
+
 ### Fixed
 
 - Fix summarizing objects at higher verbosity levels -- By Colin Watson
