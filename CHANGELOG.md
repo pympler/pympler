@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Python 3.9 support -- By tirkarthi (#105)
 - Compatibility with Django 3.x -- By Lance Moore (#108)
+- Ability to print summary information to a file -- By bobh66, Reported by
+  artgoldberg (#110)
 
 ### Removed
 

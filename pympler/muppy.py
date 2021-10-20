@@ -265,6 +265,11 @@ def _remove_duplicates(objects):
     return result
 
 
-def print_summary():
-    """Print a summary of all known objects."""
-    summary.print_(summary.summarize(get_objects()))
+def print_summary(file=None):
+    """Print a summary of all known objects.
+
+    Keyword arguments:
+    file -- An open file handle, defaults to sys.stdout
+
+    """
+    summary.print_(summary.summarize(get_objects()), file=file)
