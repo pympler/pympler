@@ -42,5 +42,4 @@ You can post wishes, bug reports or patches at our
 write an email to *pympler-dev@googlegroups.com*.
 
 
-[![Build status](https://secure.travis-ci.org/pympler/pympler.png?branch=master)](http://travis-ci.org/pympler/pympler)
 [![Coverage Status](https://coveralls.io/repos/pympler/pympler/badge.svg?branch=master)](https://coveralls.io/r/pympler/pympler?branch=master)
