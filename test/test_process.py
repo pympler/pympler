@@ -10,10 +10,7 @@ virtual memory size).
 import sys
 import unittest
 
-try:
-    from unittest import mock
-except ImportError:  # Python 2.7
-    mock = None
+from unittest import mock
 from pympler import process
 
 

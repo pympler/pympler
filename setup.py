@@ -18,8 +18,8 @@ def _not_supported(why):
     sys.exit(1)
 
 
-if sys.hexversion < 0x2070000:
-    _not_supported('Pympler requires Python 2.7 or newer')
+if sys.hexversion < 0x3050000:
+    _not_supported('Pympler requires Python 3.5 or newer')
 
 import os
 from distutils.command.install_lib import install_lib
@@ -111,8 +111,6 @@ def run_setup(include_tests=0):
                        'License :: OSI Approved :: Apache Software License',
                        'Operating System :: OS Independent',
                        'Programming Language :: Python',
-                       'Programming Language :: Python :: 2',
-                       'Programming Language :: Python :: 2.7',
                        'Programming Language :: Python :: 3',
                        'Programming Language :: Python :: 3.5',
                        'Programming Language :: Python :: 3.6',
