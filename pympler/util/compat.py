@@ -2,6 +2,8 @@
 Compatibility layer to allow Pympler being used from different Python versions.
 """
 
+from typing import Any, Iterable
+
 try:
     import tkinter
 except ImportError:
@@ -10,7 +12,7 @@ except ImportError:
 
 # Helper functions
 
-def object_in_list(obj, l):
+def object_in_list(obj: Any, l: Iterable) -> bool:
     """Returns True if object o is in list.
 
     Required compatibility function to handle WeakSet objects.

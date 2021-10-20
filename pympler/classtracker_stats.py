@@ -600,12 +600,12 @@ class HtmlStats(Stats):
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
                     if snapshot.classes:
-                        data = snapshot.classes[classname].copy()
+                        info = snapshot.classes[classname].copy()
                         path = self.relative_path(self.links[classname])
-                        data['cls'] = '<a href="%s">%s</a>' % (path, classname)
-                        data['sum'] = pp(data['sum'])
-                        data['avg'] = pp(data['avg'])
-                        fobj.write(self.snapshot_cls % data)
+                        info['cls'] = '<a href="%s">%s</a>' % (path, classname)
+                        info['sum'] = pp(info['sum'])
+                        info['avg'] = pp(info['avg'])
+                        fobj.write(self.snapshot_cls % info)
             fobj.write('</table>')
             fobj.write('</td><td>\n')
             if snapshot.tracked_total:
