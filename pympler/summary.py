@@ -94,13 +94,16 @@ def _init_representations():
         lambda l: "list, len=%s" % len(l)
     ]
     representations[list] = _list
-    module = [lambda m: "module(%s)" % getattr(m, '__name__', getattr(m, '__file__', 'nameless, id: %d' % id(m)))]
+    module = [lambda m: "module(%s)" % getattr(
+        m, '__name__', getattr(m, '__file__', 'nameless, id: %d' % id(m))
+    )]
     representations[types.ModuleType] = module
     _set = [
         lambda s: str(type(s)),
         lambda s: "set, len=%s" % len(s)
     ]
     representations[set] = _set
+
 
 _init_representations()
 
@@ -145,7 +148,7 @@ def get_diff(left, right):
     res = []
 
     right_by_key = dict((r[0], r) for r in right)
-    left_by_key  = dict((r[0], r) for r in left)
+    left_by_key = dict((r[0], r) for r in left)
 
     keys = set(right_by_key)
     keys.update(left_by_key)
@@ -160,8 +163,9 @@ def get_diff(left, right):
         elif l:
             res.append([key, -l[1], -l[2]])
         else:
-            continue # shouldn't happen
+            continue  # shouldn't happen
     return res
+
 
 def format_(rows, limit=15, sort='size', order='descending'):
     """Format the rows as a summary.

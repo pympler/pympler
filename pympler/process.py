@@ -32,7 +32,8 @@ from pympler.util.stringutils import pp
 try:
     from resource import getpagesize as _getpagesize
 except ImportError:
-    _getpagesize = lambda: 4096
+    def _getpagesize():
+        return 4096
 
 
 class _ProcessMemoryInfo(object):
@@ -149,7 +150,10 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                 except ValueError:
                     continue
                 value = value.strip()
-                size_in_bytes = lambda x: int(x.split()[0]) * 1024
+
+                def size_in_bytes(x):
+                    return int(x.split()[0]) * 1024
+
                 if key == 'VmData':
                     self.data_segment = size_in_bytes(value)
                 elif key == 'VmExe':

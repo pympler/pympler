@@ -34,10 +34,7 @@ jobs:
         python run.py --doctest
     - name: Lint
       run: |
-        pycodestyle --exclude=asizeof.py,metadata.py,bottle*.py --max-line-length=80 pympler
-    - name: Check types
-      run: |
-        mypy pympler
+        pycodestyle pympler
     - name: Build documentation
       run: |
         python run.py --html

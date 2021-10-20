@@ -14,22 +14,25 @@ from pympler.asizeof import Asized
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
 
+def _ref2key(ref):
+    return ref.name.split(':')[0]
+
+
 def _merge_asized(base, other, level=0):
     """
     Merge **Asized** instances `base` and `other` into `base`.
     """
-    ref2key = lambda ref: ref.name.split(':')[0]
     base.size += other.size
     base.flat += other.flat
     if level > 0:
-        base.name = ref2key(base)
+        base.name = _ref2key(base)
     # Add refs from other to base. Any new refs are appended.
     base.refs = list(base.refs)  # we may need to append items
     refs = {}
     for ref in base.refs:
-        refs[ref2key(ref)] = ref
+        refs[_ref2key(ref)] = ref
     for ref in other.refs:
-        key = ref2key(ref)
+        key = _ref2key(ref)
         if key in refs:
             _merge_asized(refs[key], ref, level=level + 1)
         else:
@@ -703,7 +706,6 @@ class HtmlStats(Stats):
                 sizelist.append(v['sum'])
         sizelist.insert(0, snapshot.asizeof_total - pylab_sum(sizelist))
         classlist.insert(0, 'Other')
-        #sizelist = [x*0.01 for x in sizelist]
 
         title("Snapshot (%s) Memory Distribution" % (snapshot.desc))
         figure(figsize=(8, 8))

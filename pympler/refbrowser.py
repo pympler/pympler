@@ -448,5 +448,4 @@ def write_sample():
 
 
 if __name__ == "__main__":
-#    print_sample()
     write_sample()
