@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Python 3.10 support
 - Added type annotations to various Pympler modules which are checked via Mypy
 
 ### Changed

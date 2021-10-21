@@ -13,7 +13,6 @@ import unittest
 from unittest import mock
 from pympler import process
 
-
 class ProcessMemoryTests(unittest.TestCase):
 
     def _match_sizes(self, pi1, pi2, ignore=[]):
@@ -100,8 +99,6 @@ class ProcessMemoryTests(unittest.TestCase):
 
     def test_proc(self):
         '''Test reading proc stats with mock data.'''
-        if mock is None:
-            return
         mock_stat = mock.mock_open(read_data='22411 (cat) R 22301 22411 22301 34818 22411 4194304 82 0 0 0 0 0 0 0 20 0 1 0 709170 8155136 221 18446744073709551615 94052544688128 94052544719312 140729623469552 0 0 0 0 0 0 0 0 0 17 6 0 0 0 0 0 94052546816624 94052546818240 94052566347776 140729623473446 140729623473466 140729623473466 140729623478255 0')
         mock_status = mock.mock_open(read_data='Name:  cat\n\nVmData:    2 kB\nMultiple colons: 1:1')
         with mock.patch('builtins.open', new_callable=mock.mock_open) as mock_file:
@@ -109,8 +106,7 @@ class ProcessMemoryTests(unittest.TestCase):
             procinfo = process._ProcessMemoryInfoProc()
         self.assertTrue(procinfo.available)
         self.assertEqual(procinfo.vsz, 8155136)
-        if sys.version_info >= (3, 4):  # Python 3.3 doesn't support mock_open.readlines
-            self.assertEqual(procinfo.data_segment, 2048)
+        self.assertEqual(procinfo.data_segment, 2048)
 
 
 if __name__ == "__main__":

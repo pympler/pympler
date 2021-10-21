@@ -32,5 +32,5 @@ visualisation and class tracker statistics.
 
 Pympler is written entirely in Python, with no dependencies to
 external libraries. It has been tested with Python 3.5, 3.6, 3.7, 3.8,
-3.9 on Linux, Windows and MacOS X.
+3.9, 3.10 on Linux, Windows and MacOS X.
 '''
