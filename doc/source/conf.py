@@ -13,7 +13,7 @@
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join('..', '..')))
-import pympler.metadata as metadata
+import pympler
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -25,7 +25,7 @@ import pympler.metadata as metadata
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'myst_parser']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -34,23 +34,16 @@ templates_path = ['.templates']
 source_suffix = ['.rst', '.md']
 
 source_parsers = {
-   '.md': 'recommonmark.parser.CommonMarkParser',
+   '.md': 'markdown',
 }
 
 # The master toctree document.
 master_doc = 'index'
 
 # General substitutions.
-project = metadata.project_name
-copyright = metadata.copyright
-
-# The default replacements for |version| and |release|, also used in various
-# other places throughout the built documents.
-#
-# The short X.Y version.
-version = metadata.version
-# The full version, including alpha/beta/rc tags.
-release = metadata.version
+project = 'Pympler'
+version = pympler.__version__
+release = pympler.__version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -110,7 +103,7 @@ html_theme = 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['.static']
+html_static_path = []
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -163,7 +156,7 @@ htmlhelp_basename = 'pymplerdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'pympler.tex', metadata.project_name + ' Documentation', metadata.author, 'manual'),
+  ('index', 'pympler.tex', 'Pympler Documentation', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -16,10 +16,7 @@ Tests
 
 * run the test suite 
   $ run.py --test [--clean]
-* make sure the tests pass for all supported Python versions, e.g.
-  $ python3.4 run.py --test --clean
-* there is also a bash script to test Pympler on multiple Python versions
-  $ bash tools/release_test.sh
+* check GitHub Actions if builds are passing in all tested environments
 * check test coverage with coverage.py (http://nedbatchelder.com/code/coverage/)
   $ coverage run test/runtest.py
   $ coverage html
@@ -39,7 +36,8 @@ Docs
 Checks
 ------
   
-* check the meta data specified in pympler/metadata.py
+* check the meta data specified in setup.cfg
+* check the version in pympler/__init__.py
 * check the CHANGELOG file for missing entries
 * check the NOTICE file for missing contributors
 * check the to-be-released module distributions
@@ -49,8 +47,8 @@ Release
 -------
   
 * clean the working copy from any local changes
-* build the source distribution
-  $ python setup.py sdist
+* build the distribution
+  $ python -m build
 * test installing the build in a new virtual env
   $ pip install dist/Pympler-X.X.tar.gz
 * release a new version to the Python package index

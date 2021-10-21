@@ -8,6 +8,7 @@ Introduction
 ------------
 
 .. automodule:: pympler.classtracker
+   :noindex:
 
 Usage
 -----

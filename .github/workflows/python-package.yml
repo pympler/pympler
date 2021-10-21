@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip wheel
-        pip install Sphinx recommonmark pycodestyle coverage coveralls numpy mypy
+        pip install build Sphinx myst-parser pycodestyle coverage coveralls numpy mypy
     - name: Test
       run: |
         python -Wall setup.py try
@@ -32,6 +32,9 @@ jobs:
         python -Wall setup.py test
         COVERAGE=1 coverage run test/runtest.py
         python run.py --doctest
+    - name: Build
+      run: |
+        python -m build
     - name: Lint
       run: |
         pycodestyle pympler
@@ -39,5 +42,6 @@ jobs:
       run: |
         mypy pympler
     - name: Build documentation
+      if: ${{ matrix.python-version != '3.5' }}
       run: |
-        python run.py --html
+        python setup.py build_sphinx -W

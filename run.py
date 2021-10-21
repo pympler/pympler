@@ -14,20 +14,16 @@ _Verbose     =  1
 
 try:
     from subprocess import call as _call
-  ##from distutils.spawn import spawn as _call  # raises DistutilsExecError
 except ImportError:  # no  subprocess.call
     def _call(args):  # use partial substitute
         return os.spawnlp(os.P_WAIT, args[0], args[0], *args[1:])
 
-try:
-    from distutils.dir_util import mkpath as _mkpath
-except ImportError:
-    def _mkpath(dir, **unused):
-        try:
-            os.makedirs(dir)
-        except OSError:  # dir exists
-            pass
-        return dir  # like distutils
+def _mkpath(dir, **unused):
+    try:
+        os.makedirs(dir)
+    except OSError:  # dir exists
+        pass
+    return dir
 
 from shutil import move as _mv, rmtree as shutil_rmtree
 
