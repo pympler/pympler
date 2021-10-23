@@ -148,7 +148,7 @@ def tracker_index():
         return dict(snapshots=[])
 
 
-@bottle.route('/tracker/class/:clsname')
+@bottle.route('/tracker/class/<clsname>')
 @bottle.view('tracker_class')
 def tracker_class(clsname):
     """Get class instance details."""
@@ -166,7 +166,7 @@ def refresh():
     bottle.redirect('/')
 
 
-@bottle.route('/traceback/:threadid')
+@bottle.route('/traceback/<threadid>')
 @bottle.view('stacktrace')
 def get_traceback(threadid):
     threadid = int(threadid)
@@ -181,7 +181,7 @@ def get_traceback(threadid):
     return dict(stack=stack, threadid=threadid)
 
 
-@bottle.route('/objects/:oid')
+@bottle.route('/objects/<oid>')
 @bottle.view('referents')
 def get_obj_referents(oid):
     referents = {}
@@ -197,7 +197,7 @@ def get_obj_referents(oid):
     return dict(referents=referents)
 
 
-@bottle.route('/static/:filename')
+@bottle.route('/static/<filename>')
 def static_file(filename):
     """Get static files (CSS-files)."""
     return bottle.static_file(filename, root=static_files)
@@ -220,7 +220,7 @@ def garbage_index():
     return dict(graphs=garbage_graphs)
 
 
-@bottle.route('/garbage/:index')
+@bottle.route('/garbage/<index:int>')
 @bottle.view('garbage')
 def garbage_cycle(index):
     """Get reference cycle details."""
@@ -245,7 +245,7 @@ def _get_graph(graph, filename):
     return rendered
 
 
-@bottle.route('/garbage/graph/:index')
+@bottle.route('/garbage/graph/<index:int>')
 def garbage_graph(index):
     """Get graph representation of reference cycle."""
     graph = _compute_garbage_graphs()[int(index)]
@@ -257,7 +257,7 @@ def garbage_graph(index):
     filename = 'garbage%so%s.png' % (index, reduce_graph)
     rendered_file = _get_graph(graph, filename)
     if rendered_file:
-        bottle.static_file(rendered_file, root=server.tmpdir)
+        return bottle.static_file(rendered_file, root=server.tmpdir)
     else:
         return None
 

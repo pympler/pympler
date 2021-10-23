@@ -1,4 +1,4 @@
-%include header category='Overview', title='Overview' 
+%include('header', category='Overview', title='Overview')
 
 %from pympler.util.stringutils import pp
 
@@ -23,4 +23,4 @@
     </tbody>
 </table>
 
-%include footer
+%include('footer')

@@ -1,4 +1,4 @@
-%include header category='Tracker', title=clsname 
+%include('header', category='Tracker', title=clsname)
 
 %from pympler.util.stringutils import pp, pp_timestamp
 
@@ -18,7 +18,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
         <h3>Snapshot: {{snapshot.desc}}</h3>
         <p>{{pp(merged.size)}} occupied by instances of class {{clsname}}</p>
         %if merged.refs:
-            %include asized_referents referents=merged.refs
+            %include('asized_referents', referents=merged.refs)
         %else:
             <p>No per-referent sizes recorded.</p>
         %end
@@ -68,7 +68,7 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
             %else:
                 <td>
                     {{pp(size.size)}}
-                    %include asized_referents referents=size.refs
+                    %include('asized_referents', referents=size.refs)
                 </td>
             %end
             </tr>
@@ -76,5 +76,4 @@ average size is {{pp(sum(sizes)/len(sizes))}}, the minimal size is
     </table>
 %end
 
-%include footer
-
+%include('footer')

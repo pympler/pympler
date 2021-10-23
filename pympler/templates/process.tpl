@@ -1,4 +1,4 @@
-%include header category='Process', title='Process Information'
+%include('header', category='Process', title='Process Information')
 %from pympler.util.stringutils import pp
 
 <h1>Process information</h1>
@@ -86,4 +86,4 @@
     });
 </script>
 
-%include footer
+%include('footer')
