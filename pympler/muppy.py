@@ -1,3 +1,5 @@
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+
 import gc
 
 from pympler import summary
@@ -10,14 +12,15 @@ from sys import getsizeof
 from pympler.asizeof import _Py_TPFLAGS_HAVE_GC
 
 
-def ignore_object(obj):
+def ignore_object(obj: Any) -> bool:
     try:
         return isframe(obj)
     except ReferenceError:
         return True
 
 
-def get_objects(remove_dups=True, include_frames=False):
+def get_objects(remove_dups: bool = True, include_frames: bool = False
+                ) -> List[Any]:
     """Return a list of all known objects excluding frame objects.
 
     If (outer) frame objects shall be included, pass `include_frames=True`.  In
@@ -58,7 +61,7 @@ def get_objects(remove_dups=True, include_frames=False):
     return res
 
 
-def get_size(objects):
+def get_size(objects: List[Any]) -> int:
     """Compute the total size of all elements in objects."""
     res = 0
     for o in objects:
@@ -69,7 +72,7 @@ def get_size(objects):
     return res
 
 
-def get_diff(left, right):
+def get_diff(left: List[Any], right: List[Any]) -> Dict[str, List[Any]]:
     """Get the difference of both lists.
 
     The result will be a dict with this form {'+': [], '-': []}.
@@ -77,11 +80,11 @@ def get_diff(left, right):
     items listed in '-' exist only in the left list.
 
     """
-    res = {'+': [], '-': []}
+    res = {'+': [], '-': []}  # type: Dict[str, List[Any]]
 
-    def partition(objects):
+    def partition(objects: List[Any]) -> Dict[type, List[Any]]:
         """Partition the passed object list."""
-        res = {}
+        res = {}  # type: Dict[type, List[Any]]
         for o in objects:
             t = type(o)
             if type(o) not in res:
@@ -89,12 +92,13 @@ def get_diff(left, right):
             res[t].append(o)
         return res
 
-    def get_not_included(foo, bar):
+    def get_not_included(foo: List[Any], bar: Dict[type, List[Any]]
+                         ) -> List[Any]:
         """Compare objects from foo with objects defined in the values of
         bar (set of partitions).
         Returns a list of all objects included in list, but not dict values.
         """
-        res = []
+        res = []  # type: List[Any]
         for o in foo:
             if not compat.object_in_list(type(o), bar):
                 res.append(o)
@@ -112,13 +116,14 @@ def get_diff(left, right):
     return res
 
 
-def sort(objects):
+def sort(objects: List[Any]) -> List[Any]:
     """Sort objects by size in bytes."""
     objects = sorted(objects, key=getsizeof)
     return objects
 
 
-def filter(objects, Type=None, min=-1, max=-1):
+def filter(objects: List[Any], Type: Optional[type] = None, min: int = -1,
+           max: int = -1) -> List[Any]:
     """Filter objects.
 
     The filter can be by type, minimum size, and/or maximum size.
@@ -129,6 +134,7 @@ def filter(objects, Type=None, min=-1, max=-1):
     max -- maximum object size
 
     """
+    res = []  # type: List[Any]
     if min > max and max > -1:
         raise ValueError("minimum must be smaller than maximum")
 
@@ -141,7 +147,7 @@ def filter(objects, Type=None, min=-1, max=-1):
     return objects
 
 
-def get_referents(object, level=1):
+def get_referents(object: Any, level: int = 1) -> List[Any]:
     """Get all referents of an object up to a certain level.
 
     The referents will not be returned in a specific order and
@@ -162,7 +168,7 @@ def get_referents(object, level=1):
     return res
 
 
-def _get_usage(function, *args):
+def _get_usage(function: Callable, *args: Any) -> Optional[List]:
     """Test if more memory is used after the function has been called.
 
     The function will be invoked twice and only the second measurement will be
@@ -190,7 +196,7 @@ def _get_usage(function, *args):
 
     res = None
 
-    def _get_summaries(function, *args):
+    def _get_summaries(function: Callable, *args: Any) -> Tuple:
         """Get a 2-tuple containing one summary from before, and one summary
         from after the function has been invoked.
 
@@ -200,14 +206,13 @@ def _get_usage(function, *args):
         s_after = summary.summarize(get_objects())
         return (s_before, s_after)
 
-    def _get_usage(function, *args):
+    def _get_usage(function: Callable, *args: Any) -> List:
         """Get the usage of a function call.
         This function is to be used only internally. The 'real' get_usage
         function is a wrapper around _get_usage, but the workload is done
         here.
 
         """
-        res = []
         # init before calling
         (s_before, s_after) = _get_summaries(function, *args)
         # ignore all objects used for the measurement
@@ -228,7 +233,7 @@ def _get_usage(function, *args):
         return summary._sweep(res)
 
     # calibrate; twice for initialization
-    def noop():
+    def noop() -> None:
         pass
     offset = _get_usage(noop)
     offset = _get_usage(noop)
@@ -243,18 +248,18 @@ def _get_usage(function, *args):
     return res
 
 
-def _is_containerobject(o):
+def _is_containerobject(o: Any) -> bool:
     """Is the passed object a container object."""
     return bool(getattr(type(o), '__flags__', 0) & _Py_TPFLAGS_HAVE_GC)
 
 
-def _remove_duplicates(objects):
+def _remove_duplicates(objects: List[Any]) -> List[Any]:
     """Remove duplicate objects.
 
     Inspired by http://www.peterbe.com/plog/uniqifiers-benchmark
 
     """
-    seen = set()
+    seen = set()  # type: Set[int]
     result = []
     for item in objects:
         marker = id(item)
@@ -265,6 +270,6 @@ def _remove_duplicates(objects):
     return result
 
 
-def print_summary():
+def print_summary() -> None:
     """Print a summary of all known objects."""
     summary.print_(summary.summarize(get_objects()))

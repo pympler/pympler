@@ -2,20 +2,46 @@ import doctest
 import sys
 import unittest
 
+from io import StringIO
 from sys import getsizeof
 
 from pympler import summary, muppy
-from pympler.util.compat import StringIO
 
 
 class SummaryTest(unittest.TestCase):
 
-    def test_repr(self):
-        """Test that the right representation is returned. """
-        self.assertTrue(summary._repr(''), "<type 'str'>")
-        self.assertTrue(summary._repr('', 1), "<type 'str'>")
-        self.assertTrue(summary._repr('', verbosity=1), "<type 'str'>")
-        self.assertTrue(summary._repr('', verbosity=100), "<type 'str'>")
+    def test_repr_str(self):
+        """Test that the right representation is returned for strings. """
+        self.assertEqual(summary._repr(''), 'str')
+        self.assertEqual(summary._repr('', 1), 'str')
+        self.assertEqual(summary._repr('', verbosity=1), 'str')
+        self.assertEqual(summary._repr('', verbosity=2), 'str')
+        self.assertEqual(summary._repr('', verbosity=100), 'str')
+
+    def test_repr_dict(self):
+        """Test that the right representation is returned for dicts. """
+        self.assertEqual(summary._repr({'a': 1}), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, 1), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=1), 'dict')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=2), 'dict, len=1')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=3), 'dict, len=1')
+        self.assertEqual(summary._repr({'a': 1}, verbosity=100), 'dict, len=1')
+
+    def test_repr_function(self):
+        """Test that the right representation is returned for functions. """
+        def func():
+            pass
+
+        self.assertEqual(summary._repr(func), 'function (func)')
+        self.assertEqual(summary._repr(func, 1), 'function (func)')
+        self.assertEqual(summary._repr(func, verbosity=1),
+                         'function (func)')
+        self.assertEqual(summary._repr(func, verbosity=2),
+                         'function (muppy.test_summary.func)')
+        self.assertEqual(summary._repr(func, verbosity=3),
+                         'function (muppy.test_summary.func)')
+        self.assertEqual(summary._repr(func, verbosity=100),
+                         'function (muppy.test_summary.func)')
 
     def test_summarize(self):
         """Test summarize method. """

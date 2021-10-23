@@ -7,6 +7,8 @@ sized recursively to provide an overview of memory distribution between the
 different tracked objects.
 """
 
+from typing import Any, Callable, Dict, IO, List, Optional, Tuple
+
 from collections import defaultdict
 from functools import partial
 from inspect import stack, isclass
@@ -15,7 +17,6 @@ from time import sleep, time
 from weakref import ref as weakref_ref
 
 from pympler.classtracker_stats import ConsoleStats
-from pympler.util.compat import instancemethod
 from pympler.util.stringutils import safe_repr
 
 import pympler.asizeof as asizeof
@@ -35,21 +36,22 @@ class _ClassObserver(object):
     """
     __slots__ = ('init', 'name', 'detail', 'keep', 'trace')
 
-    def __init__(self, init, name, detail, keep, trace):
+    def __init__(self, init: Callable, name: str, detail: int, keep: bool,
+                 trace: bool):
         self.init = init
         self.name = name
         self.detail = detail
         self.keep = keep
         self.trace = trace
 
-    def modify(self, name, detail, keep, trace):
+    def modify(self, name: str, detail: int, keep: bool, trace: bool) -> None:
         self.name = name
         self.detail = detail
         self.keep = keep
         self.trace = trace
 
 
-def _get_time():
+def _get_time() -> float:
     """
     Get a timestamp relative to the program start time.
     """
@@ -64,8 +66,8 @@ class TrackedObject(object):
     __slots__ = ("ref", "id", "repr", "name", "birth", "death", "trace",
                  "snapshots", "_resolution_level", "__dict__")
 
-    def __init__(self, instance, name, resolution_level=0, trace=False,
-                 on_delete=None):
+    def __init__(self, instance: Any, name: str, resolution_level: int = 0,
+                 trace: bool = False, on_delete: Optional[Callable] = None):
         """
         Create a weak reference for 'instance' to observe an object but which
         won't prevent its deletion (which is monitored by the finalize
@@ -77,9 +79,9 @@ class TrackedObject(object):
         self.repr = ''
         self.name = name
         self.birth = _get_time()
-        self.death = None
+        self.death = None  # type: Optional[float]
         self._resolution_level = resolution_level
-        self.trace = None
+        self.trace = None  # type: Optional[List[Tuple]]
 
         if trace:
             self._save_trace()
@@ -89,7 +91,7 @@ class TrackedObject(object):
         self.snapshots = [(self.birth, size)]
         self.on_delete = on_delete
 
-    def __getstate__(self):
+    def __getstate__(self) -> Dict:
         """
         Make the object serializable for dump_stats. Read the available slots
         and store the values in a dictionary. Derived values (stored in the
@@ -102,7 +104,7 @@ class TrackedObject(object):
                 state[name] = getattr(self, name)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict) -> None:
         """
         Restore the state from pickled data. Needed because a slotted class is
         used.
@@ -110,7 +112,7 @@ class TrackedObject(object):
         for key, value in list(state.items()):
             setattr(self, key, value)
 
-    def _save_trace(self):
+    def _save_trace(self) -> None:
         """
         Save current stack trace as formatted string.
         """
@@ -122,7 +124,7 @@ class TrackedObject(object):
         finally:
             del stack_trace
 
-    def track_size(self, ts, sizer):
+    def track_size(self, ts: float, sizer: asizeof.Asizer) -> None:
         """
         Store timestamp and current size for later evaluation.
         The 'sizer' is a stateful sizing facility that excludes other tracked
@@ -135,13 +137,13 @@ class TrackedObject(object):
         if obj is not None:
             self.repr = safe_repr(obj, clip=128)
 
-    def get_max_size(self):
+    def get_max_size(self) -> int:
         """
         Get the maximum of all sampled sizes.
         """
         return max([s.size for (_, s) in self.snapshots])
 
-    def get_size_at_time(self, timestamp):
+    def get_size_at_time(self, timestamp: float) -> int:
         """
         Get the size of the object at a specific time (snapshot).
         If the object was not alive/sized at that instant, return 0.
@@ -152,7 +154,7 @@ class TrackedObject(object):
                 size = s.size
         return size
 
-    def set_resolution_level(self, resolution_level):
+    def set_resolution_level(self, resolution_level: int) -> None:
         """
         Set resolution level to a new value. The next size estimation will
         respect the new value. This is useful to set different levels for
@@ -160,7 +162,7 @@ class TrackedObject(object):
         """
         self._resolution_level = resolution_level
 
-    def finalize(self, ref):
+    def finalize(self, ref: weakref_ref) -> None:
         """
         Mark the reference as dead and remember the timestamp.  It would be
         great if we could measure the pre-destruction size.  Unfortunately, the
@@ -180,12 +182,12 @@ class TrackedObject(object):
             pass
 
 
-def track_object_creation(time_series):
+def track_object_creation(time_series: List[Tuple[float, int]]) -> None:
     num_instances = time_series[-1][1] if time_series else 0
     time_series.append((_get_time(), num_instances+1))
 
 
-def track_object_deletion(time_series):
+def track_object_deletion(time_series: List[Tuple[float, int]]) -> None:
     num_instances = time_series[-1][1]
     time_series.append((_get_time(), num_instances-1))
 
@@ -195,7 +197,8 @@ class PeriodicThread(Thread):
     Thread object to take snapshots periodically.
     """
 
-    def __init__(self, tracker, interval, *args, **kwargs):
+    def __init__(self, tracker: 'ClassTracker', interval: float, *args: Any,
+                 **kwargs: Any):
         """
         Create thread with given interval and associated with the given
         tracker.
@@ -205,7 +208,7 @@ class PeriodicThread(Thread):
         self.stop = False
         super(PeriodicThread, self).__init__(*args, **kwargs)
 
-    def run(self):
+    def run(self) -> None:
         """
         Loop until a stop signal is set.
         """
@@ -218,17 +221,18 @@ class PeriodicThread(Thread):
 class Snapshot(object):
     """Sample sizes of objects and the process at an instant."""
 
-    def __init__(self):
+    def __init__(self, timestamp: float, description: str = '') -> None:
         """Initialize process-wide size information."""
         self.tracked_total = 0
         self.asizeof_total = 0
         self.overhead = 0
-        self.timestamp = None
-        self.system_total = None
-        self.desc = None
+        self.timestamp = timestamp
+        self.system_total = pympler.process.ProcessMemoryInfo()
+        self.desc = description
+        self.classes = None  # type: Optional[Dict[str, Dict[str, Any]]]
 
     @property
-    def total(self):
+    def total(self) -> int:
         """
         Return the total (virtual) size of the process in bytes. If process
         information is not available, get the best number available, even if it
@@ -242,7 +246,7 @@ class Snapshot(object):
             return self.tracked_total
 
     @property
-    def label(self):
+    def label(self) -> str:
         """Return timestamped label for this snapshot, or a raw timestamp."""
         if not self.desc:
             return "%.3fs" % self.timestamp
@@ -251,7 +255,7 @@ class Snapshot(object):
 
 class ClassTracker(object):
 
-    def __init__(self, stream=None):
+    def __init__(self, stream: Optional[IO] = None):
         """
         Creates a new `ClassTracker` object.
 
@@ -262,40 +266,42 @@ class ClassTracker(object):
         # objects that are tracked. 'index' uses the class name as the key and
         # associates a list of tracked objects. It contains all TrackedObject
         # instances, including those of dead objects.
-        self.index = defaultdict(list)
+        self.index = defaultdict(list)  # type: Dict[str, List[TrackedObject]]
 
         # 'objects' uses the id (address) as the key and associates the tracked
         # object with it. TrackedObject's referring to dead objects are
         # replaced lazily, i.e. when the id is recycled by another tracked
         # object.
-        self.objects = {}
+        self.objects = {}  # type: Dict[int, Any]
 
         # List of `Snapshot` objects.
-        self.snapshots = []
+        self.snapshots = []  # type: List[Snapshot]
 
         # Time series of instance count for each tracked class.
-        self.history = defaultdict(list)
+        self.history = defaultdict(list) \
+            # type: Dict[str, List[Tuple[float, int]]]
 
         # Keep objects alive by holding a strong reference.
-        self._keepalive = []
+        self._keepalive = []  # type: List[Any]
 
         # Dictionary of class observers identified by classname.
-        self._observers = {}
+        self._observers = {}  # type: Dict[type, _ClassObserver]
 
         # Thread object responsible for background monitoring
-        self._periodic_thread = None
+        self._periodic_thread = None  # type: Optional[PeriodicThread]
 
         self._stream = stream
 
     @property
-    def stats(self):
+    def stats(self) -> ConsoleStats:
         """
         Return a ``ConsoleStats`` instance initialized with the current state
         of the class tracker.
         """
         return ConsoleStats(tracker=self, stream=self._stream)
 
-    def _tracker(self, _observer_, _self_, *args, **kwds):
+    def _tracker(self, _observer_: _ClassObserver, _self_: Any, *args: Any,
+                 **kwds: Any) -> None:
         """
         Injected constructor for tracked classes.
         Call the actual constructor of the object and track the object.  Attach
@@ -309,17 +315,18 @@ class ClassTracker(object):
                           trace=_observer_.trace)
         _observer_.init(_self_, *args, **kwds)
 
-    def _inject_constructor(self, cls, func, name, resolution_level, keep,
-                            trace):
+    def _inject_constructor(self, cls: type, func: Callable, name: str,
+                            resolution_level: int, keep: bool, trace: bool,
+                            ) -> None:
         """
         Modifying Methods in Place - after the recipe 15.7 in the Python
         Cookbook by Ken Seehof. The original constructors may be restored
         later.
         """
         try:
-            constructor = cls.__init__
+            constructor = cls.__init__  # type: ignore
         except AttributeError:
-            def constructor(self, *_args, **_kwargs):
+            def constructor(self: Any, *_args: Any, **_kwargs: Any) -> None:
                 pass
 
         # Possible name clash between keyword arguments of the tracked class'
@@ -333,31 +340,32 @@ class ClassTracker(object):
                                   trace)
         self._observers[cls] = observer
 
-        def new_constructor(*args, **kwargs):
+        def new_constructor(*args: Any, **kwargs: Any) -> None:
             return func(observer, *args, **kwargs)
 
-        cls.__init__ = instancemethod(new_constructor, None, cls)
+        cls.__init__ = new_constructor  # type: ignore
 
-    def _is_tracked(self, cls):
+    def _is_tracked(self, cls: type) -> bool:
         """
         Determine if the class is tracked.
         """
         return cls in self._observers
 
-    def _track_modify(self, cls, name, detail, keep, trace):
+    def _track_modify(self, cls: type, name: str, detail: int, keep: bool,
+                      trace: bool) -> None:
         """
         Modify settings of a tracked class
         """
         self._observers[cls].modify(name, detail, keep, trace)
 
-    def _restore_constructor(self, cls):
+    def _restore_constructor(self, cls: type) -> None:
         """
         Restore the original constructor, lose track of class.
         """
-        cls.__init__ = self._observers[cls].init
+        cls.__init__ = self._observers[cls].init  # type: ignore
         del self._observers[cls]
 
-    def track_change(self, instance, resolution_level=0):
+    def track_change(self, instance: Any, resolution_level: int = 0) -> None:
         """
         Change tracking options for the already tracked object 'instance'.
         If instance is not tracked, a KeyError will be raised.
@@ -365,8 +373,9 @@ class ClassTracker(object):
         tobj = self.objects[id(instance)]
         tobj.set_resolution_level(resolution_level)
 
-    def track_object(self, instance, name=None, resolution_level=0,
-                     keep=False, trace=False):
+    def track_object(self, instance: Any, name: Optional[str] = None,
+                     resolution_level: int = 0, keep: bool = False,
+                     trace: bool = False) -> None:
         """
         Track object 'instance' and sample size and lifetime information.  Not
         all objects can be tracked; trackable objects are class instances and
@@ -408,8 +417,9 @@ class ClassTracker(object):
         if keep:
             self._keepalive.append(instance)
 
-    def track_class(self, cls, name=None, resolution_level=0, keep=False,
-                    trace=False):
+    def track_class(self, cls: type, name: Optional[str] = None,
+                    resolution_level: int = 0, keep: bool = False,
+                    trace: bool = False) -> None:
         """
         Track all objects of the class `cls`. Objects of that type that already
         exist are *not* tracked. If `track_class` is called for a class already
@@ -440,14 +450,14 @@ class ClassTracker(object):
             self._inject_constructor(cls, self._tracker, name,
                                      resolution_level, keep, trace)
 
-    def detach_class(self, cls):
+    def detach_class(self, cls: type) -> None:
         """
         Stop tracking class 'cls'. Any new objects of that type are not
         tracked anymore. Existing objects are still tracked.
         """
         self._restore_constructor(cls)
 
-    def detach_all_classes(self):
+    def detach_all_classes(self) -> None:
         """
         Detach from all tracked classes.
         """
@@ -455,7 +465,7 @@ class ClassTracker(object):
         for cls in classes:
             self.detach_class(cls)
 
-    def detach_all(self):
+    def detach_all(self) -> None:
         """
         Detach from all tracked classes and objects.
         Restore the original constructors and cleanse the tracking lists.
@@ -465,14 +475,14 @@ class ClassTracker(object):
         self.index.clear()
         self._keepalive[:] = []
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear all gathered data and detach from all tracked objects/classes.
         """
         self.detach_all()
         self.snapshots[:] = []
 
-    def close(self):
+    def close(self) -> None:
         """
         Detach from tracked classes by removing injected constructors. Makes it
         possible to use ClassTracker in `contextlib.closing` to safely remove
@@ -489,7 +499,7 @@ class ClassTracker(object):
 # Background Monitoring
 #
 
-    def start_periodic_snapshots(self, interval=1.0):
+    def start_periodic_snapshots(self, interval: float = 1.0) -> None:
         """
         Start a thread which takes snapshots periodically. The `interval`
         specifies the time in seconds the thread waits between taking
@@ -505,7 +515,7 @@ class ClassTracker(object):
         else:
             self._periodic_thread.interval = interval
 
-    def stop_periodic_snapshots(self):
+    def stop_periodic_snapshots(self) -> None:
         """
         Post a stop signal to the thread that takes the periodic snapshots. The
         function waits for the thread to terminate which can take some time
@@ -522,7 +532,8 @@ class ClassTracker(object):
 
     snapshot_lock = Lock()
 
-    def create_snapshot(self, description='', compute_total=False):
+    def create_snapshot(self, description: str = '',
+                        compute_total: bool = False) -> None:
         """
         Collect current per instance statistics and saves total amount of
         memory associated with the Python process.
@@ -560,14 +571,10 @@ class ClassTracker(object):
             for tobj in tracked_objects:
                 tobj.track_size(timestamp, sizer)
 
-            snapshot = Snapshot()
-
-            snapshot.timestamp = timestamp
+            snapshot = Snapshot(timestamp, str(description))
             snapshot.tracked_total = sizer.total
             if compute_total:
                 snapshot.asizeof_total = asizeof.asizeof(all=True, code=True)
-            snapshot.system_total = pympler.process.ProcessMemoryInfo()
-            snapshot.desc = str(description)
 
             # Compute overhead of all structures, use sizer to exclude tracked
             # objects(!)

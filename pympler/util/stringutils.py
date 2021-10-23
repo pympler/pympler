@@ -2,8 +2,10 @@
 String utility functions.
 """
 
+from typing import Any, Optional, Union
 
-def safe_repr(obj, clip=None):
+
+def safe_repr(obj: Any, clip: Optional[int] = None) -> str:
     """
     Convert object to string representation, yielding the same result a `repr`
     but catches all exceptions and returns 'N/A' instead of raising the
@@ -26,7 +28,7 @@ def safe_repr(obj, clip=None):
         return 'N/A'
 
 
-def trunc(obj, max, left=0):
+def trunc(obj: str, max: int, left: bool = False) -> str:
     """
     Convert `obj` to string, eliminate newlines and truncate the string to
     `max` characters. If there are more characters in the string add ``...`` to
@@ -37,7 +39,7 @@ def trunc(obj, max, left=0):
 
     >>> trunc('This is a long text.', 8)
     This ...
-    >>> trunc('This is a long text.', 8, left)
+    >>> trunc('This is a long text.', 8, left=True)
     ...text.
     """
     s = str(obj)
@@ -51,7 +53,7 @@ def trunc(obj, max, left=0):
         return s
 
 
-def pp(i, base=1024):
+def pp(i: Union[int, float], base: int = 1024) -> str:
     """
     Pretty-print the integer `i` as a human-readable size representation.
     """
@@ -65,7 +67,7 @@ def pp(i, base=1024):
     return pattern % (i, scales[degree])
 
 
-def pp_timestamp(t):
+def pp_timestamp(t: Optional[float]) -> str:
     """
     Get a friendly timestamp represented as a string.
     """

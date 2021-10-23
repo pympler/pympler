@@ -2,34 +2,44 @@
 Provide saving, loading and presenting gathered `ClassTracker` statistics.
 """
 
+from typing import (
+    Any, Dict, IO, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+)
+
 import os
+import pickle
 import sys
-from pympler.util.compat import pickle
 from copy import deepcopy
 from pympler.util.stringutils import trunc, pp, pp_timestamp
 
 from pympler.asizeof import Asized
 
+if TYPE_CHECKING:
+    from .classtracker import TrackedObject, ClassTracker, Snapshot
+
 
 __all__ = ["Stats", "ConsoleStats", "HtmlStats"]
 
 
-def _merge_asized(base, other, level=0):
+def _ref2key(ref: Asized) -> str:
+    return ref.name.split(':')[0]
+
+
+def _merge_asized(base: Asized, other: Asized, level: int = 0) -> None:
     """
     Merge **Asized** instances `base` and `other` into `base`.
     """
-    ref2key = lambda ref: ref.name.split(':')[0]
     base.size += other.size
     base.flat += other.flat
     if level > 0:
-        base.name = ref2key(base)
+        base.name = _ref2key(base)
     # Add refs from other to base. Any new refs are appended.
     base.refs = list(base.refs)  # we may need to append items
     refs = {}
     for ref in base.refs:
-        refs[ref2key(ref)] = ref
+        refs[_ref2key(ref)] = ref
     for ref in other.refs:
-        key = ref2key(ref)
+        key = _ref2key(ref)
         if key in refs:
             _merge_asized(refs[key], ref, level=level + 1)
         else:
@@ -38,7 +48,7 @@ def _merge_asized(base, other, level=0):
             base.refs[-1].name = key
 
 
-def _merge_objects(tref, merged, obj):
+def _merge_objects(tref: float, merged: Asized, obj: 'TrackedObject') -> None:
     """
     Merge the snapshot size information of multiple tracked objects.  The
     tracked object `obj` is scanned for size information at time `tref`.
@@ -52,7 +62,7 @@ def _merge_objects(tref, merged, obj):
         _merge_asized(merged, size)
 
 
-def _format_trace(trace):
+def _format_trace(trace: List[Tuple]) -> str:
     """
     Convert the (stripped) stack-trace to a nice readable format. The stack
     trace `trace` is a list of frame records as returned by
@@ -74,7 +84,9 @@ class Stats(object):
     preferences.
     """
 
-    def __init__(self, tracker=None, filename=None, stream=None):
+    def __init__(self, tracker: 'Optional[ClassTracker]' = None,
+                 filename: Optional[str] = None,
+                 stream: Optional[IO] = None):
         """
         Initialize the data log structures either from a `ClassTracker`
         instance (argument `tracker`) or a previously dumped file (argument
@@ -89,30 +101,30 @@ class Stats(object):
         else:
             self.stream = sys.stdout
         self.tracker = tracker
+        self.index = {}  # type: Dict[str, List[TrackedObject]]
+        self.snapshots = []  # type: List[Snapshot]
         if tracker:
             self.index = tracker.index
             self.snapshots = tracker.snapshots
             self.history = tracker.history
-        else:
-            self.index = None
-            self.snapshots = None
-        self.sorted = []
+        self.sorted = []  # type: List[TrackedObject]
         if filename:
             self.load_stats(filename)
 
-    def load_stats(self, fdump):
+    def load_stats(self, fdump: Union[str, IO[bytes]]) -> None:
         """
         Load the data from a dump file.
         The argument `fdump` can be either a filename or an open file object
         that requires read access.
         """
-        if isinstance(fdump, type('')):
+        if isinstance(fdump, str):
             fdump = open(fdump, 'rb')
         self.index = pickle.load(fdump)
         self.snapshots = pickle.load(fdump)
         self.sorted = []
 
-    def dump_stats(self, fdump, close=True):
+    def dump_stats(self, fdump: Union[str, IO[bytes]], close: bool = True
+                   ) -> None:
         """
         Dump the logged data to a file.
         The argument `file` can be either a filename or an open file object
@@ -122,14 +134,14 @@ class Stats(object):
         if self.tracker:
             self.tracker.stop_periodic_snapshots()
 
-        if isinstance(fdump, type('')):
+        if isinstance(fdump, str):
             fdump = open(fdump, 'wb')
         pickle.dump(self.index, fdump, protocol=pickle.HIGHEST_PROTOCOL)
         pickle.dump(self.snapshots, fdump, protocol=pickle.HIGHEST_PROTOCOL)
         if close:
             fdump.close()
 
-    def _init_sort(self):
+    def _init_sort(self) -> None:
         """
         Prepare the data to be sorted.
         If not yet sorted, import all tracked objects from the tracked index.
@@ -145,12 +157,12 @@ class Stats(object):
                     tmax = snapshot.timestamp
             for key in list(self.index.keys()):
                 for tobj in self.index[key]:
-                    tobj.classname = key
-                    tobj.size = tobj.get_max_size()
-                    tobj.tsize = tobj.get_size_at_time(tmax)
+                    tobj.classname = key  # type: ignore
+                    tobj.size = tobj.get_max_size()  # type: ignore
+                    tobj.tsize = tobj.get_size_at_time(tmax)  # type: ignore
                 self.sorted.extend(self.index[key])
 
-    def sort_stats(self, *args):
+    def sort_stats(self, *args: str) -> 'Stats':
         """
         Sort the tracked objects according to the supplied criteria. The
         argument is a string identifying the basis of a sort (example: 'size'
@@ -196,10 +208,10 @@ class Stats(object):
         if not args:
             args = criteria
 
-        def args_to_tuple(obj):
-            keys = []
+        def args_to_tuple(obj: 'TrackedObject') -> Tuple[str, ...]:
+            keys = []  # type: List[str]
             for attr in args:
-                attribute = getattr(obj, attr)
+                attribute = getattr(obj, attr, '')
                 if attr in ('tsize', 'size'):
                     attribute = -attribute
                 keys.append(attribute)
@@ -210,7 +222,7 @@ class Stats(object):
 
         return self
 
-    def reverse_order(self):
+    def reverse_order(self) -> 'Stats':
         """
         Reverse the order of the tracked instance index `self.sorted`.
         """
@@ -218,19 +230,20 @@ class Stats(object):
         self.sorted.reverse()
         return self
 
-    def annotate(self):
+    def annotate(self) -> None:
         """
         Annotate all snapshots with class-based summaries.
         """
         for snapshot in self.snapshots:
             self.annotate_snapshot(snapshot)
 
-    def annotate_snapshot(self, snapshot):
+    def annotate_snapshot(self, snapshot: 'Snapshot'
+                          ) -> Dict[str, Dict[str, Any]]:
         """
         Store additional statistical data in snapshot.
         """
-        if hasattr(snapshot, 'classes'):
-            return
+        if snapshot.classes is not None:
+            return snapshot.classes
 
         snapshot.classes = {}
 
@@ -261,8 +274,10 @@ class Stats(object):
                                                active=active)
             snapshot.classes[classname]['merged'] = merged
 
+        return snapshot.classes
+
     @property
-    def tracked_classes(self):
+    def tracked_classes(self) -> List[str]:
         """Return a list of all tracked classes occurring in any snapshot."""
         return sorted(list(self.index.keys()))
 
@@ -272,8 +287,9 @@ class ConsoleStats(Stats):
     Presentation layer for `Stats` to be used in text-based consoles.
     """
 
-    def _print_refs(self, refs, total, prefix='    ',
-                    level=1, minsize=0, minpct=0.1):
+    def _print_refs(self, refs: Iterable[Asized], total: int,
+                    prefix: str = '    ', level: int = 1, minsize: int = 0,
+                    minpct: float = 0.1) -> None:
         """
         Print individual referents recursively.
         """
@@ -291,17 +307,18 @@ class ConsoleStats(Stats):
                 self._print_refs(ref.refs, total, prefix=prefix + '  ',
                                  level=level + 1)
 
-    def print_object(self, tobj):
+    def print_object(self, tobj: 'TrackedObject') -> None:
         """
         Print the gathered information of object `tobj` in human-readable
         format.
         """
         if tobj.death:
             self.stream.write('%-32s ( free )   %-35s\n' % (
-                trunc(tobj.name, 32, left=1), trunc(tobj.repr, 35)))
+                trunc(tobj.name, 32, left=True), trunc(tobj.repr, 35)))
         else:
             self.stream.write('%-32s 0x%08x %-35s\n' % (
-                trunc(tobj.name, 32, left=1),
+                trunc(tobj.name, 32, left=True),
+
                 tobj.id,
                 trunc(tobj.repr, 35)
             ))
@@ -317,7 +334,8 @@ class ConsoleStats(Stats):
                 pp_timestamp(tobj.death),
             ))
 
-    def print_stats(self, clsname=None, limit=1.0):
+    def print_stats(self, clsname: Optional[str] = None, limit: float = 1.0
+                    ) -> None:
         """
         Write tracked objects to stdout.  The output can be filtered and
         pruned.  Only objects are printed whose classname contain the substring
@@ -340,7 +358,10 @@ class ConsoleStats(Stats):
         _sorted = self.sorted
 
         if clsname:
-            _sorted = [to for to in _sorted if clsname in to.classname]
+            _sorted = [
+                to for to in _sorted
+                if clsname in to.classname  # type: ignore
+            ]
 
         if limit < 1.0:
             limit = max(1, int(len(self.sorted) * limit))
@@ -350,7 +371,7 @@ class ConsoleStats(Stats):
         for tobj in _sorted:
             self.print_object(tobj)
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """
         Print per-class summary for each snapshot.
         """
@@ -361,7 +382,7 @@ class ConsoleStats(Stats):
 
         fobj.write('---- SUMMARY ' + '-' * 66 + '\n')
         for snapshot in self.snapshots:
-            self.annotate_snapshot(snapshot)
+            classes = self.annotate_snapshot(snapshot)
             fobj.write('%-35s %11s %12s %12s %5s\n' % (
                 trunc(snapshot.desc, 35),
                 'active',
@@ -370,7 +391,7 @@ class ConsoleStats(Stats):
                 'pct'
             ))
             for classname in classlist:
-                info = snapshot.classes.get(classname)
+                info = classes[classname]
                 fobj.write('  %-33s %11d %12s %12s %4d%%\n' % (
                     trunc(classname, 33),
                     info['active'],
@@ -424,7 +445,9 @@ class HtmlStats(Stats):
         <td id="num">%(size)s</td>
         <td id="num">%(pct)3.1f%%</td></tr>"""
 
-    def _print_refs(self, fobj, refs, total, level=1, minsize=0, minpct=0.1):
+    def _print_refs(self, fobj: IO, refs: Iterable[Asized], total: int,
+                    level: int = 1, minsize: int = 0, minpct: float = 0.1
+                    ) -> None:
         """
         Print individual referents recursively.
         """
@@ -450,7 +473,7 @@ class HtmlStats(Stats):
     class_snapshot = '''<h3>Snapshot: %(name)s, %(total)s occupied by instances
         of class %(cls)s</h3>\n'''
 
-    def print_class_details(self, fname, classname):
+    def print_class_details(self, fname: str, classname: str) -> None:
         """
         Print detailed statistics and instances for the class `classname`. All
         data will be written to the file `fname`.
@@ -474,7 +497,7 @@ class HtmlStats(Stats):
 
         fobj.write("<h2>Coalesced Referents per Snapshot</h2>\n")
         for snapshot in self.snapshots:
-            if classname in snapshot.classes:
+            if snapshot.classes and classname in snapshot.classes:
                 merged = snapshot.classes[classname]['merged']
                 fobj.write(self.class_snapshot % {
                     'name': snapshot.desc,
@@ -534,7 +557,8 @@ class HtmlStats(Stats):
         objects including code objects but excluding overhead have a total size
         of %(asizeof)s.</p>\n"""
 
-    def relative_path(self, filepath, basepath=None):
+    def relative_path(self, filepath: str, basepath: Optional[str] = None
+                      ) -> str:
         """
         Convert the filepath path to a relative path against basepath. By
         default basepath is self.basedir.
@@ -549,7 +573,7 @@ class HtmlStats(Stats):
             filepath = filepath[1:]
         return filepath
 
-    def create_title_page(self, filename, title=''):
+    def create_title_page(self, filename: str, title: str = '') -> None:
         """
         Output the title page.
         """
@@ -585,12 +609,13 @@ class HtmlStats(Stats):
             if snapshot.tracked_total:
                 fobj.write(self.snapshot_cls_header)
                 for classname in classlist:
-                    data = snapshot.classes[classname].copy()
-                    path = self.relative_path(self.links[classname])
-                    data['cls'] = '<a href="%s">%s</a>' % (path, classname)
-                    data['sum'] = pp(data['sum'])
-                    data['avg'] = pp(data['avg'])
-                    fobj.write(self.snapshot_cls % data)
+                    if snapshot.classes:
+                        info = snapshot.classes[classname].copy()
+                        path = self.relative_path(self.links[classname])
+                        info['cls'] = '<a href="%s">%s</a>' % (path, classname)
+                        info['sum'] = pp(info['sum'])
+                        info['avg'] = pp(info['avg'])
+                        fobj.write(self.snapshot_cls % info)
             fobj.write('</table>')
             fobj.write('</td><td>\n')
             if snapshot.tracked_total:
@@ -601,7 +626,7 @@ class HtmlStats(Stats):
         fobj.write(self.footer)
         fobj.close()
 
-    def create_lifetime_chart(self, classname, filename=''):
+    def create_lifetime_chart(self, classname: str, filename: str = '') -> str:
         """
         Create chart that depicts the lifetime of the instance registered with
         `classname`. The output is written to `filename`.
@@ -632,7 +657,7 @@ class HtmlStats(Stats):
 
         return self.chart_tag % (os.path.basename(filename))
 
-    def create_snapshot_chart(self, filename=''):
+    def create_snapshot_chart(self, filename: str = '') -> str:
         """
         Create chart that depicts the memory allocation over time apportioned
         to the tracked classes.
@@ -647,14 +672,16 @@ class HtmlStats(Stats):
         classlist = self.tracked_classes
 
         times = [snapshot.timestamp for snapshot in self.snapshots]
-        base = [0] * len(self.snapshots)
+        base = [0.0] * len(self.snapshots)
         poly_labels = []
         polys = []
         for cn in classlist:
-            pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots]
+            pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots
+                   if snapshot.classes is not None]
             if pct and max(pct) > 3.0:
                 sz = [float(fp.classes[cn]['sum']) / (1024 * 1024)
-                      for fp in self.snapshots]
+                      for fp in self.snapshots
+                      if fp.classes is not None]
                 sz = [sx + sy for sx, sy in zip(base, sz)]
                 xp, yp = mlab.poly_between(times, base, sz)
                 polys.append(((xp, yp), {'label': cn}))
@@ -680,7 +707,7 @@ class HtmlStats(Stats):
 
         return self.chart_tag % (self.relative_path(filename))
 
-    def create_pie_chart(self, snapshot, filename=''):
+    def create_pie_chart(self, snapshot: 'Snapshot', filename: str = '') -> str:
         """
         Create a pie chart that depicts the distribution of the allocated
         memory for a given `snapshot`. The chart is saved to `filename`.
@@ -692,7 +719,7 @@ class HtmlStats(Stats):
             return self.nopylab_msg % ("pie_chart")
 
         # Don't bother illustrating a pie without pieces.
-        if not snapshot.tracked_total:
+        if not snapshot.tracked_total or snapshot.classes is None:
             return ''
 
         classlist = []
@@ -703,7 +730,6 @@ class HtmlStats(Stats):
                 sizelist.append(v['sum'])
         sizelist.insert(0, snapshot.asizeof_total - pylab_sum(sizelist))
         classlist.insert(0, 'Other')
-        #sizelist = [x*0.01 for x in sizelist]
 
         title("Snapshot (%s) Memory Distribution" % (snapshot.desc))
         figure(figsize=(8, 8))
@@ -713,7 +739,8 @@ class HtmlStats(Stats):
 
         return self.chart_tag % (self.relative_path(filename))
 
-    def create_html(self, fname, title="ClassTracker Statistics"):
+    def create_html(self, fname: str, title: str = "ClassTracker Statistics"
+                    ) -> None:
         """
         Create HTML page `fname` and additional files in a directory derived
         from `fname`.
@@ -724,7 +751,7 @@ class HtmlStats(Stats):
         if not os.path.isdir(self.filesdir):
             os.mkdir(self.filesdir)
         self.filesdir = os.path.abspath(self.filesdir)
-        self.links = {}
+        self.links = {}  # type: Dict[str, str]
 
         # Annotate all snapshots in advance
         self.annotate()
@@ -732,7 +759,7 @@ class HtmlStats(Stats):
         # Create charts. The tags to show the images are returned and stored in
         # the self.charts dictionary. This allows to return alternative text if
         # the chart creation framework is not available.
-        self.charts = {}
+        self.charts = {}  # type: Dict[Union[str, Snapshot], str]
         fn = os.path.join(self.filesdir, 'timespace.png')
         self.charts['snapshots'] = self.create_snapshot_chart(fn)
 

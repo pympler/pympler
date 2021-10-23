@@ -90,6 +90,7 @@ class MProfiler(object):
             sys.setprofile(None)
         return self
 
+
 if __name__ == "__main__":
     p = MProfiler()
     p.run("print('hello')")

@@ -6,10 +6,10 @@ import os
 import sys
 import unittest
 
+from io import StringIO
 from tempfile import mkstemp
 
 from pympler import refbrowser
-from pympler.util.compat import StringIO
 
 
 class TreeTest(unittest.TestCase):

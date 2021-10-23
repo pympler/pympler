@@ -192,7 +192,7 @@ class StreamBrowser(RefBrowser):
                 # print the first branch (on the same line)
                 self._print(tree.children[0], prefix, carryon)
                 for b in range(1, len_children):
-                    # the caryon becomes the prefix for all following children
+                    # the carryon becomes the prefix for all following children
                     prefix = carryon[:-2] + self.cross + self.hline
                     # remove the vlines for any children of last branch
                     if b == (len_children - 1):
@@ -242,7 +242,10 @@ class FileBrowser(StreamBrowser):
 # remains outside this block. If you try to instantiate it without having
 # Tkinter installed, the import error will be raised.
 try:
-    from idlelib import TreeWidget as _TreeWidget
+    if sys.version_info < (3, 5, 2):
+        from idlelib import TreeWidget as _TreeWidget
+    else:
+        from idlelib import tree as _TreeWidget
 
     class _TreeNode(_TreeWidget.TreeNode):
         """TreeNode used by the InteractiveBrowser.
@@ -445,5 +448,4 @@ def write_sample():
 
 
 if __name__ == "__main__":
-#    print_sample()
     write_sample()

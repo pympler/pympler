@@ -6,7 +6,6 @@ installed.
 
 from pympler.asizeof import Asizer, named_refs
 from pympler.util.stringutils import safe_repr, trunc
-from pympler.util.compat import encode4pipe
 from gc import get_referents
 from subprocess import Popen, PIPE
 from copy import copy
@@ -334,12 +333,12 @@ class ReferenceGraph(object):
             p1 = Popen(('unflatten', '-l7'), stdin=PIPE, stdout=PIPE,
                        **popen_flags)
             p2 = Popen(cmdline, stdin=p1.stdout, **popen_flags)
-            p1.communicate(encode4pipe(data))
+            p1.communicate(data.encode())
             p2.communicate()
             return p2.returncode == 0
         else:
             p = Popen(cmdline, stdin=PIPE, **popen_flags)
-            p.communicate(encode4pipe(data))
+            p.communicate(data.encode())
             return p.returncode == 0
 
     def write_graph(self, filename):

@@ -5,9 +5,10 @@ import os
 import sys
 import unittest
 
+from io import StringIO
+
 from pympler.garbagegraph import GarbageGraph, start_debug_garbage, end_debug_garbage
 from pympler.refgraph import _Edge
-from pympler.util.compat import StringIO
 
 
 class Foo:

@@ -20,6 +20,7 @@ import os
 import threading
 
 from inspect import getouterframes
+from json import dumps
 from shutil import rmtree
 from tempfile import mkdtemp
 from threading import Thread
@@ -30,7 +31,6 @@ from pympler import asizeof
 from pympler.garbagegraph import GarbageGraph
 from pympler.process import get_current_threads, ProcessMemoryInfo
 
-from pympler.util.compat import dumps
 from pympler.util.stringutils import safe_repr
 
 # Prefer the installed version of bottle.py. If bottle.py is not installed

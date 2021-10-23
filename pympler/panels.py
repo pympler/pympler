@@ -31,14 +31,22 @@ try:
     from django.apps import apps
     from django.template import Context, Template
     from django.template.loader import render_to_string
+    from django.http.request import HttpRequest
+    from django.http.response import HttpResponse
 except ImportError:
-    class Panel(object):
+    class Panel(object):  # type: ignore
         pass
 
-    class Template(object):
+    class Template(object):  # type: ignore
         pass
 
-    class Context(object):
+    class Context(object):  # type: ignore
+        pass
+
+    class HttpRequest(object):  # type: ignore
+        pass
+
+    class HttpResponse(object):  # type: ignore
         pass
 
 
@@ -52,7 +60,7 @@ class MemoryPanel(Panel):
 
     classes = [Context, Template]
 
-    def process_request(self, request):
+    def process_request(self, request: HttpRequest) -> HttpResponse:
         self._tracker = ClassTracker()
         for cls in apps.get_models() + self.classes:
             self._tracker.track_class(cls)
@@ -66,15 +74,15 @@ class MemoryPanel(Panel):
         self.record_stats({'stats': stats})
         return response
 
-    def enable_instrumentation(self):
+    def enable_instrumentation(self) -> None:
         self._tracker = ClassTracker()
         for cls in apps.get_models() + self.classes:
             self._tracker.track_class(cls)
 
-    def disable_instrumentation(self):
+    def disable_instrumentation(self) -> None:
         self._tracker.detach_all_classes()
 
-    def nav_subtitle(self):
+    def nav_subtitle(self) -> str:
         context = self.get_stats()
         before = context['before']
         after = context['after']
@@ -84,7 +92,7 @@ class MemoryPanel(Panel):
         return "%s %s" % (pp(rss), delta)
 
     @property
-    def content(self):
+    def content(self) -> str:
         context = self.get_stats()
         before = context['before']
         after = context['after']

@@ -5,12 +5,12 @@ This information is used in setup.py as well as in doc/source/conf.py.
 """
 
 project_name = 'Pympler'
-version      = '0.8'
+version      = '0.9'
 url          = 'https://github.com/pympler/pympler'
 license      = 'Apache License, Version 2.0'
 author       = 'Jean Brouwers, Ludwig Haehne, Robert Schuppenies'
 author_email = 'pympler-dev@googlegroups.com'
-copyright    = '2008-2019, ' + author
+copyright    = '2008-2020, ' + author
 description  = ('A development tool to measure, monitor and analyze '
                 'the memory behavior of Python objects.')
 long_description = '''
@@ -31,6 +31,6 @@ web profiling frontend exposes process statistics, garbage
 visualisation and class tracker statistics.
 
 Pympler is written entirely in Python, with no dependencies to
-external libraries. It has been tested with Python 2.7, 3.5, 3.6,
-3.7, 3.8, 3.9 on Linux, Windows and MacOS X.
+external libraries. It has been tested with Python 3.5, 3.6, 3.7, 3.8,
+3.9, 3.10 on Linux, Windows and MacOS X.
 '''

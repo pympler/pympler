@@ -16,23 +16,17 @@ Windows without the win32 module is not supported.
     Virtual size [Byte]: ...
 """
 
+from typing import Iterable, List, Tuple
+
 import logging
 import threading
-
-try:
-    from thread import get_ident
-except ImportError:
-    from _thread import get_ident  # NOQA
 
 from os import getpid
 from subprocess import Popen, PIPE
 
 from pympler.util.stringutils import pp
 
-try:
-    from resource import getpagesize as _getpagesize
-except ImportError:
-    _getpagesize = lambda: 4096
+from resource import getpagesize
 
 
 class _ProcessMemoryInfo(object):
@@ -46,14 +40,14 @@ class _ProcessMemoryInfo(object):
     module.
     """
 
-    pagesize = _getpagesize()
+    pagesize = getpagesize()
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.pid = getpid()
         self.rss = 0
         self.vsz = 0
         self.pagefaults = 0
-        self.os_specific = []
+        self.os_specific = []  # type: List[Tuple[str, str]]
 
         self.data_segment = 0
         self.code_segment = 0
@@ -62,28 +56,28 @@ class _ProcessMemoryInfo(object):
 
         self.available = self.update()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s vsz=%d rss=%d>" % (self.__class__.__name__,
                                        self.vsz, self.rss)
 
-    def update(self):
+    def update(self) -> bool:
         """
         Refresh the information using platform instruments. Returns true if
         this operation yields useful values on the current platform.
         """
         return False  # pragma: no cover
 
-    def __sub__(self, other):
+    def __sub__(self, other: '_ProcessMemoryInfo') -> Iterable[Tuple[str, int]]:
         diff = [('Resident set size (delta)', self.rss - other.rss),
                 ('Virtual size (delta)', self.vsz - other.vsz),
                 ]
         return diff
 
 
-ProcessMemoryInfo = _ProcessMemoryInfo
+ProcessMemoryInfo = _ProcessMemoryInfo  # type: type
 
 
-def is_available():
+def is_available() -> bool:
     """
     Convenience function to check if the current platform is supported by this
     module.
@@ -92,7 +86,8 @@ def is_available():
 
 
 class _ProcessMemoryInfoPS(_ProcessMemoryInfo):
-    def update(self):
+
+    def update(self) -> bool:
         """
         Get virtual and resident size of current process via 'ps'.
         This should work for MacOS X, Solaris, Linux. Returns true if it was
@@ -127,7 +122,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
         'VmPTE':  'Page table entries size',
     }
 
-    def update(self):
+    def update(self) -> bool:
         """
         Get virtual size of current process by reading the process' stat file.
         This should work for Linux.
@@ -149,7 +144,10 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                 except ValueError:
                     continue
                 value = value.strip()
-                size_in_bytes = lambda x: int(x.split()[0]) * 1024
+
+                def size_in_bytes(x: str) -> int:
+                    return int(x.split()[0]) * 1024
+
                 if key == 'VmData':
                     self.data_segment = size_in_bytes(value)
                 elif key == 'VmExe':
@@ -158,7 +156,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
                     self.shared_segment = size_in_bytes(value)
                 elif key == 'VmStk':
                     self.stack_segment = size_in_bytes(value)
-                key = self.key_map.get(key)
+                key = self.key_map.get(key, '')
                 if key:
                     self.os_specific.append((key, pp(size_in_bytes(value))))
 
@@ -171,7 +169,7 @@ try:
     from resource import getrusage, RUSAGE_SELF
 
     class _ProcessMemoryInfoResource(_ProcessMemoryInfo):
-        def update(self):
+        def update(self) -> bool:
             """
             Get memory metrics of current process through `getrusage`.  Only
             available on Unix, on Linux most of the fields are not set,
@@ -209,7 +207,7 @@ except ImportError:
         logging.warn("Please install pywin32 when using pympler on Windows.")
     else:
         class _ProcessMemoryInfoWin32(_ProcessMemoryInfo):
-            def update(self):
+            def update(self) -> bool:
                 process_handle = GetCurrentProcess()
                 meminfo = GetProcessMemoryInfo(process_handle)
                 memstatus = GlobalMemoryStatusEx()
@@ -225,17 +223,17 @@ except ImportError:
 class ThreadInfo(object):
     """Collect information about an active thread."""
 
-    def __init__(self, thread):
+    def __init__(self, thread: threading.Thread):
         self.ident = thread.ident
         self.name = thread.name
         self.daemon = thread.daemon
 
 
-def get_current_threads():
+def get_current_threads() -> Iterable[ThreadInfo]:
     """Get a list of `ThreadInfo` objects."""
     return [ThreadInfo(thread) for thread in threading.enumerate()]
 
 
-def get_current_thread_id():
+def get_current_thread_id() -> int:
     """Get the ID of the current thread."""
-    return get_ident()
+    return threading.get_ident()
