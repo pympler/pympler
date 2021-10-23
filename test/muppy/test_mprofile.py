@@ -9,36 +9,36 @@ class MProfileTest(unittest.TestCase):
         prof = mprofile.MProfiler()
         # test single pre-defined codepoints
         prof.codepoints = [(None, None, None)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('foo', 'bar', 42)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('foo', None, None)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('bar', None, None)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [(None, 'bar', None)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [(None, 'foo', None)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [(None, None, 42)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [(None, None, 0)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
 
         prof.codepoints = [('foo', 'bar', None)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('foo', 'foo', None)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('foo', 'foo', 0)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('bar', 'foo', 42)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
 
         # test multiple pre-defined codepoints
         prof.codepoints = [('foo', 'bar', 42), ('foo', 'baz', 10)]
-        self.assert_(prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(prof.codepoint_included(('foo', 'bar', 42)))
         prof.codepoints = [('foo', 'bar', 0), ('foo', 'baz', 10)]
-        self.assert_(not prof.codepoint_included(('foo', 'bar', 42)))
+        self.assertTrue(not prof.codepoint_included(('foo', 'bar', 42)))
 
 
 def suite():

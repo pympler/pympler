@@ -118,12 +118,12 @@ root-+-branch1-+-a
         # default representation
         n = refbrowser._Node(1)
         expected = str(1)
-        self.assert_(str(n) == expected)
+        self.assertTrue(str(n) == expected)
         # custom representation
         expected = 'the quick brown fox'
         def foo(o): return expected
         n = refbrowser._Node(1, foo)
-        self.assert_(str(n) == expected)
+        self.assertTrue(str(n) == expected)
         # attach child
         n.children.append(2)
 
@@ -145,14 +145,14 @@ root-+-branch1-+-a
         refs = [ref1, ref2]
         children = [c.o for c in res.children if isinstance(c, refbrowser._Node)]
         for r in refs:
-            self.assert_(r in children, "%s not in children" % r)
-        self.assert_(ref11 not in children)
+            self.assertTrue(r in children, "%s not in children" % r)
+        self.assertTrue(ref11 not in children)
         # now we test the repeat argument
         res = refbrowser.RefBrowser(root, repeat=True).get_tree()
         refs = [ref1, ref11, ref2]
         children = [c.o for c in res.children if isinstance(c, refbrowser._Node)]
         for r in refs:
-            self.assert_(r in children)
+            self.assertTrue(r in children)
         # test if maxdepth is working
         res = refbrowser.RefBrowser(root, maxdepth=0).get_tree()
         self.assertEqual(len(res.children), 0)

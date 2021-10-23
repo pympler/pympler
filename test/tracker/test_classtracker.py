@@ -44,11 +44,11 @@ class TrackObjectTestCase(unittest.TestCase):
         self.tracker.track_object(foo)
         self.tracker.track_object(bar)
 
-        self.assert_(id(foo) in self.tracker.objects)
-        self.assert_(id(bar) in self.tracker.objects)
+        self.assertTrue(id(foo) in self.tracker.objects)
+        self.assertTrue(id(bar) in self.tracker.objects)
 
-        self.assert_('Foo' in self.tracker.index)
-        self.assert_('Bar' in self.tracker.index)
+        self.assertTrue('Foo' in self.tracker.index)
+        self.assertTrue('Bar' in self.tracker.index)
 
         self.assertEqual(self.tracker.objects[id(foo)].ref(),foo)
         self.assertEqual(self.tracker.objects[id(bar)].ref(),bar)
@@ -66,10 +66,10 @@ class TrackObjectTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.tracker.track_object, k)
         self.assertRaises(TypeError, self.tracker.track_object, l)
 
-        self.assert_(id(i) not in self.tracker.objects)
-        self.assert_(id(j) not in self.tracker.objects)
-        self.assert_(id(k) not in self.tracker.objects)
-        self.assert_(id(l) not in self.tracker.objects)
+        self.assertTrue(id(i) not in self.tracker.objects)
+        self.assertTrue(id(j) not in self.tracker.objects)
+        self.assertTrue(id(k) not in self.tracker.objects)
+        self.assertTrue(id(l) not in self.tracker.objects)
 
     def test_track_by_name(self):
         """Test registering objects by name.
@@ -78,7 +78,7 @@ class TrackObjectTestCase(unittest.TestCase):
 
         self.tracker.track_object(foo, name='Foobar')
 
-        self.assert_('Foobar' in self.tracker.index        )
+        self.assertTrue('Foobar' in self.tracker.index        )
         self.assertEqual(self.tracker.index['Foobar'][0].ref(),foo)
 
     def test_keep(self):
@@ -96,8 +96,8 @@ class TrackObjectTestCase(unittest.TestCase):
         del foo
         del bar
 
-        self.assert_(self.tracker.objects[idfoo].ref() is not None)
-        self.assert_(self.tracker.objects[idbar].ref() is None)
+        self.assertTrue(self.tracker.objects[idfoo].ref() is not None)
+        self.assertTrue(self.tracker.objects[idbar].ref() is None)
 
     def test_mixed_tracking(self):
         """Test mixed instance and class tracking.
@@ -124,8 +124,8 @@ class TrackObjectTestCase(unittest.TestCase):
         dref = [r for r in refs if r.name == '__dict__']
         self.assertEqual(len(dref),1)
         dref = dref[0]
-        self.assert_(dref.size > 0, dref.size)
-        self.assert_(dref.flat > 0, dref.flat)
+        self.assertTrue(dref.size > 0, dref.size)
+        self.assertTrue(dref.flat > 0, dref.flat)
         self.assertEqual(dref.refs,())
 
         # Test track_change and more fine-grained resolution
@@ -138,8 +138,8 @@ class TrackObjectTestCase(unittest.TestCase):
         self.assertEqual(len(dref),1)
         dref = dref[0]
         namerefs = [r.name for r in dref.refs]
-        self.assert_('[K] foo' in namerefs, namerefs)
-        self.assert_("[V] foo: 'foo'" in namerefs, namerefs)
+        self.assertTrue('[K] foo' in namerefs, namerefs)
+        self.assertTrue("[V] foo: 'foo'" in namerefs, namerefs)
 
 
 class SnapshotTestCase(unittest.TestCase):
@@ -180,22 +180,22 @@ class SnapshotTestCase(unittest.TestCase):
         fp = self.tracker.snapshots[0]
         fp_with_total = self.tracker.snapshots[1]
 
-        self.assert_(fp.overhead > 0, fp.overhead)
-        self.assert_(fp.tracked_total > 0, fp.tracked_total)
+        self.assertTrue(fp.overhead > 0, fp.overhead)
+        self.assertTrue(fp.tracked_total > 0, fp.tracked_total)
         self.assertEqual(fp.asizeof_total, 0)
 
-        self.assert_(fp_with_total.asizeof_total > 0, fp_with_total.asizeof_total)
-        self.assert_(fp_with_total.asizeof_total >= fp_with_total.tracked_total)
+        self.assertTrue(fp_with_total.asizeof_total > 0, fp_with_total.asizeof_total)
+        self.assertTrue(fp_with_total.asizeof_total >= fp_with_total.tracked_total)
 
         if pympler.process.is_available():
             procmem = fp.system_total
             self.assertEqual(fp.total, procmem.vsz)
-            self.assert_(procmem.vsz > 0, procmem)
-            self.assert_(procmem.rss > 0, procmem)
+            self.assertTrue(procmem.vsz > 0, procmem)
+            self.assertTrue(procmem.rss > 0, procmem)
             self.assertTrue(procmem.vsz >= procmem.rss, procmem)
-            self.assert_(procmem.vsz > fp.overhead, procmem)
-            self.assert_(procmem.vsz > fp.tracked_total, procmem)
-            self.assert_(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
+            self.assertTrue(procmem.vsz > fp.overhead, procmem)
+            self.assertTrue(procmem.vsz > fp.tracked_total, procmem)
+            self.assertTrue(fp_with_total.system_total.vsz > fp_with_total.asizeof_total)
         else:
             self.assertEqual(fp_with_total.total, fp_with_total.asizeof_total)
             self.assertEqual(fp.total, fp.tracked_total)
@@ -235,8 +235,8 @@ class SnapshotTestCase(unittest.TestCase):
         self.tracker.start_periodic_snapshots(0.2)
         self.assertEqual(self.tracker._periodic_thread.interval, 0.2)
         self.tracker.stop_periodic_snapshots()
-        self.assert_(self.tracker._periodic_thread is None)
-        self.assert_(len(self.tracker.snapshots) > 10)
+        self.assertTrue(self.tracker._periodic_thread is None)
+        self.assertTrue(len(self.tracker.snapshots) > 10)
 
 
 class TrackClassTestCase(unittest.TestCase):
@@ -265,10 +265,10 @@ class TrackClassTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.tracker.track_class, foo)
         self.assertRaises(TypeError, self.tracker.track_class, bar)
 
-        self.assert_(id(i) not in self.tracker.objects)
-        self.assert_(id(j) not in self.tracker.objects)
-        self.assert_(id(k) not in self.tracker.objects)
-        self.assert_(id(l) not in self.tracker.objects)
+        self.assertTrue(id(i) not in self.tracker.objects)
+        self.assertTrue(id(j) not in self.tracker.objects)
+        self.assertTrue(id(k) not in self.tracker.objects)
+        self.assertTrue(id(l) not in self.tracker.objects)
 
     def test_track_class(self):
         """Test tracking objects through classes.
@@ -282,9 +282,9 @@ class TrackClassTestCase(unittest.TestCase):
         bar = Bar()
         empty = Empty()
 
-        self.assert_(id(foo) in self.tracker.objects)
-        self.assert_(id(bar) in self.tracker.objects)
-        self.assert_(id(empty) in self.tracker.objects)
+        self.assertTrue(id(foo) in self.tracker.objects)
+        self.assertTrue(id(bar) in self.tracker.objects)
+        self.assertTrue(id(empty) in self.tracker.objects)
 
     def test_track_class_new(self):
         """Test tracking new style classes.
@@ -295,8 +295,8 @@ class TrackClassTestCase(unittest.TestCase):
         foo = FooNew()
         bar = BarNew()
 
-        self.assert_(id(foo) in self.tracker.objects)
-        self.assert_(id(bar) in self.tracker.objects)
+        self.assertTrue(id(foo) in self.tracker.objects)
+        self.assertTrue(id(bar) in self.tracker.objects)
 
     def test_track_by_name(self):
         """Test registering objects by name.
@@ -305,7 +305,7 @@ class TrackClassTestCase(unittest.TestCase):
 
         foo = Foo()
 
-        self.assert_('Foobar' in self.tracker.index        )
+        self.assertTrue('Foobar' in self.tracker.index        )
         self.assertEqual(self.tracker.index['Foobar'][0].ref(),foo)
 
     def test_keep(self):
@@ -323,8 +323,8 @@ class TrackClassTestCase(unittest.TestCase):
         del foo
         del bar
 
-        self.assert_(self.tracker.objects[idfoo].ref() is not None)
-        self.assert_(self.tracker.objects[idbar].ref() is None)
+        self.assertTrue(self.tracker.objects[idfoo].ref() is not None)
+        self.assertTrue(self.tracker.objects[idbar].ref() is None)
 
     def test_class_history(self):
         """Test instance history of tracked class.
@@ -377,8 +377,8 @@ class TrackClassTestCase(unittest.TestCase):
         foo = Foo()
         bar = Bar()
 
-        self.assert_(id(foo) in self.tracker.objects)
-        self.assert_(id(bar) in self.tracker.objects)
+        self.assertTrue(id(foo) in self.tracker.objects)
+        self.assertTrue(id(bar) in self.tracker.objects)
 
         self.tracker.detach_class(Foo)
         self.tracker.detach_class(Bar)
@@ -386,8 +386,8 @@ class TrackClassTestCase(unittest.TestCase):
         foo2 = Foo()
         bar2 = Bar()
 
-        self.assert_(id(foo2) not in self.tracker.objects)
-        self.assert_(id(bar2) not in self.tracker.objects)
+        self.assertTrue(id(foo2) not in self.tracker.objects)
+        self.assertTrue(id(bar2) not in self.tracker.objects)
 
         self.assertRaises(KeyError, self.tracker.detach_class, Foo)
 
@@ -398,8 +398,8 @@ class TrackClassTestCase(unittest.TestCase):
         self.tracker.track_class(Foo, name='Baz')
         foo = Foo()
 
-        self.assert_('Foobar' not in self.tracker.index)
-        self.assert_('Baz' in self.tracker.index)
+        self.assertTrue('Foobar' not in self.tracker.index)
+        self.assertTrue('Baz' in self.tracker.index)
         self.assertEqual(self.tracker.index['Baz'][0].ref(),foo)
 
 

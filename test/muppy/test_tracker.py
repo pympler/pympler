@@ -51,25 +51,25 @@ class TrackerTest(unittest.TestCase):
         stracker = tracker.SummaryTracker()
         # for now, no object should be listed
         diff = stracker.diff()
-        self.assert_(self._contains_indicator(diff) == None)
+        self.assertTrue(self._contains_indicator(diff) == None)
         # now an indicator object should be included in the diff
         o = self._get_indicator()
         diff = stracker.diff()
-        self.assert_(self._contains_indicator(diff) == 1)
+        self.assertTrue(self._contains_indicator(diff) == 1)
         # now it should be gone again, compared to the
         # previously stored summary
         o = self._get_indicator()
         sn1 = stracker.create_summary()
         o = None
         diff = stracker.diff(summary1=sn1)
-        self.assert_(self._contains_indicator(diff) == -1)
+        self.assertTrue(self._contains_indicator(diff) == -1)
         # comparing two homemade summaries should work, too
         o = None
         sn1 = stracker.create_summary()
         o = self._get_indicator()
         sn2 = stracker.create_summary()
         diff = stracker.diff(summary1=sn1, summary2=sn2)
-        self.assert_(self._contains_indicator(diff) == 1)
+        self.assertTrue(self._contains_indicator(diff) == 1)
         # providing summary2 without summary1 should raise an exception
         self.assertRaises(ValueError, stracker.diff, summary2=sn2)
 
@@ -80,10 +80,10 @@ class TrackerTest(unittest.TestCase):
 #        # test create_summary
 #        tmp_tracker = tracker.SummaryTracker()
 #        # XXX: TODO
-#        self.assert_(muppy.get_usage(tmp_tracker.create_summary) == None)
-#        self.assert_(muppy.get_usage(tmp_tracker.store_summary, 1) == None)
+#        self.assertTrue(muppy.get_usage(tmp_tracker.create_summary) == None)
+#        self.assertTrue(muppy.get_usage(tmp_tracker.store_summary, 1) == None)
 #        # test print_diff
-#        self.assert_(muppy.get_usage(tmp_tracker.print_diff, [], []) == None)
+#        self.assertTrue(muppy.get_usage(tmp_tracker.print_diff, [], []) == None)
 
 
     def test_stracker_create_summary(self):
@@ -115,7 +115,7 @@ class TrackerTest(unittest.TestCase):
         tmp_tracker.new_obj = self._get_indicator()
         sn2 = tmp_tracker.create_summary()
         tmp = summary._sweep(summary.get_diff(sn, sn2))
-        self.failIfEqual(len(tmp), 0)
+        self.assertNotEqual(len(tmp), 0)
 
 
     def test_stracker_store_summary(self):
@@ -127,7 +127,7 @@ class TrackerTest(unittest.TestCase):
         key = 1
         stracker.store_summary(key)
         s = stracker.summaries[key]
-        self.assert_(s != None)
+        self.assertTrue(s != None)
         # check that indicator
         key = 2
         tmp = self._get_indicator()
@@ -161,7 +161,7 @@ class TrackerTest(unittest.TestCase):
         otracker = tracker.ObjectTracker()
         o = self._get_indicator()
         diff = otracker.get_diff()
-        self.assert_(o in diff['+'])
+        self.assertTrue(o in diff['+'])
         # indicator should not be listed in diff, i.e. no new and no gone
         # indicator object
         diff = otracker.get_diff(ignore=(inspect.currentframe(),))
@@ -170,11 +170,11 @@ class TrackerTest(unittest.TestCase):
         for i in diff['+']:
             if isinstance(i, type(tmp)):
                 found = True
-        self.assert_(not found)
+        self.assertTrue(not found)
         for i in diff['-']:
             if isinstance(i, type(tmp)):
                 found = True
-        self.assert_(not found)
+        self.assertTrue(not found)
 
 
 def suite():

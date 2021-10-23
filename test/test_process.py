@@ -70,7 +70,7 @@ class ProcessMemoryTests(unittest.TestCase):
         else:
             self._match_sizes(psinfo, resinfo, ignore=['rss'])
             if psinfo.available and resinfo.available:
-                self.assert_(resinfo.rss >= psinfo.rss)
+                self.assertTrue(resinfo.rss >= psinfo.rss)
 
 
     def test_proc_vs_getrusage(self):
@@ -84,7 +84,7 @@ class ProcessMemoryTests(unittest.TestCase):
         else:
             self._match_sizes(procinfo, resinfo, ignore=['rss'])
             if procinfo.available and resinfo.available:
-                self.assert_(resinfo.rss >= procinfo.rss)
+                self.assertTrue(resinfo.rss >= procinfo.rss)
 
 
     def test_get_current_threads(self):
@@ -94,7 +94,7 @@ class ProcessMemoryTests(unittest.TestCase):
             self.assertEqual(type(tinfo.ident), int)
             self.assertEqual(type(tinfo.name), type(''))
             self.assertEqual(type(tinfo.daemon), type(True))
-            self.failIfEqual(tinfo.ident, 0)
+            self.assertNotEqual(tinfo.ident, 0)
 
 
     def test_proc(self):

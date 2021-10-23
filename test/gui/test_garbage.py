@@ -71,20 +71,20 @@ class GarbageTestCase(unittest.TestCase):
         gb = GarbageGraph()
 
         self.assertEqual(gb.count, len(gc.garbage))
-        self.assert_(gb.count >= 2, gb.count)
+        self.assertTrue(gb.count >= 2, gb.count)
 
         gfoo = [x for x in gb.metadata if x.id == idfoo]
         self.assertEqual(len(gfoo), 1)
         gfoo = gfoo[0]
         self.assertEqual(gfoo.type, 'Foo')
-        self.assert_(gfoo.size > 0, gfoo.size)
+        self.assertTrue(gfoo.size > 0, gfoo.size)
         self.assertNotEqual(gfoo.str, '')
 
         gbar = [x for x in gb.metadata if x.id == idbar]
         self.assertEqual(len(gbar), 1)
         gbar = gbar[0]
         self.assertEqual(gbar.type, 'Bar')
-        self.assert_(gbar.size > 0, gbar.size)
+        self.assertTrue(gbar.size > 0, gbar.size)
         self.assertNotEqual(gbar.str, '')
 
     def test_split(self):
@@ -117,18 +117,18 @@ class GarbageTestCase(unittest.TestCase):
         self.assertEqual(subs[1].count, 1)
         fbg, lig = subs
 
-        self.assert_(isinstance(fbg, GarbageGraph))
-        self.assert_(isinstance(lig, GarbageGraph))
+        self.assertTrue(isinstance(fbg, GarbageGraph))
+        self.assertTrue(isinstance(lig, GarbageGraph))
 
         self.assertEqual(len(fbg.edges), 4, fbg.edges)
         self.assertEqual(len(lig.edges), 1, lig.edges)
 
-        self.assert_(_Edge(idl, idl, '') in lig.edges, lig.edges)
+        self.assertTrue(_Edge(idl, idl, '') in lig.edges, lig.edges)
 
-        self.assert_(_Edge(idfoo, idfd, '__dict__') in fbg.edges, fbg.edges)
-        self.assert_(_Edge(idfd, idbar, 'next') in fbg.edges, fbg.edges)
-        self.assert_(_Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges)
-        self.assert_(_Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges)
+        self.assertTrue(_Edge(idfoo, idfd, '__dict__') in fbg.edges, fbg.edges)
+        self.assertTrue(_Edge(idfd, idbar, 'next') in fbg.edges, fbg.edges)
+        self.assertTrue(_Edge(idbar, idbd, '__dict__') in fbg.edges, fbg.edges)
+        self.assertTrue(_Edge(idbd, idfoo, 'prev') in fbg.edges, fbg.edges)
 
     def test_prune(self):
         """Test pruning of reference graph.
@@ -176,10 +176,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        self.assert_(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
-        self.assert_(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
-        self.assert_(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
-        self.assert_(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
 
     def test_edges_new(self):
         """Test referent identification for new-style classes.
@@ -200,10 +200,10 @@ class GarbageTestCase(unittest.TestCase):
 
         gb = GarbageGraph()
 
-        self.assert_(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
-        self.assert_(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
-        self.assert_(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
-        self.assert_(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idfoo, idfd, '__dict__') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idfd, idbar, 'next') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idbar, idbd, '__dict__') in gb.edges, gb.edges)
+        self.assertTrue(_Edge(idbd, idfoo, 'prev') in gb.edges, gb.edges)
 
     def test_uncollectable(self):
         """Test uncollectable object tracking.

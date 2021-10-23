@@ -80,7 +80,7 @@ class LogTestCase(unittest.TestCase):
         tmp.seek(0)
         stats.load_stats(tmp)
         tmp.close()
-        self.assert_('Foo' in stats.index)
+        self.assertTrue('Foo' in stats.index)
 
         stats.print_stats()
 
@@ -245,23 +245,23 @@ class LogTestCase(unittest.TestCase):
         for fp in stats.snapshots:
             if fp.desc == 'Merge test':
                 stats.annotate_snapshot(fp)
-                self.assert_(hasattr(fp, 'classes'))
+                self.assertTrue(hasattr(fp, 'classes'))
                 classes = fp.classes
                 stats.annotate_snapshot(fp)
                 self.assertEqual(fp.classes, classes)
-                self.assert_('Foo' in fp.classes, fp.classes)
-                self.assert_('merged' in fp.classes['Foo'])
+                self.assertTrue('Foo' in fp.classes, fp.classes)
+                self.assertTrue('merged' in fp.classes['Foo'])
                 fm = fp.classes['Foo']['merged']
                 self.assertEqual(fm.size, sz1.size + sz2.size, (fm.size, str(sz1), str(sz2)))
                 refs = {}
                 for ref in fm.refs:
                     refs[ref.name] = ref
-                self.assert_('__dict__' in refs.keys(), refs.keys())
+                self.assertTrue('__dict__' in refs.keys(), refs.keys())
                 refs2 = {}
                 for ref in refs['__dict__'].refs:
                     refs2[ref.name] = ref
-                self.assert_('[V] a' in refs2.keys(), refs2.keys())
-                self.assert_('[V] b' in refs2.keys(), refs2.keys())
+                self.assertTrue('[V] a' in refs2.keys(), refs2.keys())
+                self.assertTrue('[V] b' in refs2.keys(), refs2.keys())
                 self.assertEqual(refs2['[V] a'].size, asizeof(f1.a, f2.a))
 
 
