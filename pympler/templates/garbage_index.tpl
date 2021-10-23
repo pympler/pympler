@@ -1,4 +1,4 @@
-%include header category='Garbage', title='Garbage' 
+%include('header', category='Garbage', title='Garbage')
 <h1>Garbage - Overview</h1>
 
 <p>This page gives an overview of all objects that would have been
@@ -38,4 +38,4 @@ deleted if those weren't holding circular references to each other
     <p>No reference cycles detected.</p>
 %end
 
-%include footer
+%include('footer')

@@ -1,4 +1,4 @@
-%include header category='Garbage', title='Garbage' 
+%include('header', category='Garbage', title='Garbage')
 
 <h1>Garbage - Cycle {{index}}</h1>
 <table class="tdata" width="100%">
@@ -30,4 +30,4 @@
 
 <img src="/garbage/graph/{{index}}?reduce=1"/>
 
-%include footer
+%include('footer')

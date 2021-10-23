@@ -1,4 +1,4 @@
-%include header category='Tracker', title='Tracked objects' 
+%include('header', category='Tracker', title='Tracked objects')
 
 %from pympler.util.stringutils import pp, pp_timestamp
 %from json import dumps
@@ -124,4 +124,4 @@
 
 %end
 
-%include footer
+%include('footer')
