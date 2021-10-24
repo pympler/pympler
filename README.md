@@ -17,6 +17,8 @@ and 3.10.
 Installation
 ------------
 
+### From Source
+
 For a system-wide installation run:
 
     python setup.py install
@@ -24,6 +26,9 @@ For a system-wide installation run:
 Test the installed Pympler package:
 
     python setup.py test
+
+### Using PIP
+    pip install Pympler
 
 
 Usage
