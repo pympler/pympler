@@ -21,12 +21,11 @@ from typing import Iterable, List, Tuple
 import logging
 import threading
 
+from mmap import PAGESIZE  # type: ignore
 from os import getpid
 from subprocess import Popen, PIPE
 
 from pympler.util.stringutils import pp
-
-from resource import getpagesize
 
 
 class _ProcessMemoryInfo(object):
@@ -40,7 +39,7 @@ class _ProcessMemoryInfo(object):
     module.
     """
 
-    pagesize = getpagesize()
+    pagesize = PAGESIZE
 
     def __init__(self) -> None:
         self.pid = getpid()

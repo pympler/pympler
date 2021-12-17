@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
     runs-on: ${{ matrix.os }}
     steps:
@@ -19,6 +19,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install system dependencies
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get install -y graphviz idle python3-matplotlib
     - name: Install dependencies
@@ -26,11 +27,14 @@ jobs:
         python -m pip install --upgrade pip wheel
         pip install build Sphinx myst-parser pycodestyle coverage coveralls numpy mypy
     - name: Test
+      shell: bash
       run: |
         python -Wall setup.py try
         python setup.py install
         python -Wall setup.py test
-        COVERAGE=1 coverage run test/runtest.py
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          COVERAGE=1 coverage run test/runtest.py
+        fi
         python run.py --doctest
     - name: Build
       run: |
