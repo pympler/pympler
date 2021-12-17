@@ -209,11 +209,11 @@ class Stats(object):
             args = criteria
 
         def args_to_tuple(obj: 'TrackedObject') -> Tuple[str, ...]:
-            keys = []  # type: List[str]
+            keys: List[str] = []
             for attr in args:
                 attribute = getattr(obj, attr, '')
                 if attr in ('tsize', 'size'):
-                    attribute = -attribute
+                    attribute = -int(attribute)
                 keys.append(attribute)
             return tuple(keys)
 

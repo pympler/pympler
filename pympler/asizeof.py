@@ -16,11 +16,11 @@
 
 '''
 This module exposes 9 functions and 2 classes to obtain lengths and
-sizes of Python objects (for Python 2.6 or later).
+sizes of Python objects (for Python 3.5 or later).
 
 Earlier versions of this module supported Python versions down to
-Python 2.2.  If you are using Python 2.5 or older, please consider
-downgrading Pympler to version 0.3.x.
+Python 2.2.  If you are using Python 3.5 or older, please consider
+downgrading Pympler.
 
 **Public Functions** [#unsafe]_
 
@@ -187,8 +187,8 @@ downgrading Pympler to version 0.3.x.
      ``_builtin_modules``.
 '''  # PYCHOK escape
 import sys
-if sys.version_info < (3, 5, 0):
-    raise NotImplementedError('%s requires Python 3.5 or newer' % ('asizeof',))
+if sys.version_info < (3, 6, 0):
+    raise NotImplementedError('%s requires Python 3.6 or newer' % ('asizeof',))
 
 from typing import Callable, Dict, List, Optional, Tuple, Union
 

@@ -184,6 +184,7 @@ class TypesTest(unittest.TestCase):
             finally:
                 del etb
 
+    @unittest.skipIf(sys.version_info < (3, 7), "Known to fail on 3.6 with Numpy installed.")
     def test_ignore_frame(self):
         '''Test whether reference cycles are created
         '''

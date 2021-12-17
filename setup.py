@@ -15,8 +15,8 @@ def _not_supported(why):
     sys.exit(1)
 
 
-if sys.hexversion < 0x3050000:
-    _not_supported('Pympler requires Python 3.5 or newer')
+if sys.hexversion < 0x3060000:
+    _not_supported('Pympler requires Python 3.6 or newer')
 
 import os
 from setuptools import Command
@@ -77,7 +77,6 @@ def run_setup(include_tests=0):
                        'Operating System :: OS Independent',
                        'Programming Language :: Python',
                        'Programming Language :: Python :: 3',
-                       'Programming Language :: Python :: 3.5',
                        'Programming Language :: Python :: 3.6',
                        'Programming Language :: Python :: 3.7',
                        'Programming Language :: Python :: 3.8',
