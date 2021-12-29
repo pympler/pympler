@@ -16,9 +16,7 @@ selected Python objects. A web profiling frontend exposes process statistics,
 garbage visualisation and class tracker statistics.
 
 Pympler is written entirely in Python, with no dependencies to external
-libraries. It has been tested with Python 3.6, 3.7, 3.8, 3.9, 3.10 on Linux,
-Windows and MacOS X.
-
+libraries on Linux and MacOS. On Windows, pywin32 is required.
 
 Installation from PyPI
 ----------------------
