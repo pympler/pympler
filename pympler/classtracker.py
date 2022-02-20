@@ -6,8 +6,8 @@ individual objects or all instances of certain classes. Tracked objects are
 sized recursively to provide an overview of memory distribution between the
 different tracked objects.
 """
-
-from typing import Any, Callable, Dict, IO, List, Optional, Tuple
+import sys
+from typing import Any, Callable, Dict, List, Optional, TextIO, Tuple
 
 from collections import defaultdict
 from functools import partial
@@ -255,7 +255,7 @@ class Snapshot(object):
 
 class ClassTracker(object):
 
-    def __init__(self, stream: Optional[IO] = None):
+    def __init__(self, stream: TextIO = sys.stdout) -> None:
         """
         Creates a new `ClassTracker` object.
 

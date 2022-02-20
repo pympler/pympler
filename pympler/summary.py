@@ -46,6 +46,7 @@ more detailed information at higher verbosity levels than 1.
 import re
 import sys
 import types
+from typing import TextIO
 
 from pympler.util import stringutils
 from sys import getsizeof
@@ -238,7 +239,8 @@ def _format_table(rows, header=True):
             header = False
 
 
-def print_(rows, limit=15, sort='size', order='descending'):
+def print_(rows, limit=15, sort='size', order='descending',
+           file: TextIO = sys.stdout) -> None:
     """Print the rows as a summary.
 
     Keyword arguments:
@@ -248,7 +250,7 @@ def print_(rows, limit=15, sort='size', order='descending'):
 
     """
     for line in format_(rows, limit=limit, sort=sort, order=order):
-        print(line)
+        print(line, file=file)
 
 
 # regular expressions used by _repr to replace default type representations

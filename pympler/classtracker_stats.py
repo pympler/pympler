@@ -3,7 +3,7 @@ Provide saving, loading and presenting gathered `ClassTracker` statistics.
 """
 
 from typing import (
-    Any, Dict, IO, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+    Any, Dict, IO, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING, Union
 )
 
 import os
@@ -86,7 +86,7 @@ class Stats(object):
 
     def __init__(self, tracker: 'Optional[ClassTracker]' = None,
                  filename: Optional[str] = None,
-                 stream: Optional[IO] = None):
+                 stream: TextIO = sys.stdout) -> None:
         """
         Initialize the data log structures either from a `ClassTracker`
         instance (argument `tracker`) or a previously dumped file (argument
@@ -96,10 +96,7 @@ class Stats(object):
         :param filename: filename of previously dumped statistics
         :param stream: where to print statistics, defaults to ``sys.stdout``
         """
-        if stream:
-            self.stream = stream
-        else:
-            self.stream = sys.stdout
+        self.stream = stream
         self.tracker = tracker
         self.index = {}  # type: Dict[str, List[TrackedObject]]
         self.snapshots = []  # type: List[Snapshot]

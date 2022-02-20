@@ -78,18 +78,13 @@ class SummaryTest(unittest.TestCase):
 
     def test_print_diff(self):
         """Test summary can be printed."""
-        try:
-            self._stdout = sys.stdout
-            stream = StringIO()
-            sys.stdout = stream
-            sum1 = summary.summarize(muppy.get_objects())
-            sum2 = summary.summarize(muppy.get_objects())
-            sumdiff = summary.get_diff(sum1, sum2)
-            summary.print_(sumdiff)
-            self.assertIn('str', stream.getvalue())
-            self.assertNotIn("<class 'str", stream.getvalue())
-        finally:
-            sys.stdout = self._stdout
+        stream = StringIO()
+        sum1 = summary.summarize(muppy.get_objects())
+        sum2 = summary.summarize(muppy.get_objects())
+        sumdiff = summary.get_diff(sum1, sum2)
+        summary.print_(sumdiff, file=stream)
+        self.assertIn('str', stream.getvalue())
+        self.assertNotIn("<class 'str", stream.getvalue())
 
 
     def test_subtract(self):

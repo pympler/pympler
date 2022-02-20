@@ -1,6 +1,6 @@
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
-
+from typing import Any, Callable, Dict, List, Optional, Set, TextIO, Tuple
 import gc
+import sys
 
 from pympler import summary
 from pympler.util import compat
@@ -61,14 +61,14 @@ def get_objects(remove_dups: bool = True, include_frames: bool = False
     return res
 
 
-def get_size(objects: List[Any]) -> int:
+def get_size(objects: List[Any], file: TextIO = sys.stdout) -> int:
     """Compute the total size of all elements in objects."""
     res = 0
     for o in objects:
         try:
             res += getsizeof(o)
         except AttributeError:
-            print("IGNORING: type=%s; o=%s" % (str(type(o)), str(o)))
+            print("IGNORING: type=%s; o=%s" % (str(type(o)), str(o)), file=file)
     return res
 
 
@@ -270,6 +270,6 @@ def _remove_duplicates(objects: List[Any]) -> List[Any]:
     return result
 
 
-def print_summary() -> None:
+def print_summary(file: TextIO = sys.stdout) -> None:
     """Print a summary of all known objects."""
-    summary.print_(summary.summarize(get_objects()))
+    summary.print_(summary.summarize(get_objects()), file=file)
