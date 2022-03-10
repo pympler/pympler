@@ -205,7 +205,7 @@ import weakref as Weakref
 __all__ = ['adict', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '21.08.09'
+__version__ = '22.03.10'
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -1367,7 +1367,9 @@ try:  # MCCABE 14
         '''
         try:
             return isinstance(obj, _numpy_types) or (hasattr(obj, 'nbytes') and
-                                          _moduleof(_classof(obj)).startswith('numpy'))
+                                          _moduleof(_classof(obj)).startswith('numpy') and
+                                          # sizing memory-mapped files is not feasible
+                                          _classof(obj, dflt='memmap').__name__ != 'memmap')
         except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
             return False
 
