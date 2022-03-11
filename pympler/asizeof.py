@@ -190,11 +190,12 @@ import sys
 if sys.version_info < (3, 6, 0):
     raise NotImplementedError('%s requires Python 3.6 or newer' % ('asizeof',))
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+# from abc import ABCMeta
+from typing import Callable, Dict, List, Tuple, Union  # Optional
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
-                     ismethod, ismodule, stack)
+                     ismethod, ismodule)  # stack
 from math import log
 from os import curdir, linesep
 from struct import calcsize  # type/class Struct only in Python 2.5+
@@ -202,10 +203,10 @@ import types as Types
 import warnings
 import weakref as Weakref
 
-__all__ = ['adict', 'asized', 'asizeof', 'asizesof',
+__all__ = ['adict', 'amapped', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '21.08.09'
+__version__ = '22.03.11'  # 21.08.09
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -268,8 +269,6 @@ if hasattr(sys, 'gettotalrefcount'):  # pragma: no coverage
     _sizeof_Crefcounts = _calcsize('2z')
 else:
     _sizeof_Crefcounts = 0
-
-from abc import ABCMeta
 
 # Some flags from .../Include/object.h
 _Py_TPFLAGS_HEAPTYPE = 1 << 9  # Py_TPFLAGS_HEAPTYPE
@@ -338,7 +337,7 @@ from gc import get_referents as _getreferents
 _getsizeof = sys.getsizeof  # overridden below
 _getsizeof_excls = ()  # types not sys.getsizeof'd
 
-from sys import intern as _intern
+from sys import intern as _intern  # Python 3+
 
 
 # Private functions
@@ -1276,6 +1275,7 @@ except AttributeError:  # missing
 # Newer or obsolete types
 from array import array  # array type
 
+
 def _array_kwds(obj):
     if hasattr(obj, 'itemsize'):
         v = 'itemsize'
@@ -1287,10 +1287,12 @@ def _array_kwds(obj):
     # and function leng returns the length in number of items
     return dict(leng=_len_array, item=_sizeof_Cbyte, vari=v)
 
+
 def _len_array(obj):
     '''Array length (in bytes!).
     '''
     return len(obj) * obj.itemsize
+
 
 _all_lens += (_len_array,)  # type: ignore
 
@@ -1361,6 +1363,13 @@ except NameError:  # missing
 
 try:  # MCCABE 14
     import numpy  # NumPy array, matrix, etc.
+    _memmap = numpy.memmap
+    try:
+        from mmap import PAGESIZE as _PAGESIZE
+        if _PAGESIZE < 1024:
+            raise ImportError
+    except ImportError:
+        _PAGESIZE = 4096  # 4 KiB, typical
 
     def _isnumpy(obj):
         '''Return True for a NumPy arange, array, matrix, etc. instance.
@@ -1374,10 +1383,19 @@ try:  # MCCABE 14
     def _len_numpy(obj):
         '''NumPy array, matrix, etc. length (in bytes!).
         '''
-        return obj.nbytes  # == obj.size * obj.itemsize
+        n = obj.nbytes  # == obj.size * obj.itemsize
+        if isinstance(obj, _memmap):
+            n = int(n * _amapped)
+            if n:  # round up to virtual memory page size
+                n = max(2, (n // _PAGESIZE) + 1) * _PAGESIZE
+        return n
 
     def _numpy_kwds(obj):
-        b = _getsizeof(obj, 96) - obj.nbytes  # XXX 96..144 typical?
+        # .nbytes is included in sys.sizeof for most numpy
+        # objects except for numpy.memmap ones and for the
+        # latter it is the size of the memory-mapped file
+        n =  0 if isinstance(obj, _memmap) else obj.nbytes
+        b = _getsizeof(obj, 96) - n  # XXX 96..144 typical?
         # since item size depends on the numpy data type, set
         # itemsize to 1 byte and use _len_numpy in bytes; note,
         # function itemsize returns the actual size in bytes,
@@ -2472,7 +2490,24 @@ def adict(*classes):
     return a  # all installed if True
 
 
-_asizer = Asizer()
+def amapped(percentage=None):
+    '''Set/get approximate mapped memory usage as a percentage
+       of the mapped file size.
+
+       Sets the new percentage if not None and returns the
+       previously set percentage.
+
+       Applies only to *numpy.memmap* objects.
+    '''
+    global _amapped
+    p = _amapped
+    if percentage is not None:
+        _amapped = max(0, min(1, percentage * 0.01))
+    return p * 100.0
+
+
+_amapped = 0.01  # 0 <= percentage <= 1.0
+_asizer  = Asizer()
 
 
 def asized(*objs, **opts):
