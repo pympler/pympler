@@ -190,11 +190,12 @@ import sys
 if sys.version_info < (3, 6, 0):
     raise NotImplementedError('%s requires Python 3.6 or newer' % ('asizeof',))
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+# from abc import ABCMeta
+from typing import Callable, Dict, List, Tuple, Union  # Optional
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
-                     ismethod, ismodule, stack)
+                     ismethod, ismodule)  # stack
 from math import log
 from os import curdir, linesep
 from struct import calcsize  # type/class Struct only in Python 2.5+
@@ -202,10 +203,10 @@ import types as Types
 import warnings
 import weakref as Weakref
 
-__all__ = ['adict', 'asized', 'asizeof', 'asizesof',
+__all__ = ['adict', 'amapped', 'asized', 'asizeof', 'asizesof',
            'Asized', 'Asizer',  # classes
            'basicsize', 'flatsize', 'itemsize', 'leng', 'refs']
-__version__ = '21.08.09'
+__version__ = '22.03.12'  # 21.08.09
 
 # Any classes or types in modules listed in _builtin_modules are
 # considered built-in and ignored by default, as built-in functions
@@ -221,10 +222,7 @@ _sizeof_Clong  = calcsize('l')  # sizeof(long)
 _sizeof_Cvoidp = calcsize('P')  # sizeof(void*)
 
 # sizeof(long) != sizeof(ssize_t) on LLP64
-if _sizeof_Clong < _sizeof_Cvoidp:  # pragma: no coverage
-    _z_P_L = 'P'
-else:
-    _z_P_L = 'L'
+_z_P_L = 'P' if _sizeof_Clong < _sizeof_Cvoidp else 'L'
 
 
 def _calcsize(fmt):
@@ -242,7 +240,7 @@ _sizeof_CPyModuleObject = _calcsize('PzP0P')  # sizeof(PyModuleObject)
 _sizeof_CPyDictEntry = _calcsize('z2P')  # sizeof(PyDictEntry)
 _sizeof_Csetentry = _calcsize('lP')  # sizeof(setentry)
 
-_sizeof_Cdigit = int.__itemsize__
+_sizeof_Cdigit = int.__itemsize__  # Python 2: long.__itemsize__
 if _sizeof_Cdigit < 2:  # pragma: no coverage
     raise AssertionError('sizeof(%s) bad: %d' % ('digit', _sizeof_Cdigit))
 
@@ -268,8 +266,6 @@ if hasattr(sys, 'gettotalrefcount'):  # pragma: no coverage
     _sizeof_Crefcounts = _calcsize('2z')
 else:
     _sizeof_Crefcounts = 0
-
-from abc import ABCMeta
 
 # Some flags from .../Include/object.h
 _Py_TPFLAGS_HEAPTYPE = 1 << 9  # Py_TPFLAGS_HEAPTYPE
@@ -338,7 +334,7 @@ from gc import get_referents as _getreferents
 _getsizeof = sys.getsizeof  # overridden below
 _getsizeof_excls = ()  # types not sys.getsizeof'd
 
-from sys import intern as _intern
+from sys import intern as _intern  # Python 3+
 
 
 # Private functions
@@ -1276,6 +1272,7 @@ except AttributeError:  # missing
 # Newer or obsolete types
 from array import array  # array type
 
+
 def _array_kwds(obj):
     if hasattr(obj, 'itemsize'):
         v = 'itemsize'
@@ -1287,10 +1284,12 @@ def _array_kwds(obj):
     # and function leng returns the length in number of items
     return dict(leng=_len_array, item=_sizeof_Cbyte, vari=v)
 
+
 def _len_array(obj):
     '''Array length (in bytes!).
     '''
     return len(obj) * obj.itemsize
+
 
 _all_lens += (_len_array,)  # type: ignore
 
@@ -1301,7 +1300,6 @@ _array_excl = (v[0] == 2 and v < (2, 7, 4)) or \
               (v[0] == 3 and v < (3, 2, 4))
 if _array_excl:  # see function _typedef below
     _getsizeof_excls_add(array)
-
 del v
 
 try:  # bool has non-zero __itemsize__ in 3.0
@@ -1359,31 +1357,65 @@ try:
 except NameError:  # missing
     pass
 
-try:  # MCCABE 14
-    import numpy  # NumPy array, matrix, etc.
+try:  # MCCABE 19
+    import numpy as _numpy  # NumPy array, matrix, etc.
+    try:
+        _numpy_memmap = _numpy.memmap
+    except AttributeError:
+        _numpy_memmap = None
+    try:
+        from mmap import PAGESIZE as _PAGESIZE
+        if _PAGESIZE < 1024:
+            raise ImportError
+    except ImportError:
+        _PAGESIZE = 4096  # 4 KiB, typical
 
     def _isnumpy(obj):
-        '''Return True for a NumPy arange, array, matrix, etc. instance.
+        '''Return True for a NumPy arange, array, matrix, memmap, ndarray, etc. instance.
         '''
-        try:
-            return isinstance(obj, _numpy_types) or (hasattr(obj, 'nbytes') and
-                                          _moduleof(_classof(obj)).startswith('numpy'))
-        except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
-            return False
+        if hasattr(obj, 'nbytes'):
+            try:
+                return (_moduleof(_classof(obj)).startswith('numpy') or
+                        _moduleof(type(obj)).startswith('numpy'))
+            except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
+                pass
+        return False
 
     def _len_numpy(obj):
         '''NumPy array, matrix, etc. length (in bytes!).
         '''
         return obj.nbytes  # == obj.size * obj.itemsize
 
+    def _len_numpy_memmap(obj):
+        '''Approximate NumPy memmap in-memory size (in bytes!).
+        '''
+        nb = int(obj.nbytes * _amapped)
+        if nb > 0:  # up to multiple of virtual memory page size
+            nb = ((nb + _PAGESIZE - 1) // _PAGESIZE) * _PAGESIZE
+        return nb
+
     def _numpy_kwds(obj):
-        b = _getsizeof(obj, 96) - obj.nbytes  # XXX 96..144 typical?
-        # since item size depends on the numpy data type, set
+        t = type(obj)
+        # .nbytes is included in sys.sizeof size for most numpy
+        # objects except for numpy.memmap, and for the latter it
+        # is the length of the file to be memory-mapped (which
+        # is the size of the file less the offset, by default)
+        if t is _numpy_memmap:  # isinstance(obj, _numpy_memmap)
+            b, _len, nb = 144, _len_numpy_memmap, 0
+        else:
+            b, _len, nb =  96, _len_numpy, obj.nbytes
+        b = _getsizeof(obj, b) - nb  # XXX 96..144 typical?
+        # sizing numpy 1.13 arrays works fine, but 1.8 and older
+        # appears to suffer from sys.getsizeof() bug like array,
+        # however, exclude all numpy types from sys.getsizeof
+        _getsizeof_excls_add(t)  # see _Typedef.flat
+        # since item size depends on the nympy data type, set
         # itemsize to 1 byte and use _len_numpy in bytes; note,
         # function itemsize returns the actual size in bytes,
         # function alen returns the length in number of items
         return dict(base=b, item=_sizeof_Cbyte,  # not obj.itemsize
-                            leng=_len_numpy,
+                            both= True,
+                            leng=_len,
                             refs=_numpy_refs,
                             vari='itemsize')
 
@@ -1392,38 +1424,13 @@ try:  # MCCABE 14
         '''
         return _refs(obj, named, 'base')
 
-    _all_lens += (_len_numpy,)
+    _all_lens += (_len_numpy, _len_numpy_memmap)
     _all_refs += (_numpy_refs,)
 
-    v = tuple(map(int, numpy.__version__.split('.')[:2]))
-
-    if v < (1, 19):
-        t = (numpy.matrix(range(0)),)
-    else:  # numpy.matrix deprecated in 1.19.3
-        t = ()
-    _numpy_types = ()  # type: Tuple[type, ...]
-    for d in (t + (numpy.array(range(0)), numpy.arange(0),
-              numpy.ma.masked_array([]), numpy.ndarray(0))):
-        t = type(d)
-        if t not in _numpy_types:
-            _numpy_types += (t,)
-            if _isnumpy(d):  # double check
-                _typedef_both(t, **_numpy_kwds(d))
-            else:
-                raise AssertionError('not %s: %r' % ('numpy', d))
-
-    # sizing numpy 1.13 arrays works fine, but 1.8 and older
-    # appears to suffer from sys.getsizeof() bug like array
-    _numpy_excl = v < (1, 9)
-    if _numpy_excl:  # see function _typedef below
-        for t in _numpy_types:
-            _getsizeof_excls_add(t)
-
-    del d, t, v
 except ImportError:  # no NumPy
-    _numpy_excl = numpy = None  # type: ignore # see function _typedef below
+    _numpy = _numpy_kwds = None  # type: ignore # see function _typedef below
 
-    def _isnumpy(obj):  # PYCHOK expected
+    def _isnumpy(unused):  # PYCHOK expected
         '''Not applicable, no NumPy.
         '''
         return False
@@ -1593,10 +1600,8 @@ def _typedef(obj, derive=False, frames=False, infer=False):  # MCCABE 25
         v.set(item=_itemsize(t), refs=_cell_refs)
     elif _isnamedtuple(obj):
         v.set(refs=_namedtuple_refs)
-    elif numpy and _isnumpy(obj):  # NumPy data
+    elif _numpy and _isnumpy(obj):  # NumPy data
         v.set(**_numpy_kwds(obj))
-        if _numpy_excl:
-            _getsizeof_excls_add(t)
     elif array and isinstance(obj, array):
         v.set(**_array_kwds(obj))
         if _array_excl:
@@ -2472,7 +2477,24 @@ def adict(*classes):
     return a  # all installed if True
 
 
-_asizer = Asizer()
+def amapped(percentage=None):
+    '''Set/get approximate mapped memory usage as a percentage
+       of the mapped file size.
+
+       Sets the new percentage if not None and returns the
+       previously set percentage.
+
+       Applies only to *numpy.memmap* objects.
+    '''
+    global _amapped
+    p = _amapped
+    if percentage is not None:
+        _amapped = max(0, min(1, percentage * 0.01))
+    return p * 100.0
+
+
+_amapped = 0.01  # 0 <= percentage <= 1.0
+_asizer  = Asizer()
 
 
 def asized(*objs, **opts):
@@ -2793,6 +2815,18 @@ if __name__ == '__main__':
         if '-gc' in sys.argv:
             collect = True
             gc.collect()
+
+        if '-numpy' in sys.argv and _numpy:  # some NumPy examples
+            v = tuple(map(int, _numpy.__version__.split('.')[:2]))
+            t = (_numpy.arange(0),  # some example
+                 _numpy.array(range(0)),
+                 _numpy.ma.masked_array([]),
+                 _numpy.ndarray(0),
+                 _numpy.memmap(sys.executable, mode='r'))
+            if v < (1, 19):  # numpy.matrix deprecated in 1.19.3
+                t += _numpy.matrix(range(0)),
+            asizesof(*t, stats=2, above=0)
+            amapped(100)
 
         frames = '-frames' in sys.argv
 
