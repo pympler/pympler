@@ -197,7 +197,7 @@ try:
     elif _ProcessMemoryInfoResource().update():  # pragma: no cover
         ProcessMemoryInfo = _ProcessMemoryInfoResource
 
-except ImportError:
+except (AttributeError, ImportError):
     try:
         # Requires pywin32
         from win32process import GetProcessMemoryInfo
