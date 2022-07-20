@@ -7,7 +7,7 @@ Introduction
 Quick Links
 ===========
 
-**Download pympler**: https://pypi.org/projects/Pympler
+**Download pympler**: https://pypi.org/project/Pympler
 
 **File a bug report**: https://github.com/pympler/pympler/issues
 
