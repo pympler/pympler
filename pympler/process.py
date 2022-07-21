@@ -165,7 +165,7 @@ class _ProcessMemoryInfoProc(_ProcessMemoryInfo):
 
 
 try:
-    from resource import getrusage, RUSAGE_SELF
+    from resource import getrusage, RUSAGE_SELF  # type: ignore
 
     class _ProcessMemoryInfoResource(_ProcessMemoryInfo):
         def update(self) -> bool:
