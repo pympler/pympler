@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Python 3.11 support
+- Size numpy.memmap objects and allow setting percentage via pympler.asizeof.amapped -- By Jean Brouwers (#143)
+
 ### Changed
 
 - Require pywin32 on Windows
+- Removed all remnants of Python 2, like old- vs new-style classes and types -- By Jean Brouwers (#145)
+
+### Fixed
+
+- Sizing of Python array.array and large int values have been corrected after being wrong for recent Python versions -- By Jean Brouwers (#145)
+- Distribute py.typed file for mypy typings -- Reported by Alex Rothberg (#135)
+- Fix PyPI links -- Reported by Victor Vorobev (#136)
 
 ## 1.0.1 - 2021-12-22
 
