@@ -1,0 +1,13 @@
+Source: python-pympler
+Section: python
+Priority: extra
+Maintainer: Vladimir Eremin <yottatsa@yandex-team.ru>
+Build-Depends: debhelper (>= 8.0.0), python-all-dev, python-setuptools
+Homepage: https://pypi.python.org/pypi/Pympler
+
+Package: python-pympler
+Architecture: all
+XB-Python-Version: ${python:Versions}
+Depends: ${python:Depends}
+Provides: ${python:Provides}
+Description: A development tool to measure, monitor and analyze the memory behavior of Python objects. 
