@@ -51,8 +51,8 @@ have a look at the objects, invoke an action, and look at the objects again.
 
    from pympler import tracker
 
-   self.memory_tracker = tracker.SummaryTracker()
-   self.memory_tracker.print_diff()
+   tracker.memory_tracker = tracker.SummaryTracker()
+   tracker.memory_tracker.print_diff()
 
 The last step is repeated after each invocation. Let's start with something
 simple which should not leak. We will check the Windows resize. You can invoke
