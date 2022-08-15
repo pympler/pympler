@@ -4,6 +4,7 @@ Memory usage profiler for Python.
 """
 import inspect
 import sys
+from typing import TextIO
 
 from pympler import muppy
 
@@ -37,7 +38,8 @@ class MProfiler(object):
 
     """
 
-    def __init__(self, codepoints=None, events=None):
+    def __init__(self, codepoints=None, events=None,
+                 stream: TextIO = sys.stdout) -> None:
         """
         keyword arguments:
         codepoints -- a list of points in code to monitor (defaults to all
@@ -47,6 +49,7 @@ class MProfiler(object):
         self.memories = {}
         self.codepoints = codepoints
         self.events = events
+        self.stream = stream
 
     def codepoint_included(self, codepoint):
         """Check if codepoint matches any of the defined codepoints."""
@@ -69,7 +72,7 @@ class MProfiler(object):
             cp = (frame_info[0], frame_info[2], frame_info[1])
             if self.codepoint_included(cp):
                 objects = muppy.get_objects()
-                size = muppy.get_size(objects)
+                size = muppy.get_size(objects, file=self.stream)
                 if cp not in self.memories:
                     self.memories[cp] = [0, 0, 0, 0]
                     self.memories[cp][0] = 1

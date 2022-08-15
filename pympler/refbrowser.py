@@ -20,6 +20,7 @@ raised.
 import gc
 import inspect
 import sys
+from typing import TextIO
 
 from pympler import muppy
 from pympler import summary
@@ -66,7 +67,7 @@ class RefBrowser(object):
     """
 
     def __init__(self, rootobject, maxdepth=3, str_func=summary._repr,
-                 repeat=True, stream=None):
+                 repeat=True, stream: TextIO = sys.stdout) -> None:
         """You have to provide the root object used in the refbrowser.
 
         keyword arguments
@@ -208,10 +209,9 @@ class StreamBrowser(RefBrowser):
 class ConsoleBrowser(StreamBrowser):
     """RefBrowser that prints to the console (stdout)."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs.update({'stream': sys.stdout})
         super(ConsoleBrowser, self).__init__(*args, **kwargs)
-        if not self.stream:
-            self.stream = sys.stdout
 
 
 class FileBrowser(StreamBrowser):

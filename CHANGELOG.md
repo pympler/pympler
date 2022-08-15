@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Require pywin32 on Windows
+- `stream` arguments (of type `TextIO` default to `sys.stdout`) for all 
+   classes that are using `print()` calls for redirecting output to 
+   dedicated IO. `file` arguments for methods that are using `print()`
+   directly - by abcdenis (#18, #27) 
 
 ## 1.0.1 - 2021-12-22
 

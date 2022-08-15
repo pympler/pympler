@@ -11,6 +11,8 @@ one time and compare with objects from an earlier time.
 """
 import gc
 import inspect
+import sys
+from typing import TextIO
 
 from pympler import muppy, summary
 from pympler.util import compat
@@ -127,7 +129,8 @@ class SummaryTracker(object):
                     "You cannot provide summary2 without summary1.")
         return summary._sweep(res)
 
-    def print_diff(self, summary1=None, summary2=None):
+    def print_diff(self, summary1=None, summary2=None,
+                   file: TextIO = sys.stdout) -> None:
         """Compute diff between to summaries and print it.
 
         If no summary is provided, the diff from the last to the current
@@ -135,7 +138,7 @@ class SummaryTracker(object):
         to the current summary is used. If summary1 and summary2 are
         provided, the diff between these two is used.
         """
-        summary.print_(self.diff(summary1=summary1, summary2=summary2))
+        summary.print_(self.diff(summary1=summary1, summary2=summary2), file=file)
 
     def format_diff(self, summary1=None, summary2=None):
         """Compute diff between to summaries and return a list of formatted
@@ -173,13 +176,14 @@ class ObjectTracker(object):
     # warning at http://docs.python.org/lib/inspect-stack.html). All ignore
     # lists used need to be emptied so no frame objects remain referenced.
 
-    def __init__(self):
+    def __init__(self, stream: TextIO = sys.stdout) -> None:
         """On initialisation, the current state of objects is stored.
 
         Note that all objects which exist at this point in time will not be
         released until you destroy this ObjectTracker instance.
         """
         self.o0 = self._get_objects(ignore=(inspect.currentframe(),))
+        self.stream = stream
 
     def _get_objects(self, ignore=()):
         """Get all currently existing objects.
@@ -247,7 +251,7 @@ class ObjectTracker(object):
         """
         # ignore this and the caller frame
         for line in self.format_diff(ignore+(inspect.currentframe(),)):
-            print(line)
+            print(line, file=self.stream)
 
     def format_diff(self, ignore=()):
         """Format the diff to the last time the state of objects was measured.
