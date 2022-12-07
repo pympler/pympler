@@ -199,7 +199,7 @@ import warnings
 import weakref as Weakref
 
 __all__ = []  # overwritten below
-__version__ = '22.06.30'  # 21.08.09
+__version__ = '22.12.07'  # 22.06.30
 
 _NN       = ''
 _Not_vari = _NN  # non-variable item size
@@ -1320,19 +1320,27 @@ try:  # MCCABE 19
         # objects except for numpy.memmap (and for the latter it
         # is the length of the file to be memory-mapped which by
         # default is the file size less the offset specified)
+        _i, _v = _sizeof_Cbyte, 'itemsize'
         if t is _numpy_memmap:  # isinstance(obj, _numpy_memmap)
-            b, _len_, nb = 144, _len_numpy_memmap, 0
+            b, _l, nb = 144, _len_numpy_memmap, 0
+        elif t.__name__ in ('str', 'str_'):  # numpy.str Deprecated!
+            # make numpy.str_ behave like Python type str
+            b  =  81
+            _l = _len
+            nb = _l(obj)
+            _i =  obj.nbytes // nb
+            _v = _Not_vari
         else:  # XXX 96, 128, 144 typical?
-            b, _len_, nb =  96, _len_numpy, obj.nbytes
+            b, _l, nb =  96, _len_numpy, obj.nbytes
         # since item size depends on the nympy data type, set
         # itemsize to 1 byte and use _len_numpy in bytes; note,
         # function itemsize returns the actual size in bytes,
-        # function alen returns the length in number of items
-        return dict(base=_getsizeof(obj, b) - nb,
-                    item=_sizeof_Cbyte,  # not obj.itemsize!
-                    leng=_len_,
+        # function leng returns the length in number of items
+        return dict(base=_getsizeof(obj, b + nb) - nb,
+                    item=_i,  # not obj.itemsize!
+                    leng=_l,
                     refs=_numpy_refs,
-                    vari='itemsize',  # numpy.itemsize
+                    vari=_v,  # numpy.itemsize
                     xtyp= True)  # never _getsizeof'd
 
     def _numpy_refs(obj, named):
