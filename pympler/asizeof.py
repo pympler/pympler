@@ -1657,17 +1657,18 @@ class Asized(object):
 
         *refs* -- tuple containing an **Asized** instance for each referent
     '''
-    __slots__ = ('flat', 'name', 'refs', 'size')
+    __slots__ = ('flat', 'name', 'refs', 'size', 'type_name')
 
-    def __init__(self, size, flat, refs=(), name=None):
+    def __init__(self, size, flat, refs=(), name=None, type_name=None):
         self.size = size  # total size
         self.flat = flat  # flat size
         self.name = name  # name, repr or None
         self.refs = tuple(refs)
+        self.type_name = type_name
 
     def __str__(self):
-        return 'size %r, flat %r, refs[%d], name %r' % (
-            self.size, self.flat, len(self.refs), self.name)
+        return 'size %r, flat %r, refs[%d], name %r, type ' % (
+            self.size, self.flat, len(self.refs), self.name, self.type_name)
 
     def format(self, format='%(name)s size=%(size)d flat=%(flat)d',
                      depth=-1, order_by='size', indent=_NN):
@@ -1837,7 +1838,7 @@ class Asizer(object):
             # or if ref of a given obj
             self._seen.again(i)
             if sized:
-                s = sized(s, f, name=self._nameof(obj))
+                s = sized(s, f, name=self._nameof(obj), type_name=str(type(obj)))
                 self.exclude_objs(s)
             return s  # zero
         else:  # deep == seen[i] == 0
@@ -1888,7 +1889,7 @@ class Asizer(object):
         if not deep:
             self._total += s  # accumulate
         if sized:
-            s = sized(s, f, name=self._nameof(obj), refs=rs)
+            s = sized(s, f, name=self._nameof(obj), refs=rs, type_name=str(type(obj)))
             self.exclude_objs(s)
         return s
 
