@@ -575,6 +575,14 @@ def _refs(obj, named, *attrs, **kwds):
             yield _N(a, o)
 
 
+def _clip(string:str, clip):
+    if len(string) > clip > 0:
+        h = (clip // 2) - 2
+        if h > 0:
+            string = string[:h] + '....' + string[-h:]
+    return string
+
+
 def _repr(obj, clip=80):
     '''Clip long repr() string.
     '''
@@ -582,10 +590,7 @@ def _repr(obj, clip=80):
         r = repr(obj).replace(linesep, '\\n')
     except Exception:
         r = 'N/A'
-    if len(r) > clip > 0:
-        h = (clip // 2) - 2
-        if h > 0:
-            r = r[:h] + '....' + r[-h:]
+    r = _clip(r, clip)
     return r
 
 
@@ -1664,7 +1669,7 @@ class Asized(object):
         self.flat = flat  # flat size
         self.name = name  # name, repr or None
         self.refs = tuple(refs)
-        self.type_name = type_name
+        self.type_name = sys.intern(_repr(type_name))
 
     def __str__(self):
         return 'size %r, flat %r, refs[%d], name %r, type ' % (
