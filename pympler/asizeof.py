@@ -186,7 +186,7 @@ if sys.version_info < (3, 6, 0):
     raise NotImplementedError('%s requires Python 3.6 or newer' % (__file__,))
 
 # from abc import ABCMeta
-from typing import Callable, Dict, List, Set, Union  # Optional
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union  # Optional
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
@@ -1664,12 +1664,12 @@ class Asized(object):
     '''
     __slots__ = ('flat', 'name', 'refs', 'size', 'dtype')
 
-    def __init__(self, size, flat, refs=(), name=None, dtype=None):
-        self.size = size  # total size
-        self.flat = flat  # flat size
-        self.name = name  # name, repr or None
-        self.refs = tuple(refs)
-        self.dtype = dtype
+    def __init__(self, size: int, flat:int, refs: Tuple["Asized"]=(), name:Optional[str]=None, dtype: Optional[Type]=None):
+        self.size: int = size  # total size
+        self.flat: int = flat  # flat size
+        self.refs: Tuple[Asized] = tuple(refs)
+        self.name: str = name  # name, repr or None
+        self.dtype: Type = dtype
 
     def __str__(self):
         return 'size %r, flat %r, refs[%d], name %r, type ' % (
