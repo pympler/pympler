@@ -1293,13 +1293,13 @@ try:  # MCCABE 19
         '''Return True for a NumPy arange, array, matrix, memmap, ndarray, etc. instance.
         '''
         # not every numpy obj  hasattr(obj, 'base')
-        if hasattr(obj, 'dtype') and hasattr(obj, 'itemsize') \
-                                 and hasattr(obj, 'nbytes'):
-            try:
+        try:
+            if hasattr(obj, 'dtype') and hasattr(obj, 'itemsize') \
+                    and hasattr(obj, 'nbytes'):
                 return (_moduleof(_classof(obj)).startswith('numpy') or
                         _moduleof(type(obj)).startswith('numpy'))
-            except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
-                pass
+        except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
+            pass
         return False
 
     def _len_numpy(obj):
