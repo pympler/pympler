@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Handle sizing of numpy.str and numpy.str_ -- Reported by Rui Xue (#155), fixed by Jean Brouwers
+- Fix sizing of multiple objects with references to each other
 
 ## 1.0.1 - 2021-12-22
 
