@@ -1843,7 +1843,8 @@ class Asizer(object):
         elif deep or self._seen[i]:
             # skip obj if seen before
             # or if ref of a given obj
-            self._seen.again(i)
+            if self._seen[i]:
+                self._seen.again(i)
             if sized:
                 s = sized(s, f, name=self._nameof(obj))
                 self.exclude_objs(s)

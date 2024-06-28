@@ -304,6 +304,19 @@ class FunctionTest(unittest.TestCase):
         code_sizes = sizer.asizesof(*objs, **dict(code=True))
         self.assertNotEqual(list(code_sizes), sizes)
 
+    def test_asizesof_cyclic_references(self):
+        foo = Foo(1)
+        bar = Foo(2)
+
+        foo.next = bar
+        bar.prev = foo
+
+        sizes = list(asizeof.asizesof(foo, bar))
+        self.assertEqual(len(sizes), 2)
+        self.assertTrue(all(size > 0 for size in sizes), sizes)
+        cycle_size = asizeof.asizeof(foo)
+        self.assertEqual(cycle_size, sum(sizes))
+
     def test_asizeof(self):
         '''Test asizeof.asizeof()
         '''
