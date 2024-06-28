@@ -52,4 +52,4 @@ jobs:
         mypy pympler
     - name: Build documentation
       run: |
-        python setup.py build_sphinx -W
+        python run.py --html
