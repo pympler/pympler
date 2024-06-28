@@ -18,6 +18,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - name: Install system dependencies
       if: matrix.os == 'ubuntu-20.04'
       run: |
