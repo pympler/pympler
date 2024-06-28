@@ -35,8 +35,8 @@ Before installing Pympler, try it with your Python version:
 
 If any errors are reported, check whether your Python version is supported.
 Pympler is written entirely in Python, with no dependencies other than standard
-Python modules and libraries. Pympler works with Python 3.6, 3.7, 3.8, 3.9 and
-3.10.
+Python modules and libraries. Pympler works with Python 3.6, 3.7, 3.8, 3.9,
+3.10, 3.11 and 3.12.
 
 For a system-wide installation from source run:
 

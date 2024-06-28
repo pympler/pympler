@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Python 3.11 and 3.12 support
+
 ### Changed
 
 - Require pywin32 on Windows
 - Update bottle.py to 0.12.25  -- Reported by Ben Poweski, fixed by Chris Adams (#158)
+
+### Fixed
+
+- Handle sizing of numpy.str and numpy.str_ -- Reported by Rui Xue (#155), fixed by Jean Brouwers
 
 ## 1.0.1 - 2021-12-22
 
