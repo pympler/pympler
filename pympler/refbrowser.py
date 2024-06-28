@@ -113,7 +113,7 @@ class RefBrowser(object):
         self.ignore.append(objects)
         for o in objects:
             # Ignore dict of _Node and RefBrowser objects
-            if isinstance(o, dict):
+            if isinstance(o, dict) and sys.version_info < (3, 11):
                 if any(isinstance(ref, (_Node, RefBrowser))
                        for ref in gc.get_referrers(o)):
                     continue

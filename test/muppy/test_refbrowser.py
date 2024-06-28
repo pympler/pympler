@@ -137,7 +137,7 @@ root-+-branch1-+-a
         # see http://bugs.python.org/issue4688 for details
         ref1 = [root, []]
         ref11 = [ref1, root]
-        ref2 = {1: root, 2:[]}
+        ref2 = {1: root, 2: []}
         ref22 = {1: ref2}
 
         res = refbrowser.RefBrowser(root, repeat=False).get_tree()
@@ -152,7 +152,7 @@ root-+-branch1-+-a
         refs = [ref1, ref11, ref2]
         children = [c.o for c in res.children if isinstance(c, refbrowser._Node)]
         for r in refs:
-            self.assertTrue(r in children)
+            self.assertIn(r, children)
         # test if maxdepth is working
         res = refbrowser.RefBrowser(root, maxdepth=0).get_tree()
         self.assertEqual(len(res.children), 0)
