@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Require pywin32 on Windows
+- Update bottle.py to 0.12.25  -- Reported by Ben Poweski, fixed by Chris Adams (#158)
 
 ## 1.0.1 - 2021-12-22
 
