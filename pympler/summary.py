@@ -45,6 +45,7 @@ more detailed information at higher verbosity levels than 1.
 
 import re
 import sys
+import os
 import types
 
 from pympler.util import stringutils
@@ -238,17 +239,23 @@ def _format_table(rows, header=True):
             header = False
 
 
-def print_(rows, limit=15, sort='size', order='descending'):
+def print_(rows, limit=15, sort='size', order='descending', filename=""):
     """Print the rows as a summary.
 
     Keyword arguments:
     limit -- the maximum number of elements to be listed
     sort  -- sort elements by 'size', 'type', or '#'
     order -- sort 'ascending' or 'descending'
+    filename -- file to write the object dump to. eg: /tmp/objectdump.txt
 
     """
+    fp = None
+    if filename != "" and os.path.dirname(filename):
+        fp.open(filename, 'w')
+
     for line in format_(rows, limit=limit, sort=sort, order=order):
         print(line)
+        if fp: write(line+"\n")
 
 
 # regular expressions used by _repr to replace default type representations
