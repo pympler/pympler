@@ -186,7 +186,7 @@ if sys.version_info < (3, 6, 0):
     raise NotImplementedError('%s requires Python 3.6 or newer' % (__file__,))
 
 # from abc import ABCMeta
-from typing import Callable, Dict, List, Set, Union  # Optional
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union  # Optional
 
 # all imports listed explicitly to help PyChecker
 from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
@@ -575,6 +575,14 @@ def _refs(obj, named, *attrs, **kwds):
             yield _N(a, o)
 
 
+def _clip(string:str, clip):
+    if len(string) > clip > 0:
+        h = (clip // 2) - 2
+        if h > 0:
+            string = string[:h] + '....' + string[-h:]
+    return string
+
+
 def _repr(obj, clip=80):
     '''Clip long repr() string.
     '''
@@ -582,10 +590,7 @@ def _repr(obj, clip=80):
         r = repr(obj).replace(linesep, '\\n')
     except Exception:
         r = 'N/A'
-    if len(r) > clip > 0:
-        h = (clip // 2) - 2
-        if h > 0:
-            r = r[:h] + '....' + r[-h:]
+    r = _clip(r, clip)
     return r
 
 
@@ -1665,17 +1670,18 @@ class Asized(object):
 
         *refs* -- tuple containing an **Asized** instance for each referent
     '''
-    __slots__ = ('flat', 'name', 'refs', 'size')
+    __slots__ = ('flat', 'name', 'refs', 'size', 'dtype')
 
-    def __init__(self, size, flat, refs=(), name=None):
-        self.size = size  # total size
-        self.flat = flat  # flat size
-        self.name = name  # name, repr or None
-        self.refs = tuple(refs)
+    def __init__(self, size: int, flat:int, refs: Tuple["Asized"]=(), name:Optional[str]=None, dtype: Optional[Type]=None):
+        self.size: int = size  # total size
+        self.flat: int = flat  # flat size
+        self.refs: Tuple[Asized] = tuple(refs)
+        self.name: str = name  # name, repr or None
+        self.dtype: Type = dtype
 
     def __str__(self):
-        return 'size %r, flat %r, refs[%d], name %r' % (
-            self.size, self.flat, len(self.refs), self.name)
+        return 'size %r, flat %r, refs[%d], name %r, type ' % (
+            self.size, self.flat, len(self.refs), self.name, repr(self.dtype))
 
     def format(self, format='%(name)s size=%(size)d flat=%(flat)d',
                      depth=-1, order_by='size', indent=_NN):
@@ -1846,7 +1852,7 @@ class Asizer(object):
             if self._seen[i]:
                 self._seen.again(i)
             if sized:
-                s = sized(s, f, name=self._nameof(obj))
+                s = sized(s, f, name=self._nameof(obj), dtype=type(obj))
                 self.exclude_objs(s)
             return s  # zero
         else:  # deep == seen[i] == 0
@@ -1897,7 +1903,7 @@ class Asizer(object):
         if not deep:
             self._total += s  # accumulate
         if sized:
-            s = sized(s, f, name=self._nameof(obj), refs=rs)
+            s = sized(s, f, name=self._nameof(obj), refs=rs, dtype=type(obj))
             self.exclude_objs(s)
         return s
 
