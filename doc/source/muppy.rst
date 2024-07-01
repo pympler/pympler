@@ -4,7 +4,7 @@
 Identifying memory leaks
 ========================
 
-Muppy tries to help developers to identity memory leaks of Python
+Muppy tries to help developers to identify memory leaks of Python
 applications. It enables the tracking of memory usage during runtime and the
 identification of objects which are leaking. Additionally, tools are provided
 which allow to locate the source of not released objects.
