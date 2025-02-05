@@ -19,8 +19,11 @@ def ignore_object(obj: Any) -> bool:
         return True
 
 
-def get_objects(remove_dups: bool = True, include_frames: bool = False
-                ) -> List[Any]:
+def get_objects(
+  remove_dups: bool = True,
+  include_frames: bool = False,
+  ignore_types: tuple[any] = tuple()
+) -> List[Any]:
     """Return a list of all known objects excluding frame objects.
 
     If (outer) frame objects shall be included, pass `include_frames=True`.  In
@@ -32,6 +35,7 @@ def get_objects(remove_dups: bool = True, include_frames: bool = False
     Keyword arguments:
     remove_dups -- if True, all duplicate objects will be removed.
     include_frames -- if True, includes frame objects.
+    ignore_types -- if given, ignores these types of objects.
     """
     gc.collect()
 
@@ -39,7 +43,7 @@ def get_objects(remove_dups: bool = True, include_frames: bool = False
     # will be included in the list. Furthermore, ignore frame objects to
     # prevent reference cycles.
     tmp = gc.get_objects()
-    tmp = [o for o in tmp if not ignore_object(o)]
+    tmp = [o for o in tmp if not isinstance(o, ignore_types) and not ignore_object(o)]
 
     res = []
     for o in tmp:

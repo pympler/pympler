@@ -32,7 +32,7 @@ class SummaryTracker(object):
     need.
 
     """
-    def __init__(self, ignore_self=True):
+    def __init__(self, ignore_self=True, ignore_types: tuple[any] = tuple()):
         """Constructor.
 
         The number of summaries managed by the tracker has a performance
@@ -41,10 +41,12 @@ class SummaryTracker(object):
 
         Keyword arguments:
         ignore_self -- summaries managed by this object will be ignored.
+        ignore_types -- if given, ignores these types of objects.
         """
-        self.s0 = summary.summarize(muppy.get_objects())
+        self.s0 = summary.summarize(muppy.get_objects(ignore_types=ignore_types))
         self.summaries = {}
         self.ignore_self = ignore_self
+        self.ignore_types = ignore_types
 
     def create_summary(self):
         """Return a summary.
@@ -88,7 +90,7 @@ class SummaryTracker(object):
                 summary._traverse(v, store_info)
 
             # do the summary
-            res = summary.summarize(muppy.get_objects())
+            res = summary.summarize(muppy.get_objects(ignore_types=self.ignore_types))
 
             # remove ids stored in the ref_counter
             for _id in ref_counter:
