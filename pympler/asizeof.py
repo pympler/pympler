@@ -199,7 +199,7 @@ import warnings
 import weakref as Weakref
 
 __all__ = []  # overwritten below
-__version__ = '22.12.07'  # 22.06.30
+__version__ = '24.08.21'  # 23.11.15, 22.12.07, 22.06.30
 
 _NN       = ''
 _Not_vari = _NN  # non-variable item size
@@ -538,22 +538,19 @@ def _prepr(obj, clip=0):
     return _repr(obj, clip=clip).strip('<>').replace("'", _NN)  # remove <''>
 
 
-def _printf(fmt, *args, **print3options):
+def _printf(fmt, *args, **end_file_flush):
     '''Formatted print to sys.stdout or given stream.
 
-       *print3options* -- some keyword arguments, like Python 3+ print.
+       *end_file_flush* -- some keyword arguments, like Python 3+ print.
     '''
-    if print3options:  # like Python 3+
-        f = print3options.get('file', None) or sys.stdout
-        if args:
-            f.write(fmt % args)
-        else:
-            f.write(fmt)
-        f.write(print3options.get('end', linesep))
-        if print3options.get('flush', False):
+    if args:
+        fmt %= args
+    if end_file_flush:  # like Python 3+
+        f = end_file_flush.get('file', None) or sys.stdout
+        f.write(fmt)
+        f.write(end_file_flush.get('end', linesep))
+        if end_file_flush.get('flush', False):
             f.flush()
-    elif args:
-        print(fmt % args)
     else:
         print(fmt)
 
@@ -1293,13 +1290,13 @@ try:  # MCCABE 19
         '''Return True for a NumPy arange, array, matrix, memmap, ndarray, etc. instance.
         '''
         # not every numpy obj  hasattr(obj, 'base')
-        try:
-            if hasattr(obj, 'dtype') and hasattr(obj, 'itemsize') \
-                    and hasattr(obj, 'nbytes'):
+        if hasattr(obj, 'dtype') and hasattr(obj, 'itemsize') \
+                                 and hasattr(obj, 'nbytes'):
+            try:
                 return (_moduleof(_classof(obj)).startswith('numpy') or
                         _moduleof(type(obj)).startswith('numpy'))
-        except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
-            pass
+            except (AttributeError, OSError, ValueError):  # on iOS/Pythonista
+                pass
         return False
 
     def _len_numpy(obj):
@@ -1331,12 +1328,12 @@ try:  # MCCABE 19
             _i =  obj.nbytes // nb
             _v = _Not_vari
         else:  # XXX 96, 128, 144 typical?
-            b, _l, nb =  96, _len_numpy, obj.nbytes
+            b, _l, nb = 96, _len_numpy, obj.nbytes
         # since item size depends on the nympy data type, set
         # itemsize to 1 byte and use _len_numpy in bytes; note,
         # function itemsize returns the actual size in bytes,
         # function leng returns the length in number of items
-        return dict(base=_getsizeof(obj, b + nb) - nb,
+        return dict(base=max(_getsizeof(obj, b + nb) - nb, b),
                     item=_i,  # not obj.itemsize!
                     leng=_l,
                     refs=_numpy_refs,
@@ -1344,7 +1341,7 @@ try:  # MCCABE 19
                     xtyp= True)  # never _getsizeof'd
 
     def _numpy_refs(obj, named):
-        '''Return the .base object for NumPy slices, views, etc.
+        '''Return the .base object for NumPy slices, tile, views, etc.
         '''
         return _refs(obj, named, 'base')
 
@@ -1655,7 +1652,7 @@ class _Seen(dict):
 
 class Asized(object):
     '''Stores the results of an **asized** object in the following
-       4 attributes:
+       5 attributes:
 
         *size* -- total size of the object (including referents)
 
@@ -1664,18 +1661,29 @@ class Asized(object):
         *name* -- name or ``repr`` of the object
 
         *refs* -- tuple containing an **Asized** instance for each referent
-    '''
-    __slots__ = ('flat', 'name', 'refs', 'size')
 
-    def __init__(self, size, flat, refs=(), name=None):
+        *tobj* -- the object or its type.
+    '''
+    # __slots__ = ('flat', 'name', 'refs', 'size', 'type_name')
+    name = \
+    tobj = None
+
+    def __init__(self, size, flat, refs=(), name=None, tobj=None):
         self.size = size  # total size
         self.flat = flat  # flat size
-        self.name = name  # name, repr or None
         self.refs = tuple(refs)
+        if name is not None:
+            self.name = name  # name, repr or None
+        if tobj is not None:
+            self.tobj = type(tobj)
 
     def __str__(self):
-        return 'size %r, flat %r, refs[%d], name %r' % (
-            self.size, self.flat, len(self.refs), self.name)
+        s = 'size %r, flat %r, refs[%d]' % (self.size, self.flat, len(self.refs))
+        if self.name:
+            s = '%s, name %r' % (s, self.name)
+        if self.tobj:
+            s = '%s, type %s' % (s, _repr(self.tobj))
+        return s
 
     def format(self, format='%(name)s size=%(size)d flat=%(flat)d',
                      depth=-1, order_by='size', indent=_NN):
@@ -1843,10 +1851,9 @@ class Asizer(object):
         elif deep or self._seen[i]:
             # skip obj if seen before
             # or if ref of a given obj
-            if self._seen[i]:
-                self._seen.again(i)
+            self._seen.again(i)
             if sized:
-                s = sized(s, f, name=self._nameof(obj))
+                s = sized(s, f, name=self._nameof(obj), tobj=obj)
                 self.exclude_objs(s)
             return s  # zero
         else:  # deep == seen[i] == 0
@@ -1897,7 +1904,7 @@ class Asizer(object):
         if not deep:
             self._total += s  # accumulate
         if sized:
-            s = sized(s, f, name=self._nameof(obj), refs=rs)
+            s = sized(s, f, name=self._nameof(obj), refs=rs, tobj=obj)
             self.exclude_objs(s)
         return s
 
@@ -2775,8 +2782,7 @@ if __name__ == '__main__':
 # License from the initial version of this source file follows:
 
 # --------------------------------------------------------------------
-#       Copyright (c) 2002-2022 -- ProphICy Semiconductor, Inc.
-#                        All rights reserved.
+# Copyright 2002-2024 ProphICy Semiconductor, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
