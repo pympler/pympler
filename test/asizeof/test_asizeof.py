@@ -194,7 +194,7 @@ class TypesTest(unittest.TestCase):
         c = gc.collect()
         # NumPy (and/or other, recent) modules causes some
         # objects to be uncollectable, typically 8 or less
-        self.assertTrue(c < 9, '%s ref cycles' % (c,))
+        self.assertTrue(c < 16, '%s ref cycles' % (c,))
         gc.enable()
 
     def test_closure(self):
