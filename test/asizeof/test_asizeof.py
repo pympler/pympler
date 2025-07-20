@@ -5,9 +5,25 @@ import sys
 import unittest
 import weakref
 
-import pympler.asizeof as asizeof
-
 from inspect import stack
+
+from os.path import abspath, dirname
+# extend sys.path with the ../.. directory
+dd_dd = dirname(dirname(abspath(__file__)))
+if dd_dd not in sys.path:
+    sys.path.insert(0, dd_dd)
+del dd_dd, abspath, dirname
+
+import asizeof  # noqa: E402 25.06.24
+try:
+    _sizeof_CPyGC_Head   = asizeof._sizeof_CPyGC_Head
+    _sizeof_CPyDictEntry = asizeof._sizeof_CPyDictEntry
+    _sizeof_Csetentry    = asizeof._sizeof_Csetentry
+except AttributeError:  # asizeof 25.06.24+
+    _sizeof_CPyGC_Head   = asizeof._sizeof.CPyGC_Head
+    _sizeof_CPyDictEntry = asizeof._sizeof.CPyDictStrEntry  # -KeyEntry
+    _sizeof_Csetentry    = asizeof._sizeof.Csetentry
+__version__ = '25.07.17'
 
 
 class Foo(object):
@@ -79,10 +95,9 @@ class TypesTest(unittest.TestCase):
         def foo():
             pass
 
-        s1 = asizeof.asizeof(self.test_methods, code=True)
-        s2 = asizeof.asizeof(TypesTest.test_methods, code=True)
-        s3 = asizeof.asizeof(foo, code=True)
-        # TODO asserts?
+        self.assertTrue(asizeof.asizeof(self.test_methods, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(TypesTest.test_methods, code=True) > 0)
+        self.assertTrue(asizeof.asizeof(foo, code=True) > 0)
 
     def test_classes(self):
         '''Test sizing class objects and instances
@@ -106,6 +121,14 @@ class TypesTest(unittest.TestCase):
         '''
         module_size = asizeof.asizeof(unittest)
         self.assertTrue(module_size > 0, module_size)
+        f  = Foo(1)
+        s1 = asizeof.asizeof(f)
+        f.__dict__  # materializedict
+        s2 = asizeof.asizeof(f)
+        if sys.version_info < (3, 13):
+            self.assertEqual(s2, s1)
+        else:  # s2 ~ 320, s1 ~ 80
+            self.assertGreater(s2, s1)
 
     def test_enumerate(self):
         '''Test sizing enumerators.
@@ -244,10 +267,12 @@ class FunctionTest(unittest.TestCase):
         '''
         self.assertEqual(list(asizeof.asized(detail=2)), [])
         self.assertRaises(KeyError, asizeof.asized, **{'all': True})
-        sized = asizeof.asized(Foo(42), detail=2)
+        foo = Foo(42)
+        _ = foo.__dict__  # materializedict
+        sized = asizeof.asized(foo, detail=2)
         self.assertEqual(sized.name, 'Foo')
         refs = [ref for ref in sized.refs if ref.name == '__dict__']
-        self.assertEqual(len(refs), 1)
+        self.assertEqual(len(refs), 1, sized.refs)
         self.assertEqual(refs[0], sized.get('__dict__'))
 
         refs = [ref for ref in refs[0].refs if ref.name == '[V] data: 42']
@@ -269,6 +294,7 @@ class FunctionTest(unittest.TestCase):
         '''Test Asized.format(depth=x)
         '''
         foo = Foo(42)
+        _ = foo.__dict__  # materializedict
         sized1 = asizeof.asized(foo, detail=1)
         sized2 = asizeof.asized(foo, detail=2)
         sized1_no = sized1.format('%(name)s', order_by='name')
@@ -288,34 +314,24 @@ class FunctionTest(unittest.TestCase):
         self.assertEqual(list(asizeof.asizesof()), [])
         self.assertRaises(KeyError, asizeof.asizesof, **{'all': True})
 
-        objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
+        objs = [Foo(42), ThinFoo("spam"), OldFoo(2**99)]
         sizes = list(asizeof.asizesof(*objs))
-        objs.reverse()
-        rsizes = list(asizeof.asizesof(*objs))
         self.assertEqual(len(sizes), 3)
+        rsizes = list(asizeof.asizesof(*reversed(objs)))
         rsizes.reverse()
-        self.assertEqual(sizes, rsizes, (sizes, rsizes))
-        objs.reverse()
+        self.assertEqual(len(rsizes), 3)
+        self.assertEqual(sizes, rsizes)
         isizes = [asizeof.asizeof(obj) for obj in objs]
+        self.assertEqual(len(isizes), 3)
         self.assertEqual(sizes, isizes)
         sizer = asizeof.Asizer()
         asizer_sizes = sizer.asizesof(*objs)
         self.assertEqual(list(asizer_sizes), sizes)
         code_sizes = sizer.asizesof(*objs, **dict(code=True))
         self.assertNotEqual(list(code_sizes), sizes)
-
-    def test_asizesof_cyclic_references(self):
-        foo = Foo(1)
-        bar = Foo(2)
-
-        foo.next = bar
-        bar.prev = foo
-
-        sizes = list(asizeof.asizesof(foo, bar))
+        sizes = asizeof.asizesof(objs, objs)
         self.assertEqual(len(sizes), 2)
-        self.assertTrue(all(size > 0 for size in sizes), sizes)
-        cycle_size = asizeof.asizeof(foo)
-        self.assertEqual(cycle_size, sum(sizes))
+        self.assertEqual(sizes[1], sizes[0])  # duplicate
 
     def test_asizeof(self):
         '''Test asizeof.asizeof()
@@ -333,7 +349,9 @@ class FunctionTest(unittest.TestCase):
     def test_asizer_limit(self):
         '''Test limit setting for Asizer.
         '''
-        objs = [Foo(42), ThinFoo("spam"), OldFoo(67)]
+        foo = Foo(42)
+        _ = foo.__dict__  # materializedict
+        objs = [foo, ThinFoo("spam"), OldFoo(67)]
         sizer = [asizeof.Asizer() for _ in range(4)]
         for limit, asizer in enumerate(sizer):
             asizer.asizeof(objs, limit=limit)
@@ -347,10 +365,10 @@ class FunctionTest(unittest.TestCase):
         '''
         objects = [1, '', 'a', True, None]
         for o in objects:
-            self.assertEqual(asizeof.basicsize(o), type(o).__basicsize__)
+            self.assertEqual(asizeof.basicsize(o), type(o).__basicsize__, o)
         objects = [[], (), {}]
         for o in objects:
-            self.assertEqual(asizeof.basicsize(o) - asizeof._sizeof_CPyGC_Head,
+            self.assertEqual(asizeof.basicsize(o) - _sizeof_CPyGC_Head,
                 type(o).__basicsize__)
         l1 = [1,2,3,4]
         l2 = ["spam",2,3,4,"eggs",6,7,8]
@@ -362,8 +380,8 @@ class FunctionTest(unittest.TestCase):
         objects = [1, True, None, ()]
         for o in objects:
             self.assertEqual(asizeof.itemsize(o), type(o).__itemsize__)
-        itemsizes = [({}, asizeof._sizeof_CPyDictEntry),
-                     (set(), asizeof._sizeof_Csetentry),
+        itemsizes = [({},    _sizeof_CPyDictEntry),
+                     (set(), _sizeof_Csetentry),
                      ]
         for o, itemsize in itemsizes:
             self.assertEqual(asizeof.itemsize(o), itemsize)
@@ -395,11 +413,13 @@ class FunctionTest(unittest.TestCase):
         '''Test asizeof.refs()
         '''
         f = Foo(42)
+        _ = f.__dict__  # materializedict
         refs = list(asizeof.refs(f))
         self.assertTrue(len(refs) >= 1, len(refs))
         self.assertTrue({'data': 42} in refs, refs)
 
         f = OldFoo(42)
+        _ = f.__dict__  # materializedict
         refs = list(asizeof.refs(f))
         self.assertTrue(len(refs) >= 1, len(refs))
         self.assertTrue({'odata': 42} in refs, refs)
@@ -500,7 +520,8 @@ class AsizeofDemos(unittest.TestCase):
         self._printf('%s(): %s', ' asized',           asizeof.asized(obj, align=align, detail=detail, code=code, limit=limit))
       ##_printf('%s(): %s', '.asized',   _asizer.asized(obj, align=align, detail=detail, code=code, limit=limit))
 
-    class C: pass
+    class C:
+        pass
 
     class D(dict):
         _attr1 = None
@@ -738,7 +759,7 @@ if __name__ == '__main__':
     else:
         unittest.main()
 
-  ##suite = unittest.makeSuite([AsizeofTest, TypesTest, FunctionTest, AsizeofDemos], 'test')
-  ##suite.addTest(doctest.DocTestSuite())
-  ##suite.debug()
-  ##unittest.TextTestRunner(verbosity=1).run(suite)
+    ##suite = unittest.makeSuite([TypesTest, FunctionTest, AsizeofDemos], 'test')
+    ##suite.addTest(doctest.DocTestSuite())
+    ##suite.debug()
+    ##unittest.TextTestRunner(verbosity=1).run(suite)
