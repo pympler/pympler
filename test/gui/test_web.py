@@ -192,8 +192,10 @@ class WebGuiTest(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     tclasses = [WebGuiTest]
+    loader = unittest.TestLoader()
+    loader.testMethodPrefix = 'test_'
     for tclass in tclasses:
-        names = unittest.getTestCaseNames(tclass, 'test_')
+        names = loader.getTestCaseNames(tclass)
         suite.addTests(map(tclass, names))
     if not unittest.TextTestRunner().run(suite).wasSuccessful():
         sys.exit(1)
