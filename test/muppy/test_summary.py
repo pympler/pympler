@@ -257,7 +257,7 @@ The _print_table function should print a nice, clean table.
 #            "test_print_": test_print_}
 
 def suite():
-    suite = unittest.makeSuite(SummaryTest,'test')
+    suite = unittest.TestLoader().loadTestsFromTestCase(SummaryTest)
     suite.addTest(doctest.DocTestSuite())
     return suite
 
