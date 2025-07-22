@@ -42,7 +42,7 @@ class MProfileTest(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.makeSuite(MProfileTest,'test')
+    suite = unittest.TestLoader().loadTestsFromTestCase(MProfileTest)
     return suite
 
 if __name__ == '__main__':

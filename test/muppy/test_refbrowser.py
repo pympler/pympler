@@ -296,7 +296,7 @@ root-+-branch1-+-a
 __test__ = {"test_print_tree": test_print_tree}
 
 def suite():
-    suite = unittest.makeSuite(TreeTest,'test')
+    suite = unittest.TestLoader().loadTestsFromTestCase(TreeTest)
     suite.addTest(doctest.DocTestSuite())
     return suite
 

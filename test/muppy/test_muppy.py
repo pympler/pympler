@@ -218,7 +218,7 @@ class MuppyTest(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.makeSuite(MuppyTest,'test')
+    suite = unittest.TestLoader().loadTestsFromTestCase(MuppyTest)
     suite.addTest(doctest.DocTestSuite())
     return suite
 
