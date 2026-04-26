@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pympler Memory Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .metric-value.positive {
+            color: #28a745;
+        }
+
+        .metric-value.negative {
+            color: #dc3545;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h2 {
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .no-data {
+            color: #999;
+            font-style: italic;
+        }
+
+        .compare-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .recommendation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 0 8px 8px 0;
+            color: #856404;
+        }
+
+        .diff-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .diff-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-group {
+                width: 100%;
+            }
+
+            .btn-group .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            table th, table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Pympler Memory Monitor</h1>
+            <p>实时监控Python应用内存使用情况</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>📊 进程信息</h3>
+                <div id="process-info">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📸 快照管理</h3>
+                <div id="snapshot-stats">
+                    <div class="metric">
+                        <span class="metric-label">快照数量</span>
+                        <span class="metric-value" id="snapshot-count">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">最新快照</span>
+                        <span class="metric-value no-data" id="last-snapshot">-</span>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="createSnapshot()">创建快照</button>
+                    <button class="btn btn-secondary" onclick="refreshData()">刷新</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⚠️ 泄漏检测状态</h3>
+                <div id="leak-status">
+                    <div class="metric">
+                        <span class="metric-label">Tracker状态</span>
+                        <span class="status-badge status-info" id="tracker-status">未初始化</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">潜在泄漏</span>
+                        <span class="metric-value" id="leak-count">-</span>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-top: 15px;">
+                    <button class="btn btn-success" onclick="checkLeaks()">检测泄漏</button>
+                    <button class="btn btn-danger" onclick="resetTracker()">重置</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2>📋 操作面板</h2>
+            </div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('stats')">对象统计</button>
+                <button class="tab" onclick="switchTab('snapshots')">快照列表</button>
+                <button class="tab" onclick="switchTab('compare')">比较快照</button>
+                <button class="tab" onclick="switchTab('leaks')">泄漏分析</button>
+                <button class="tab" onclick="switchTab('exports')">导出文件</button>
+            </div>
+
+            <div id="tab-stats" class="tab-content active">
+                <div class="section-header">
+                    <h3>📊 内存对象统计（按大小排序）</h3>
+                    <div class="btn-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <span>显示前</span>
+                            <select id="stats-limit" style="width: 80px; padding: 8px;" onchange="refreshStats()">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span>条</span>
+                        </label>
+                        <button class="btn btn-secondary" onclick="refreshStats()">刷新</button>
+                        <button class="btn btn-primary" onclick="exportCurrentState()">导出当前状态</button>
+                    </div>
+                </div>
+                <div id="stats-table">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <div id="tab-snapshots" class="tab-content">
+                <div id="snapshots-table">
+                    <div class="empty-state">
+                        <h4>暂无快照</h4>
+                        <p>点击"创建快照"按钮开始内存监控</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-compare" class="tab-content">
+                <div class="compare-section">
+                    <div class="form-group">
+                        <label for="compare-snap1">基准快照</label>
+                        <select id="compare-snap1">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="compare-snap2">比较快照</label>
+                        <select id="compare-snap2">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="compareSnapshots()">比较快照</button>
+                    <button class="btn btn-secondary" onclick="clearCompare()">清除</button>
+                </div>
+                <div id="compare-result">
+                    <div class="alert alert-info">
+                        选择两个快照进行比较，查看内存变化情况
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-leaks" class="tab-content">
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-success" onclick="checkLeaks()">执行泄漏检测</button>
+                    <button class="btn btn-secondary" onclick="refreshLeaks()">刷新</button>
+                </div>
+                <div id="leaks-result">
+                    <div class="alert alert-info">
+                        点击"执行泄漏检测"开始分析内存变化
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-exports" class="tab-content">
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="refreshExports()">刷新列表</button>
+                </div>
+                <div id="exports-table">
+                    <div class="empty-state">
+                        <h4>暂无导出文件</h4>
+                        <p>导出的内存分析报告将显示在这里</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Pympler Memory Monitor | 基于 FastAPI 构建</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+
+        async function apiRequest(endpoint, options = {}) {
+            try {
+                const response = await fetch(API_BASE + endpoint, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                throw error;
+            }
+        }
+
+        async function refreshData() {
+            await Promise.all([
+                refreshProcessInfo(),
+                refreshSnapshots(),
+                refreshStats()
+            ]);
+        }
+
+        async function refreshProcessInfo() {
+            try {
+                const data = await apiRequest('/process');
+                const html = `
+                    <div class="metric">
+                        <span class="metric-label">进程ID (PID)</span>
+                        <span class="metric-value">${data.pid}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">物理内存 (RSS)</span>
+                        <span class="metric-value">${data.rss_formatted}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">虚拟内存 (VSZ)</span>
+                        <span class="metric-value">${data.vsz_formatted}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">页面错误</span>
+                        <span class="metric-value">${data.pagefaults}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">更新时间</span>
+                        <span class="metric-value">${new Date(data.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                `;
+                document.getElementById('process-info').innerHTML = html;
+            } catch (error) {
+                document.getElementById('process-info').innerHTML = 
+                    `<div class="alert alert-warning">获取进程信息失败: ${error.message}</div>`;
+            }
+        }
+
+        async function refreshSnapshots() {
+            try {
+                const data = await apiRequest('/snapshots');
+                document.getElementById('snapshot-count').textContent = data.count;
+                
+                if (data.snapshots.length > 0) {
+                    const lastSnap = data.snapshots[0];
+                    document.getElementById('last-snapshot').textContent = lastSnap.snapshot_id;
+                    document.getElementById('last-snapshot').classList.remove('no-data');
+                    
+                    renderSnapshotsTable(data.snapshots);
+                    updateCompareSelects(data.snapshots);
+                } else {
+                    document.getElementById('last-snapshot').textContent = '-';
+                    document.getElementById('last-snapshot').classList.add('no-data');
+                    renderSnapshotsTable([]);
+                    updateCompareSelects([]);
+                }
+            } catch (error) {
+                console.error('Failed to refresh snapshots:', error);
+            }
+        }
+
+        function renderSnapshotsTable(snapshots) {
+            if (snapshots.length === 0) {
+                document.getElementById('snapshots-table').innerHTML = `
+                    <div class="empty-state">
+                        <h4>暂无快照</h4>
+                        <p>点击"创建快照"按钮开始内存监控</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>快照ID</th>
+                            <th>时间</th>
+                            <th>对象总数</th>
+                            <th>总大小</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (const snap of snapshots) {
+                html += `
+                    <tr>
+                        <td><strong>${snap.snapshot_id}</strong></td>
+                        <td>${new Date(snap.timestamp).toLocaleString()}</td>
+                        <td>${snap.total_objects.toLocaleString()}</td>
+                        <td>${snap.total_size_formatted}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" 
+                                    onclick="viewSnapshot('${snap.snapshot_id}')">查看</button>
+                            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem;"
+                                    onclick="exportSnapshot('${snap.snapshot_id}')">导出</button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('snapshots-table').innerHTML = html;
+        }
+
+        function updateCompareSelects(snapshots) {
+            const select1 = document.getElementById('compare-snap1');
+            const select2 = document.getElementById('compare-snap2');
+            
+            let options = '<option value="">请选择...</option>';
+            for (const snap of snapshots) {
+                options += `<option value="${snap.snapshot_id}">${snap.snapshot_id} (${snap.total_size_formatted})</option>`;
+            }
+            
+            select1.innerHTML = options;
+            select2.innerHTML = options;
+        }
+
+        async function createSnapshot() {
+            try {
+                const data = await apiRequest('/snapshot', { method: 'POST' });
+                alert(`快照创建成功!\nID: ${data.snapshot_id}\n对象数: ${data.total_objects}\n大小: ${data.total_size_formatted}`);
+                await refreshSnapshots();
+            } catch (error) {
+                alert(`创建快照失败: ${error.message}`);
+            }
+        }
+
+        async function viewSnapshot(snapshotId) {
+            try {
+                const data = await apiRequest(`/snapshot/${snapshotId}`);
+                
+                let summaryHtml = '';
+                if (data.summary && data.summary.length > 0) {
+                    summaryHtml = `
+                        <h4>对象类型统计（前20条）</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>类型</th>
+                                    <th>数量</th>
+                                    <th>大小</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    for (const item of data.summary.slice(0, 20)) {
+                        summaryHtml += `
+                            <tr>
+                                <td>${item.type}</td>
+                                <td>${item.count.toLocaleString()}</td>
+                                <td>${item.size_formatted}</td>
+                            </tr>
+                        `;
+                    }
+                    summaryHtml += '</tbody></table>';
+                }
+
+                const popup = window.open('', '_blank');
+                popup.document.write(`
+                    <html>
+                        <head>
+                            <title>快照详情: ${snapshotId}</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; max-width: 1000px; margin: 30px auto; padding: 20px; }
+                                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                                th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+                                th { background: #f5f5f5; }
+                                .card { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0; }
+                                h1 { color: #667eea; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>📸 快照详情</h1>
+                            <div class="card">
+                                <p><strong>快照ID:</strong> ${data.snapshot_id}</p>
+                                <p><strong>创建时间:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                                <p><strong>对象总数:</strong> ${data.total_objects.toLocaleString()}</p>
+                                <p><strong>总大小:</strong> ${data.total_size_formatted}</p>
+                            </div>
+                            ${summaryHtml}
+                        </body>
+                    </html>
+                `);
+            } catch (error) {
+                alert(`查看快照失败: ${error.message}`);
+            }
+        }
+
+        async function exportSnapshot(snapshotId) {
+            try {
+                const data = await apiRequest(`/export/snapshot/${snapshotId}`, { method: 'POST' });
+                alert(`导出成功!\n文件: ${data.filename}\n路径: ${data.filepath}`);
+                await refreshExports();
+            } catch (error) {
+                alert(`导出失败: ${error.message}`);
+            }
+        }
+
+        async function refreshStats() {
+            const limit = document.getElementById('stats-limit').value;
+            try {
+                const data = await apiRequest(`/stats?limit=${limit}`);
+                
+                if (data.length === 0) {
+                    document.getElementById('stats-table').innerHTML = `
+                        <div class="empty-state">
+                            <h4>暂无数据</h4>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>类型名称</th>
+                                <th>数量</th>
+                                <th>总大小</th>
+                                <th>平均大小</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                let totalCount = 0;
+                let totalSize = 0;
+
+                data.forEach((item, index) => {
+                    totalCount += item.count;
+                    totalSize += item.total_size_bytes;
+                    
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${item.type_name}</strong></td>
+                            <td>${item.count.toLocaleString()}</td>
+                            <td>${item.total_size_formatted}</td>
+                            <td>${Math.round(item.avg_size_bytes).toLocaleString()} bytes</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong>统计汇总:</strong> 共 ${data.length} 种类型，${totalCount.toLocaleString()} 个对象，总大小 ${formatBytes(totalSize)}
+                    </div>
+                `;
+
+                document.getElementById('stats-table').innerHTML = html;
+            } catch (error) {
+                document.getElementById('stats-table').innerHTML = 
+                    `<div class="alert alert-danger">获取统计信息失败: ${error.message}</div>`;
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 bytes';
+            const k = 1024;
+            const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function exportCurrentState() {
+            try {
+                const data = await apiRequest('/export/current', { method: 'POST' });
+                alert(`导出成功!\n快照ID: ${data.snapshot_id}\n文件: ${data.filename}\n路径: ${data.filepath}`);
+                await Promise.all([refreshSnapshots(), refreshExports()]);
+            } catch (error) {
+                alert(`导出失败: ${error.message}`);
+            }
+        }
+
+        async function checkLeaks() {
+            try {
+                const data = await apiRequest('/leaks');
+                
+                if (data.status === 'tracker_initialized') {
+                    document.getElementById('tracker-status').className = 'status-badge status-success';
+                    document.getElementById('tracker-status').textContent = '已初始化';
+                    document.getElementById('leak-count').textContent = '-';
+                    
+                    let html = `
+                        <div class="alert alert-info">
+                            <h4>✅ SummaryTracker 已初始化</h4>
+                            <p>${data.recommendations.join('<br>')}</p>
+                        </div>
+                        <div class="alert alert-warning">
+                            <p><strong>提示:</strong> 请执行一些可能导致内存增长的操作后，再次点击"执行泄漏检测"进行对比分析。</p>
+                        </div>
+                    `;
+                    document.getElementById('leaks-result').innerHTML = html;
+                } else {
+                    document.getElementById('leak-count').textContent = data.potential_leaks.length;
+                    
+                    let html = '';
+                    
+                    if (data.recommendations.length > 0) {
+                        html += `<h4>📋 分析建议</h4>`;
+                        for (const rec of data.recommendations) {
+                            html += `<div class="recommendation">${rec}</div>`;
+                        }
+                    }
+
+                    if (data.potential_leaks.length > 0) {
+                        html += `
+                            <h4 style="margin-top: 20px;">⚠️ 潜在泄漏对象</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>类型</th>
+                                        <th>新增数量</th>
+                                        <th>新增大小</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        for (const leak of data.potential_leaks.slice(0, 50)) {
+                            html += `
+                                <tr>
+                                    <td><strong>${leak.type}</strong></td>
+                                    <td class="${leak.added_count > 0 ? 'diff-positive' : leak.added_count < 0 ? 'diff-negative' : ''}">
+                                        ${leak.added_count > 0 ? '+' : ''}${leak.added_count}
+                                    </td>
+                                    <td class="${leak.added_size_bytes > 0 ? 'diff-positive' : leak.added_size_bytes < 0 ? 'diff-negative' : ''}">
+                                        ${leak.added_size_bytes > 0 ? '+' : ''}${leak.added_size_formatted}
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                        html += `
+                                </tbody>
+                            </table>
+                        `;
+                    } else {
+                        html += `
+                            <div class="alert alert-success" style="margin-top: 20px;">
+                                <h4>✅ 未检测到明显的内存泄漏</h4>
+                                <p>当前两次检测之间没有发现显著的内存增长。</p>
+                            </div>
+                        `;
+                    }
+
+                    document.getElementById('leaks-result').innerHTML = html;
+                }
+            } catch (error) {
+                document.getElementById('leaks-result').innerHTML = 
+                    `<div class="alert alert-danger">泄漏检测失败: ${error.message}</div>`;
+            }
+        }
+
+        async function refreshLeaks() {
+            await checkLeaks();
+        }
+
+        async function resetTracker() {
+            if (!confirm('确定要重置Tracker吗？这将清除所有泄漏分析历史数据。')) {
+                return;
+            }
+            try {
+                await apiRequest('/reset', { method: 'POST' });
+                document.getElementById('tracker-status').className = 'status-badge status-info';
+                document.getElementById('tracker-status').textContent = '未初始化';
+                document.getElementById('leak-count').textContent = '-';
+                document.getElementById('leaks-result').innerHTML = `
+                    <div class="alert alert-info">
+                        Tracker已重置，请重新执行泄漏检测
+                    </div>
+                `;
+                alert('Tracker已重置');
+            } catch (error) {
+                alert(`重置失败: ${error.message}`);
+            }
+        }
+
+        async function compareSnapshots() {
+            const snap1 = document.getElementById('compare-snap1').value;
+            const snap2 = document.getElementById('compare-snap2').value;
+
+            if (!snap1 || !snap2) {
+                alert('请选择两个快照进行比较');
+                return;
+            }
+
+            if (snap1 === snap2) {
+                alert('请选择不同的快照进行比较');
+                return;
+            }
+
+            try {
+                const data = await apiRequest(`/compare?snap1=${snap1}&snap2=${snap2}`);
+                
+                let html = `
+                    <div class="card" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4>📊 比较结果</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div>
+                                <strong>基准快照:</strong> ${data.snapshot_1.id}<br>
+                                <small>时间: ${new Date(data.snapshot_1.timestamp).toLocaleString()}</small><br>
+                                <small>对象数: ${data.snapshot_1.total_objects.toLocaleString()}</small>
+                            </div>
+                            <div>
+                                <strong>比较快照:</strong> ${data.snapshot_2.id}<br>
+                                <small>时间: ${new Date(data.snapshot_2.timestamp).toLocaleString()}</small><br>
+                                <small>对象数: ${data.snapshot_2.total_objects.toLocaleString()}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 15px; background: ${data.diff.total_size_diff_bytes >= 0 ? '#fff3cd' : '#d4edda'}; border-radius: 8px; margin-bottom: 20px;">
+                        <strong>变化摘要:</strong> 
+                        对象数变化: <span class="${data.diff.total_objects_diff >= 0 ? 'diff-positive' : 'diff-negative'}">
+                            ${data.diff.total_objects_diff >= 0 ? '+' : ''}${data.diff.total_objects_diff}
+                        </span>，
+                        内存变化: <span class="${data.diff.total_size_diff_bytes >= 0 ? 'diff-positive' : 'diff-negative'}">
+                            ${data.diff.total_size_diff_formatted}
+                        </span>
+                    </div>
+                `;
+
+                if (data.diff.by_type && data.diff.by_type.length > 0) {
+                    html += `
+                        <h4>📋 各类型变化详情（前50条）</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>类型</th>
+                                    <th>数量变化</th>
+                                    <th>大小变化</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    for (const item of data.diff.by_type) {
+                        html += `
+                            <tr>
+                                <td><strong>${item.type}</strong></td>
+                                <td class="${item.count_diff > 0 ? 'diff-positive' : item.count_diff < 0 ? 'diff-negative' : ''}">
+                                    ${item.count_diff > 0 ? '+' : ''}${item.count_diff}
+                                    <span style="font-size: 0.8rem; color: #666;">
+                                        (${item.count_1} → ${item.count_2})
+                                    </span>
+                                </td>
+                                <td class="${item.size_diff_bytes > 0 ? 'diff-positive' : item.size_diff_bytes < 0 ? 'diff-negative' : ''}">
+                                    ${item.size_diff_formatted}
+                                </td>
+                            </tr>`;
+                    }
+
+                    html += `
+                                </tbody>
+                            </table>
+                        `;
+                }
+
+                document.getElementById('compare-result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('compare-result').innerHTML = 
+                    `<div class="alert alert-danger">比较失败: ${error.message}</div>`;
+            }
+        }
+
+        function clearCompare() {
+            document.getElementById('compare-snap1').value = '';
+            document.getElementById('compare-snap2').value = '';
+            document.getElementById('compare-result').innerHTML = `
+                <div class="alert alert-info">
+                    选择两个快照进行比较，查看内存变化情况
+                </div>
+            `;
+        }
+
+        async function refreshExports() {
+            try {
+                const data = await apiRequest('/exports');
+                
+                if (data.exports.length === 0) {
+                    document.getElementById('exports-table').innerHTML = `
+                        <div class="empty-state">
+                            <h4>暂无导出文件</h4>
+                            <p>导出的内存分析报告将显示在这里</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>文件名</th>
+                                <th>大小</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                for (const exp of data.exports) {
+                    html += `
+                        <tr>
+                            <td><strong>${exp.filename}</strong></td>
+                            <td>${exp.size_formatted}</td>
+                            <td>${new Date(exp.created).toLocaleString()}</td>
+                            <td>
+                                <a href="${API_BASE}/exports/${exp.filename}" 
+                                   class="btn btn-primary" 
+                                   style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;"
+                                   download>下载</a>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('exports-table').innerHTML = html;
+            } catch (error) {
+                document.getElementById('exports-table').innerHTML = 
+                    `<div class="alert alert-danger">获取导出列表失败: ${error.message}</div>`;
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            if (tabName === 'exports') {
+                refreshExports();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            setInterval(refreshProcessInfo, 5000);
+        });
+    </script>
+</body>
+</html>
