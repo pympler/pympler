@@ -207,10 +207,16 @@ class MuppyTest(unittest.TestCase):
         gc.enable()
 
     def test_untracked_containers(self):
-        """Test whether untracked container objects are detected.
+        """Test whether untracked non-container objects referenced by
+        tracked containers are detected.
+
+        In Python 3.14+, empty dicts are tracked by the GC, so we can no
+        longer rely on ``{}`` being untracked.  Instead we use an integer
+        (never tracked) and make sure the parent dict contains another
+        container so that *it* is tracked.
         """
-        untracked = {}
-        tracked = {'untracked': untracked}
+        untracked = 42
+        tracked = {'untracked': untracked, 'marker': [1]}
         self.assertTrue(gc.is_tracked(tracked))
         self.assertFalse(gc.is_tracked(untracked))
         objects = [id(o) for o in muppy.get_objects()]
