@@ -2,6 +2,7 @@ import doctest
 import sys
 import unittest
 
+from contextlib import redirect_stdout
 from io import StringIO
 from sys import getsizeof
 
@@ -183,6 +184,49 @@ class SummaryTest(unittest.TestCase):
             self.assertTrue(row in touched)
             for item in row:
                 self.assertTrue(item in touched)
+
+    def test_format_type_order(self):
+        rows = summary.summarize([1, 2, 'a', 'b', 'c', {}])
+        original = [row[:] for row in rows]
+        for order, expected in [
+            ('ascending', ['dict', 'int', 'str']),
+            ('descending', ['str', 'int', 'dict']),
+        ]:
+            for limit in [3, 1]:
+                with self.subTest(order=order, limit=limit):
+                    lines = list(summary.format_(
+                        rows, sort='type', order=order, limit=limit))
+                    labels = [line.split('|')[0].strip()
+                              for line in lines[2:]]
+                    self.assertEqual(labels, expected[:limit])
+        self.assertEqual(rows, original)
+
+    def test_print_type_order(self):
+        rows = summary.summarize([1, 2, 'a', 'b', 'c', {}])
+        for order, expected in [('ascending', 'dict'), ('descending', 'str')]:
+            with self.subTest(order=order):
+                stream = StringIO()
+                with redirect_stdout(stream):
+                    summary.print_(rows, sort='type', order=order, limit=1)
+                labels = [line.split('|')[0].strip()
+                          for line in stream.getvalue().splitlines()[2:]]
+                self.assertEqual(labels, [expected])
+
+    def test_format_numeric_order_preserves_rows(self):
+        rows = summary.summarize([1, 2, 'a', 'b', 'c', {}])
+        original = [row[:] for row in rows]
+        for sort, index in [('size', 2), ('#', 1)]:
+            for order in ['ascending', 'descending']:
+                with self.subTest(sort=sort, order=order):
+                    expected = sorted(
+                        original, key=lambda row: row[index],
+                        reverse=order == 'descending')
+                    lines = list(summary.format_(
+                        rows, sort=sort, order=order, limit=1))
+                    labels = [line.split('|')[0].strip()
+                              for line in lines[2:]]
+                    self.assertEqual(labels, [expected[0][0]])
+                    self.assertEqual(rows, original)
 
 
 
