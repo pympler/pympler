@@ -188,9 +188,9 @@ def format_(rows, limit=15, sort='size', order='descending'):
     # sort rows
     if sortby.index(sort) == 0:
         if order == "ascending":
-            localrows.sort(key=lambda x: _repr(x[0]))
+            localrows.sort(key=lambda x: x[0])
         elif order == "descending":
-            localrows.sort(key=lambda x: _repr(x[0]), reverse=True)
+            localrows.sort(key=lambda x: x[0], reverse=True)
     else:
         if order == "ascending":
             localrows.sort(key=lambda x: x[sortby.index(sort)])
