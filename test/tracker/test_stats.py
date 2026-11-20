@@ -8,7 +8,7 @@ from io import StringIO, BytesIO
 from shutil import rmtree
 from tempfile import mkdtemp, mkstemp
 
-from pympler.classtracker import ClassTracker
+from pympler.classtracker import ClassTracker, Snapshot
 from pympler.classtracker_stats import ConsoleStats, HtmlStats, Stats
 from pympler.asizeof import Asizer, asizeof
 
@@ -314,9 +314,60 @@ class LogTestCase(unittest.TestCase):
             rmtree(target)
 
 
+class ChartTestCase(unittest.TestCase):
+    def setUp(self):
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+        except ImportError:
+            self.skipTest('matplotlib is not installed')
+        self.plt = plt
+        self.addCleanup(plt.close, 'all')
+        self.target = mkdtemp(prefix='pympler_test')
+        self.addCleanup(rmtree, self.target)
+        self.stats = HtmlStats()
+        self.stats.basedir = self.target
+        self.stats.index = {'A': [], 'B': []}
+        for timestamp in (1, 2):
+            snapshot = Snapshot(timestamp)
+            size = timestamp * 1024 * 1024
+            snapshot.classes = {
+                'A': {'sum': size, 'pct': 25.0},
+                'B': {'sum': 2 * size, 'pct': 50.0},
+            }
+            snapshot.tracked_total = 3 * size
+            snapshot.asizeof_total = 4 * size
+            self.stats.snapshots.append(snapshot)
+
+    def check_chart(self, filename):
+        with open(filename, 'rb') as chart:
+            self.assertEqual(chart.read(8), b'\x89PNG\r\n\x1a\n')
+        areas = self.plt.gca().collections
+        self.assertEqual([area.get_label() for area in areas], ['A', 'B'])
+        for area, bounds in zip(areas, (((0, 1), (0, 2)),
+                                      ((1, 3), (2, 6)))):
+            vertices = area.get_paths()[0].vertices
+            for timestamp, (lower, upper) in enumerate(bounds, 1):
+                heights = vertices[vertices[:, 0] == timestamp, 1]
+                self.assertEqual(min(heights), lower)
+                self.assertEqual(max(heights), upper)
+
+    def test_snapshot_chart_stacks_classes(self):
+        filename = os.path.join(self.target, 'snapshot.png')
+        self.assertIn('snapshot.png', self.stats.create_snapshot_chart(filename))
+        self.check_chart(filename)
+
+    def test_timespace_chart_stacks_classes(self):
+        from pympler.charts import tracker_timespace
+        filename = os.path.join(self.target, 'timespace.png')
+        tracker_timespace(filename, self.stats)
+        self.check_chart(filename)
+
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    tclasses = [ LogTestCase ]
+    tclasses = [ LogTestCase, ChartTestCase ]
     for tclass in tclasses:
         names = unittest.getTestCaseNames(tclass, 'test_')
         suite.addTests(map(tclass, names))

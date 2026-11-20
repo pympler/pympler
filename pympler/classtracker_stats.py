@@ -663,9 +663,8 @@ class HtmlStats(Stats):
         to the tracked classes.
         """
         try:
-            from pylab import (figure, title, xlabel, ylabel, plot, fill,
-                               legend, savefig)
-            import matplotlib.mlab as mlab
+            from pylab import (figure, title, xlabel, ylabel, plot,
+                               fill_between, legend, savefig)
         except ImportError:
             return self.nopylab_msg % ("memory allocation")
 
@@ -673,7 +672,6 @@ class HtmlStats(Stats):
 
         times = [snapshot.timestamp for snapshot in self.snapshots]
         base = [0.0] * len(self.snapshots)
-        poly_labels = []
         polys = []
         for cn in classlist:
             pct = [snapshot.classes[cn]['pct'] for snapshot in self.snapshots
@@ -683,9 +681,7 @@ class HtmlStats(Stats):
                       for fp in self.snapshots
                       if fp.classes is not None]
                 sz = [sx + sy for sx, sy in zip(base, sz)]
-                xp, yp = mlab.poly_between(times, base, sz)
-                polys.append(((xp, yp), {'label': cn}))
-                poly_labels.append(cn)
+                polys.append(((times, base, sz), cn))
                 base = sz
 
         figure()
@@ -700,8 +696,8 @@ class HtmlStats(Stats):
                  for fp in self.snapshots]
         plot(times, sizes, 'b--', label='Tracked total')
 
-        for (args, kwds) in polys:
-            fill(*args, **kwds)
+        for args, label in polys:
+            fill_between(*args, label=label)
         legend(loc=2)
         savefig(filename)
 
