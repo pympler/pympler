@@ -23,7 +23,6 @@ try:
 
         timestamps = [fp.timestamp for fp in stats.snapshots]
         offsets = [0] * len(stats.snapshots)
-        poly_labels = []
         polys = []
         for clsname in classlist:
             pct = [fp.classes[clsname]['pct'] for fp in stats.snapshots
@@ -33,9 +32,7 @@ try:
                          if fp.classes and clsname in fp.classes]
                 sizes = [float(x) / (1024 * 1024) for x in sizes]
                 sizes = [offset + size for offset, size in zip(offsets, sizes)]
-                poly = matplotlib.mlab.poly_between(timestamps, offsets, sizes)
-                polys.append((poly, {'label': clsname}))
-                poly_labels.append(clsname)
+                polys.append(((timestamps, offsets, sizes), clsname))
                 offsets = sizes
 
         fig = plt.figure(figsize=(10, 4))
@@ -52,8 +49,8 @@ try:
                    for x in stats.snapshots]
         axis.plot(timestamps, tracked, 'b--', label='Tracked total')
 
-        for (args, kwds) in polys:
-            axis.fill(*args, **kwds)
+        for args, label in polys:
+            axis.fill_between(*args, label=label)
         axis.legend(loc=2)  # TODO fill legend
         fig.savefig(filename)
 
