@@ -2,6 +2,9 @@ import doctest
 import random
 import unittest
 import gc
+import os
+import subprocess
+import sys
 from sys import getsizeof
 
 import pympler.muppy
@@ -106,6 +109,43 @@ class MuppyTest(unittest.TestCase):
         self.assertEqual(len(l1) + len(l2), len(res))
         for o in res:
             self.assertTrue((o in l0) or (o in l1) or (o in l2))
+
+    def test_get_referents_depth(self):
+        end = []
+        leaf = [end]
+        middle = [leaf]
+        root = [middle]
+        for level, expected in [(1, [middle]), (2, [middle, leaf]),
+                                (3, [middle, leaf, end])]:
+            with self.subTest(level=level):
+                result = muppy.get_referents(root, level=level)
+                self.assertEqual(set(map(id, result)), set(map(id, expected)))
+
+    def test_get_referents_shared_objects(self):
+        first = []
+        second = []
+        root = [[first, second], first]
+        result = muppy.get_referents(root, level=2)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(set(map(id, result)), {id(root[0]), id(first), id(second)})
+
+    def test_get_referents_cycles_terminate(self):
+        # A subprocess bounds the regression if traversal becomes unbounded.
+        code = '''
+from pympler import muppy
+cycle = []
+cycle.append(cycle)
+result = muppy.get_referents(cycle, level=3)
+assert len(result) == 1 and result[0] is cycle
+left, right = [], []
+left.append(right)
+right.append(left)
+result = muppy.get_referents(left, level=3)
+assert len(result) == 2
+assert set(map(id, result)) == {id(left), id(right)}
+'''
+        subprocess.run([sys.executable, '-c', code], check=True, timeout=5,
+                       cwd=os.path.dirname(os.path.dirname(muppy.__file__)))
 
     def test_get_size(self):
         """Test that the return value is the sum of the size of all objects."""

@@ -162,7 +162,7 @@ def get_referents(object: Any, level: int = 1) -> List[Any]:
     res = gc.get_referents(object)
     level -= 1
     if level > 0:
-        for o in res:
+        for o in res[:]:
             res.extend(get_referents(o, level))
     res = _remove_duplicates(res)
     return res
