@@ -16,7 +16,7 @@ you can do with muppy.
 The muppy module
 ================
 
-Muppy allows you to get hold of all objects,
+Muppy allows you to get hold of objects discoverable through the garbage collector,
 
 >>> from pympler import muppy
 >>> all_objects = muppy.get_objects()
@@ -55,6 +55,43 @@ sre_parse.Pattern
 This result, for example, tells us that the number of lists remained the same,
 but the memory allocated by lists has increased by 8 bytes. The correct increase
 for a LP64 system (see 64-Bit_Programming_Models_). 
+
+Visibility of primitive objects
+===============================
+
+``muppy.get_objects()`` is not a complete inventory of every allocation.
+It starts with ``gc.get_objects()`` and adds untracked objects directly
+referenced by those tracked objects. CPython normally does not track primitive
+objects such as integers and floats, and can also untrack containers holding
+only immutable values. The current scan does not recursively expand every
+untracked container or explicitly scan all local and global namespaces.
+
+An untracked float can still appear when a tracked list refers to it:
+
+.. code-block:: python
+
+    import gc
+    from pympler import muppy
+
+    value = float('1.23456789')
+    owner = [value]
+    assert not gc.is_tracked(value)  # CPython
+    assert gc.is_tracked(owner)
+    objects = muppy.get_objects()
+    assert any(obj is value for obj in objects)
+    del objects  # The snapshot itself holds references.
+
+``SummaryTracker`` compares summaries of discovered objects; a missing float
+in a diff does not prove that no float was allocated. Reused small integers may
+already exist in the earlier snapshot. Growing a list can increase its size
+without increasing the number of list objects.
+
+A leaked primitive held only by a C extension reference may be invisible to
+this scan. If you already hold the object, ``asizeof.asizeof(obj)`` can estimate
+its size directly. For allocation-site comparisons, start ``tracemalloc``
+before the workload; it tracks supported Python allocator activity, not every
+native allocation. Native allocations may require extension-specific or
+native memory profiling.
 
 The summary module
 ==================
