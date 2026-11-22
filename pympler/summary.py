@@ -136,7 +136,7 @@ def summarize(objects):
 def get_diff(left, right):
     """Get the difference of two summaries.
 
-    Subtracts the values of the right summary from the values of the left
+    Subtracts the values of the left summary from the values of the right
     summary.
     If similar rows appear on both sides, the are included in the summary with
     0 for number of elements and total size.
