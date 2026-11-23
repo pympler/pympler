@@ -2,6 +2,7 @@ import doctest
 import sys
 import unittest
 
+from contextlib import redirect_stdout
 from io import StringIO
 from sys import getsizeof
 
@@ -75,6 +76,74 @@ class SummaryTest(unittest.TestCase):
         for row_e in res:
             self.assertTrue(row_e in expected)
 
+
+    def test_format_default_size_ties(self):
+        rows = [['cell', 2, 96], ['weakref', 1, 80],
+                ['functools._lru_list_elem', 1, 80], ['method', -1, -64]]
+        original = [row[:] for row in rows]
+        lines = list(summary.format_(rows))
+        labels = [line.split('|')[0].strip() for line in lines[2:]]
+        self.assertEqual(rows, original)
+        self.assertEqual(labels, ['cell', 'functools._lru_list_elem',
+                                  'weakref', 'method'])
+
+    def test_format_numeric_ties_use_type_labels(self):
+        cases = (
+            ('size', [['zeta', 1, 80], ['lowest', 5, 16],
+                      ['alpha', 9, 80], ['highest', 2, 128]]),
+            ('#', [['zeta', 2, 16], ['lowest', 1, 80],
+                   ['alpha', 2, 128], ['highest', 3, 64]]),
+        )
+        orders = (
+            ('ascending', ['lowest', 'alpha', 'zeta', 'highest']),
+            ('descending', ['highest', 'alpha', 'zeta', 'lowest']),
+        )
+        for sort, rows in cases:
+            for order, expected in orders:
+                for reverse_input in (False, True):
+                    with self.subTest(sort=sort, order=order,
+                                      reverse_input=reverse_input):
+                        source = rows[::-1] if reverse_input else rows
+                        original = [row[:] for row in source]
+                        lines = list(summary.format_(
+                            source, sort=sort, order=order))
+                        labels = [line.split('|')[0].strip()
+                                  for line in lines[2:]]
+                        self.assertEqual(source, original)
+                        self.assertEqual(labels, expected)
+
+    def test_print_numeric_ties_apply_limit_after_label_order(self):
+        rows = [['zeta', 1, 80], ['alpha', 1, 80]]
+        original = [row[:] for row in rows]
+        options = ({}, {'order': 'ascending'}, {'sort': '#'},
+                   {'sort': '#', 'order': 'ascending'})
+        for kwargs in options:
+            with self.subTest(options=kwargs):
+                stream = StringIO()
+                with redirect_stdout(stream):
+                    summary.print_(rows, limit=1, **kwargs)
+                labels = [line.split('|')[0].strip()
+                          for line in stream.getvalue().splitlines()[2:]]
+                self.assertEqual(rows, original)
+                self.assertEqual(labels, ['alpha'])
+
+    def test_format_negative_numeric_ties(self):
+        rows = [['zeta', -2, -80], ['zero', 0, 0],
+                ['alpha', -2, -80], ['lowest', -3, -96]]
+        original = [row[:] for row in rows]
+        orders = (
+            ('ascending', ['lowest', 'alpha', 'zeta', 'zero']),
+            ('descending', ['zero', 'alpha', 'zeta', 'lowest']),
+        )
+        for sort in ('size', '#'):
+            for order, expected in orders:
+                with self.subTest(sort=sort, order=order):
+                    lines = list(summary.format_(
+                        rows, sort=sort, order=order))
+                    labels = [line.split('|')[0].strip()
+                              for line in lines[2:]]
+                    self.assertEqual(rows, original)
+                    self.assertEqual(labels, expected)
 
     def test_print_diff(self):
         """Test summary can be printed."""

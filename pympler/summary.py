@@ -170,6 +170,8 @@ def get_diff(left, right):
 def format_(rows, limit=15, sort='size', order='descending'):
     """Format the rows as a summary.
 
+    Rows with equal sizes or counts use ascending type labels in either order.
+
     Keyword arguments:
     limit -- the maximum number of elements to be listed
     sort  -- sort elements by 'size', 'type', or '#'
@@ -192,6 +194,8 @@ def format_(rows, limit=15, sort='size', order='descending'):
         elif order == "descending":
             localrows.sort(key=lambda x: _repr(x[0]), reverse=True)
     else:
+        # Stable numeric sorting preserves ascending labels for ties.
+        localrows.sort(key=lambda x: x[0])
         if order == "ascending":
             localrows.sort(key=lambda x: x[sortby.index(sort)])
         elif order == "descending":
@@ -240,6 +244,8 @@ def _format_table(rows, header=True):
 
 def print_(rows, limit=15, sort='size', order='descending'):
     """Print the rows as a summary.
+
+    Rows with equal sizes or counts use ascending type labels in either order.
 
     Keyword arguments:
     limit -- the maximum number of elements to be listed
