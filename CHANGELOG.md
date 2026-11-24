@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+
+- Format negative summary size differences using the same units as positive sizes.
+
 ## 1.1 - 2024-06-28
 
 ### Added
