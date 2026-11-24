@@ -59,7 +59,7 @@ def pp(i: Union[int, float], base: int = 1024) -> str:
     """
     degree = 0
     pattern = "%4d     %s"
-    while i > base:
+    while i > base or -float('inf') < i < -base:
         pattern = "%7.2f %s"
         i = i / float(base)
         degree += 1
